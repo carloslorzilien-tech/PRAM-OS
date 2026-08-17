@@ -82,65 +82,65 @@ export function MentorView() {
   }
 
   const getNivelBadgeInfo = (nivel: number) => {
-    if (nivel <= 1) return { title: 'Crítico', rank: 'Novato', color: 'text-red-700 bg-red-50 border-red-200' }
-    if (nivel === 2) return { title: 'Básico', rank: 'Aspirante', color: 'text-red-700 bg-red-50 border-red-200' }
-    if (nivel === 3) return { title: 'Funcional', rank: 'Avanzado', color: 'text-blue-700 bg-blue-50 border-blue-200' }
-    if (nivel === 4) return { title: 'Sólido', rank: 'Avanzado', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' }
-    return { title: 'Avanzado', rank: 'Élite', color: 'text-emerald-800 bg-emerald-50 border-emerald-300' }
+    if (nivel <= 1) return { title: 'Inicial', rank: 'Novato', color: 'text-slate-700 bg-slate-100 border-slate-200' }
+    if (nivel === 2) return { title: 'Básico', rank: 'Aspirante', color: 'text-slate-700 bg-slate-100 border-slate-200' }
+    if (nivel === 3) return { title: 'Intermedio', rank: 'Avanzado', color: 'text-slate-700 bg-slate-100 border-slate-200' }
+    if (nivel === 4) return { title: 'Sólido', rank: 'Avanzado', color: 'text-slate-700 bg-slate-100 border-slate-200' }
+    return { title: 'Avanzado', rank: 'Dominio Completo', color: 'text-slate-700 bg-slate-100 border-slate-200' }
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 pb-8 px-1">
-      {/* 1. Tarjeta de Bienvenida y Rol (Apilada) */}
-      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
+    <div className="mx-auto w-full max-w-2xl space-y-5 pb-8 px-1">
+      {/* 1. Tarjeta de Bienvenida y Rol */}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-3 flex size-16 items-center justify-center rounded-2xl bg-[#152642] text-white font-bold text-xl shadow-md">
+          <div className="mb-2.5 flex size-12 items-center justify-center rounded-lg bg-slate-900 text-white font-bold text-lg">
             {activeMentor.nombre.split(' ').map((n) => n[0]).slice(0, 2).join('')}
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">
             Hola, {activeMentor.nombre}
           </h2>
 
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#152642]/20 bg-[#152642]/5 px-3.5 py-1 text-xs font-bold uppercase tracking-wide text-[#152642]">
-            <Sparkles className="size-3.5 text-[#152642]" />
-            <span>RANGO: {activeMentor.rango} MENTOR</span>
+          <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-xs font-medium uppercase tracking-wider text-slate-700">
+            <Sparkles className="size-3 text-slate-600" />
+            <span>Rango: {activeMentor.rango} Mentor</span>
           </div>
 
-          <p className="mt-2 text-xs text-slate-500 font-medium max-w-md">
+          <p className="mt-1.5 text-xs text-slate-500 font-normal max-w-md">
             {activeMentor.especialidad || 'Matemáticas y Razonamiento Lógico'} · Liceo Minerva Mirabal
           </p>
 
           <button
             type="button"
             onClick={handleOpenNewSession}
-            className="mt-6 inline-flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-[#152642] px-6 text-sm font-bold text-white shadow-md transition-all hover:bg-[#152642]/90 hover:shadow-lg active:scale-[0.98] cursor-pointer"
+            className="mt-5 inline-flex w-full h-10 items-center justify-center gap-2 rounded-md bg-slate-900 px-5 text-xs font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer"
           >
-            <CalendarPlus className="size-5" />
-            <span>AGENDAR SESIÓN DE HOY</span>
+            <CalendarPlus className="size-4" />
+            <span>Agendar Sesión de Hoy</span>
           </button>
         </div>
       </section>
 
-      {/* 2. Tarjeta de Progreso (Elemento Central con Progress Ring) */}
-      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
+      {/* 2. Tarjeta de Progreso */}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col items-center text-center">
-          <div className="relative flex size-36 items-center justify-center">
+          <div className="relative flex size-32 items-center justify-center">
             <svg className="size-full -rotate-90" viewBox="0 0 120 120">
               <circle
                 cx="60"
                 cy="60"
                 r={radius}
                 className="stroke-slate-100"
-                strokeWidth="10"
+                strokeWidth="8"
                 fill="transparent"
               />
               <circle
                 cx="60"
                 cy="60"
                 r={radius}
-                className="stroke-[#152642] transition-all duration-1000 ease-out"
-                strokeWidth="10"
+                className="stroke-slate-900 transition-all duration-1000 ease-out"
+                strokeWidth="8"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
@@ -149,46 +149,46 @@ export function MentorView() {
             </svg>
 
             <div className="absolute flex flex-col items-center justify-center">
-              <span className="text-3xl font-black tracking-tight text-slate-900">
+              <span className="text-2xl font-bold font-mono tracking-tight text-slate-900">
                 {porcentajeHoras}%
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                COMPLETO
+              <span className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                Completo
               </span>
             </div>
           </div>
 
-          <h3 className="mt-4 text-lg font-black tracking-tight text-slate-900 sm:text-xl">
+          <h3 className="mt-3 text-base font-semibold tracking-tight text-slate-900">
             Progreso de Servicio Social MINERD
           </h3>
-          <p className="mt-1 text-xs text-slate-500 font-medium max-w-sm">
+          <p className="mt-0.5 text-xs text-slate-500 font-normal max-w-sm">
             Requisito de 60 Horas Institucionales Validadas
           </p>
 
-          <div className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200/80 px-4 py-2">
-            <Award className="size-4 text-[#152642]" />
-            <span className="text-sm font-bold text-slate-800">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-1.5">
+            <Award className="size-4 text-slate-700" />
+            <span className="text-xs font-medium text-slate-800">
               {horasAcumuladas.toFixed(1)} / {metaHorasMinerd} Horas
             </span>
-            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[11px] font-bold">
+            <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.2 text-[10px] font-medium">
               ({porcentajeHoras}%)
             </span>
           </div>
         </div>
       </section>
 
-      {/* 3. Cohorte Asignada (RBAC Filtered) */}
-      <section className="space-y-4">
+      {/* 3. Cohorte Asignada */}
+      <section className="space-y-3">
         <div className="text-center">
-          <h3 className="text-lg font-black tracking-tight text-slate-900 uppercase sm:text-xl">
-            COHORTE ASIGNADA
+          <h3 className="text-xs font-semibold tracking-wider text-slate-700 uppercase">
+            Cohorte Asignada
           </h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs text-slate-500 font-normal mt-0.5">
             {estudiantesVisibles.length} Estudiante(s) bajo tu supervisión directa
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {estudiantesVisibles.map((est) => {
             const badge = getNivelBadgeInfo(est.nivel_actual)
             const nivelNum = Math.round(est.nivel_actual)
@@ -196,29 +196,29 @@ export function MentorView() {
             return (
               <div
                 key={est.id}
-                className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+                className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs"
               >
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-2.5">
                   <div>
-                    <h4 className="text-base font-black text-slate-900">
+                    <h4 className="text-sm font-semibold text-slate-900">
                       {est.nombre}
                     </h4>
-                    <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    <p className="text-xs font-normal text-slate-500 mt-0.5">
                       Grado {est.grado} · {est.liceo_seccion || 'Liceo Minerva Mirabal'}
                     </p>
                   </div>
-                  <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase shrink-0', badge.color)}>
+                  <span className={cn('rounded-full border px-2 py-0.2 text-[10px] font-medium uppercase shrink-0', badge.color)}>
                     {badge.rank}
                   </span>
                 </div>
 
-                <div className="my-4 flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3.5">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-[#152642]">
+                <div className="my-3 flex items-center justify-between gap-3 rounded-md bg-slate-50 p-2.5">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-bold font-mono text-slate-900">
                       {est.nivel_actual.toFixed(1)}
                     </span>
-                    <span className="text-xs font-bold text-slate-500">
-                      / 5.0 · Nivel <strong className="text-slate-800">{badge.title}</strong>
+                    <span className="text-xs font-medium text-slate-500">
+                      / 5.0 · Nivel <strong className="text-slate-800 font-semibold">{badge.title}</strong>
                     </span>
                   </div>
 
@@ -227,14 +227,8 @@ export function MentorView() {
                       <div
                         key={lvl}
                         className={cn(
-                          'h-6 w-3 rounded-sm transition-all',
-                          lvl <= nivelNum
-                            ? lvl <= 2
-                              ? 'bg-red-600'
-                              : lvl === 3
-                              ? 'bg-blue-600'
-                              : 'bg-emerald-600'
-                            : 'bg-slate-200'
+                          'h-4 w-2 rounded-xs transition-colors',
+                          lvl <= nivelNum ? 'bg-slate-800' : 'bg-slate-200'
                         )}
                         title={`Nivel ${lvl}`}
                       />
@@ -245,10 +239,10 @@ export function MentorView() {
                 <button
                   type="button"
                   onClick={() => handleOpenPhygital(est.id)}
-                  className="w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-[#152642] shadow-2xs transition-all hover:bg-[#152642] hover:text-white hover:border-[#152642] active:scale-[0.99] cursor-pointer"
+                  className="w-full inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
                 >
-                  <FileCheck2 className="size-4" />
-                  <span>CALIFICAR EXAMEN</span>
+                  <FileCheck2 className="size-3.5" />
+                  <span>Calificar Examen Phygital</span>
                 </button>
               </div>
             )
@@ -256,19 +250,19 @@ export function MentorView() {
         </div>
       </section>
 
-      {/* 4. Sesiones y Validación Dual (RBAC Filtered) */}
+      {/* 4. Sesiones y Validación Dual */}
       {sesionesVisibles.length > 0 && (
-        <section className="space-y-3 pt-2">
+        <section className="space-y-3 pt-1">
           <div className="text-center">
-            <h3 className="text-sm font-black uppercase tracking-wide text-slate-700">
+            <h3 className="text-xs font-semibold tracking-wider text-slate-700 uppercase">
               Validación de Sesiones
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
               Doble confirmación para acreditación de horas MINERD
             </p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {sesionesVisibles.map((sesion) => {
               const estudiante = getEstudianteById(sesion.estudiante_id)
               const ambosConfirmados =
@@ -278,18 +272,18 @@ export function MentorView() {
                 <div
                   key={sesion.id}
                   className={cn(
-                    'rounded-2xl border p-4 transition-all shadow-2xs',
+                    'rounded-lg border p-3.5 transition-colors shadow-xs',
                     ambosConfirmados
-                      ? 'border-emerald-200 bg-emerald-50/40'
+                      ? 'border-emerald-200 bg-emerald-50/30'
                       : 'border-slate-200 bg-white'
                   )}
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">
+                      <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
                         {sesion.tema}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 font-normal mt-0.5">
                         {estudiante?.nombre} · {sesion.fecha_programada} ({sesion.duracion_minutos} min)
                       </p>
                     </div>
@@ -300,10 +294,10 @@ export function MentorView() {
                         onClick={() => handleConfirmarMentor(sesion.id)}
                         disabled={sesion.confirmacion_mentor}
                         className={cn(
-                          'inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer',
+                          'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors cursor-pointer',
                           sesion.confirmacion_mentor
-                            ? 'bg-emerald-100 text-emerald-800 cursor-default'
-                            : 'bg-[#152642] text-white hover:bg-[#152642]/90'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default'
+                            : 'bg-slate-900 text-white hover:bg-slate-800'
                         )}
                       >
                         <UserCheck className="size-3.5" />
@@ -315,10 +309,10 @@ export function MentorView() {
                         onClick={() => handleOpenPinTerminal(sesion)}
                         disabled={sesion.confirmacion_estudiante}
                         className={cn(
-                          'inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer',
+                          'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors cursor-pointer',
                           sesion.confirmacion_estudiante
-                            ? 'bg-emerald-100 text-emerald-800 cursor-default'
-                            : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default'
+                            : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                         )}
                       >
                         <TabletSmartphone className="size-3.5" />

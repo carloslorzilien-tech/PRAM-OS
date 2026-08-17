@@ -50,46 +50,46 @@ export function Checkpoint() {
   const done = criteria.filter((c) => c.done).length
 
   return (
-    <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-[#152642]/10 text-[#152642]">
-            <ClipboardCheck className="size-5" />
+    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+            <ClipboardCheck className="size-4" />
           </span>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900">
               Checkpoint de Dominio
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-[11px] text-slate-500 font-normal">
               {student ? `${student.nombre} · Nivel ${nivel}` : 'Criterios pedagógicos evaluados'}
             </p>
           </div>
         </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
           {done} de {criteria.length} listos
         </span>
       </div>
 
-      <div className="mt-4 flex flex-col gap-2.5">
+      <div className="mt-4 flex flex-col gap-2">
         {criteria.map((c) => (
           <div
             key={c.label}
             className={cn(
-              'flex items-center gap-3.5 rounded-2xl border p-3.5 transition-all',
+              'flex items-center gap-3 rounded-lg border p-3 transition-colors',
               c.done
-                ? 'border-emerald-200 bg-emerald-50/50'
-                : 'border-slate-100 bg-slate-50/60'
+                ? 'border-emerald-200 bg-emerald-50/40 text-emerald-950'
+                : 'border-slate-100 bg-slate-50/60 text-slate-600'
             )}
           >
             {c.done ? (
-              <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
             ) : (
-              <Circle className="size-5 text-slate-300 shrink-0" />
+              <Circle className="size-4 text-slate-300 shrink-0" />
             )}
             <span
               className={cn(
-                'text-xs sm:text-sm font-medium leading-snug',
-                c.done ? 'text-slate-900 font-bold' : 'text-slate-600'
+                'text-xs font-normal leading-normal',
+                c.done && 'font-medium text-slate-900'
               )}
             >
               {c.label}
@@ -99,7 +99,7 @@ export function Checkpoint() {
       </div>
 
       {isGuestMode && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 p-3 text-[11px] text-slate-500">
+        <div className="mt-3.5 flex items-center gap-2 rounded-md bg-slate-50 border border-slate-100 p-2.5 text-xs text-slate-500 font-normal">
           <Lock className="size-3.5 text-slate-400 shrink-0" />
           <span>Inicia sesión para ver tu progreso personalizado</span>
         </div>

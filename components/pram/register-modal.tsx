@@ -81,41 +81,41 @@ export function RegisterModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-in fade-in">
-      <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+      <div className="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-lg">
         {/* Botón Cerrar */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+          className="absolute right-4 top-4 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
         >
-          <X className="size-5" />
+          <X className="size-4" />
         </button>
 
         {/* Encabezado */}
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-[#152642] text-white shadow-sm">
-            <UserPlus className="size-5" />
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <UserPlus className="size-4.5" />
           </div>
           <div>
-            <h3 className="text-base font-black tracking-tight text-slate-900">
+            <h3 className="text-base font-semibold tracking-tight text-slate-900">
               Alta de Usuarios PRAM
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 font-normal">
               Registro con asignación de cohorte y generación de PIN
             </p>
           </div>
         </div>
 
         {/* Pestañas de Selección */}
-        <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
+        <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1">
           <button
             type="button"
             onClick={() => setTab('estudiante')}
             className={cn(
-              'rounded-xl py-2 text-center text-xs font-bold transition-all cursor-pointer',
+              'rounded-md py-1.5 text-center text-xs font-medium transition-colors cursor-pointer',
               tab === 'estudiante'
-                ? 'bg-white text-[#152642] shadow-xs'
+                ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
@@ -125,9 +125,9 @@ export function RegisterModal({
             type="button"
             onClick={() => setTab('mentor')}
             className={cn(
-              'rounded-xl py-2 text-center text-xs font-bold transition-all cursor-pointer',
+              'rounded-md py-1.5 text-center text-xs font-medium transition-colors cursor-pointer',
               tab === 'mentor'
-                ? 'bg-white text-[#152642] shadow-xs'
+                ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
@@ -137,17 +137,17 @@ export function RegisterModal({
 
         {/* Mensaje de Éxito */}
         {successMessage && (
-          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs font-bold text-emerald-800">
-            <CheckCircle2 className="size-5 shrink-0 text-emerald-600" />
+          <div className="mt-3 flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-2.5 text-xs font-medium text-emerald-800">
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {/* Formulario Estudiante */}
         {tab === 'estudiante' && (
-          <form onSubmit={handleRegisterEstudiante} className="mt-4 space-y-4">
+          <form onSubmit={handleRegisterEstudiante} className="mt-4 space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 Nombre Completo:
               </label>
               <input
@@ -156,19 +156,19 @@ export function RegisterModal({
                 value={nombreEstudiante}
                 onChange={(e) => setNombreEstudiante(e.target.value)}
                 placeholder="Ej. Ana Lucía Peralta"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none"
+                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Grado Secundaria:
                 </label>
                 <select
                   value={gradoEstudiante}
                   onChange={(e) => setGradoEstudiante(e.target.value as GradoSecundaria)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none cursor-pointer"
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none cursor-pointer"
                 >
                   <option value="3ro">3ro Secundaria</option>
                   <option value="4to">4to Secundaria</option>
@@ -176,7 +176,7 @@ export function RegisterModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   PIN Nómada (4 dígitos):
                 </label>
                 <div className="flex gap-1.5">
@@ -185,12 +185,12 @@ export function RegisterModal({
                     maxLength={4}
                     value={pinEstudiante}
                     onChange={(e) => setPinEstudiante(e.target.value.replace(/\D/g, ''))}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center font-mono text-xs font-bold text-slate-800 focus:border-[#152642] outline-none"
+                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-center font-mono text-xs font-bold text-slate-900 focus:border-slate-900 outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setPinEstudiante(String(Math.floor(1000 + Math.random() * 9000)))}
-                    className="rounded-xl border border-slate-200 bg-slate-100 px-3 text-[10px] font-bold text-slate-700 hover:bg-slate-200 cursor-pointer shadow-2xs"
+                    className="rounded-md border border-slate-200 bg-slate-100 px-2.5 text-[10px] font-medium text-slate-700 hover:bg-slate-200 cursor-pointer"
                   >
                     GEN
                   </button>
@@ -199,25 +199,25 @@ export function RegisterModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 Liceo y Sección:
               </label>
               <input
                 type="text"
                 value={seccionEstudiante}
                 onChange={(e) => setSeccionEstudiante(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none"
+                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 Mentor Asignado:
               </label>
               <select
                 value={mentorIdEstudiante}
                 onChange={(e) => setMentorIdEstudiante(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none cursor-pointer"
+                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none cursor-pointer"
               >
                 {mentores.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -229,18 +229,18 @@ export function RegisterModal({
 
             <button
               type="submit"
-              className="w-full h-12 inline-flex items-center justify-center rounded-2xl bg-[#152642] text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-[#152642]/90 active:scale-[0.98] cursor-pointer"
+              className="w-full h-10 inline-flex items-center justify-center rounded-md bg-slate-900 text-xs font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer mt-2"
             >
-              REGISTRAR ESTUDIANTE →
+              Registrar Estudiante →
             </button>
           </form>
         )}
 
         {/* Formulario Mentor */}
         {tab === 'mentor' && (
-          <form onSubmit={handleRegisterMentor} className="mt-4 space-y-4">
+          <form onSubmit={handleRegisterMentor} className="mt-4 space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 Nombre del Mentor:
               </label>
               <input
@@ -249,19 +249,19 @@ export function RegisterModal({
                 value={nombreMentor}
                 onChange={(e) => setNombreMentor(e.target.value)}
                 placeholder="Ej. Ing. Daniel Vásquez"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none"
+                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Rango Docente:
                 </label>
                 <select
                   value={rangoMentor}
                   onChange={(e) => setRangoMentor(e.target.value as MentorRango)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none cursor-pointer"
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none cursor-pointer"
                 >
                   <option value="Junior">Junior (En formación)</option>
                   <option value="Senior">Senior (Evaluador)</option>
@@ -270,23 +270,23 @@ export function RegisterModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Especialidad:
                 </label>
                 <input
                   type="text"
                   value={especialidadMentor}
                   onChange={(e) => setEspecialidadMentor(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none"
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full h-12 inline-flex items-center justify-center rounded-2xl bg-[#152642] text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-[#152642]/90 active:scale-[0.98] cursor-pointer"
+              className="w-full h-10 inline-flex items-center justify-center rounded-md bg-slate-900 text-xs font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer mt-2"
             >
-              REGISTRAR MENTOR MINERD →
+              Registrar Mentor MINERD →
             </button>
           </form>
         )}

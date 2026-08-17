@@ -1,16 +1,8 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Lora, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
-import { PramProvider } from '@/lib/pram-context'
-import { ToastContainer } from '@/components/pram/toast'
-
-const lora = Lora({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-lora',
-  display: 'swap',
-})
+import { SafeClerkProvider } from '@/components/pram/safe-clerk-provider'
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -21,26 +13,26 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'PRAM · Programa de Refuerzo Académico Minerva Mirabal',
+  title: 'PRAM OS · Programa de Refuerzo Académico Minerva Mirabal',
   description:
-    'Plataforma de refuerzo académico Minerva Mirabal: sesiones, checkpoints, validación dual MINERD y modelo Phygital.',
+    'Sistema de gestión pedagógica, validación ministerial de tutorías y acreditación de servicio social para estudiantes de secundaria (MINERD).',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'PRAM',
+    title: 'PRAM OS',
   },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#152642',
+  themeColor: '#0F172A',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -51,13 +43,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
   return (
-    <html lang="es" className={`${lora.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} bg-background`}>
-      <body className="font-sans antialiased text-foreground bg-background">
-        <PramProvider>
+    <html
+      lang="es"
+      className={`${plusJakarta.variable} ${jetbrainsMono.variable} bg-slate-50`}
+    >
+      <body className="min-h-screen bg-slate-50 font-sans antialiased text-slate-900 selection:bg-slate-900 selection:text-white">
+        <SafeClerkProvider publishableKey={clerkKey}>
           {children}
-        </PramProvider>
-        <ToastContainer />
+        </SafeClerkProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

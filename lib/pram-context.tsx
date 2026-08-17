@@ -817,7 +817,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
     if (!isDemoMode && isCloudConnected) {
       await SupabaseService.updateEstudiante(estudianteId, { graduado_pram: true })
     }
-    showToast('success', '🎓 ¡Graduación PRAM autorizada!', 'El estudiante completó el programa exitosamente.')
+    showToast('success', 'Graduación PRAM autorizada', 'El estudiante completó el programa exitosamente.')
     return true
   }
 

@@ -32,50 +32,50 @@ export function MicroRoutes() {
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
-            <Route className="size-4 text-[#152642]" />
+        <div className="flex items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+            <Route className="size-3.5" />
           </span>
-          <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900">
             Micro-Rutas de Aprendizaje
           </h3>
         </div>
         {solicitudes.length > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700">
             <Sparkles className="size-3" />
             {solicitudes.length} solicitud(es)
           </span>
         )}
       </div>
-      <p className="text-xs text-slate-500 font-medium mb-4">
+      <p className="text-xs text-slate-500 font-normal mb-3">
         Cápsulas cortas de práctica para dominar el tema paso a paso.
       </p>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         {routes.map((route, idx) => (
           <div
             key={route.id}
-            className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 transition-all hover:bg-slate-100/80 hover:shadow-2xs"
+            className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50/70 p-3 transition-colors hover:bg-slate-100/70"
           >
             <div className="flex min-w-0 items-center gap-3">
               <span
                 className={cn(
-                  'flex size-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold shadow-2xs',
+                  'flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium',
                   route.done
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-[#152642] text-white'
+                    : 'bg-slate-900 text-white'
                 )}
               >
-                {route.done ? <Check className="size-4 stroke-[3]" /> : idx + 1}
+                {route.done ? <Check className="size-3.5 stroke-[2.5]" /> : idx + 1}
               </span>
 
               <div className="min-w-0">
-                <p className="truncate text-xs sm:text-sm font-bold text-slate-900">
+                <p className="truncate text-xs font-medium text-slate-900">
                   {route.title}
                 </p>
-                <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium mt-0.5">
+                <p className="flex items-center gap-1 text-[11px] text-slate-500 font-normal mt-0.5">
                   <Clock className="size-3" />
                   {route.minutes} min de práctica
                 </p>
@@ -86,13 +86,20 @@ export function MicroRoutes() {
               type="button"
               onClick={() => handleStart(route.id)}
               className={cn(
-                'shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs',
+                'shrink-0 rounded-md px-3 py-1 text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1',
                 route.done
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-[#152642] text-white hover:bg-[#152642]/90'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
               )}
             >
-              {route.done ? 'Hecho ✓' : 'Iniciar'}
+              {route.done ? (
+                <>
+                  <Check className="size-3 text-emerald-600" />
+                  <span>Completado</span>
+                </>
+              ) : (
+                'Iniciar'
+              )}
             </button>
           </div>
         ))}

@@ -126,23 +126,23 @@ export function DirectorView() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-8">
+    <div className="mx-auto max-w-4xl space-y-5 pb-8">
       {/* 1. Encabezado Institucional Dirección MINERD */}
-      <section className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-[#152642] text-white shadow-md">
-            <Building2 className="size-7" />
+          <div className="flex size-11 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <Building2 className="size-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black tracking-tight text-slate-900">
+              <h2 className="text-base sm:text-lg font-semibold tracking-tight text-slate-900">
                 {supervisor.nombre}
               </h2>
-              <span className="rounded-full bg-[#152642]/10 px-2.5 py-0.5 text-xs font-bold text-[#152642]">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                 Directora de Área · {supervisor.area}
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
               Supervisión de Cohortes · Validación Dual · Lic. Minerva Mirabal
             </p>
           </div>
@@ -152,92 +152,92 @@ export function DirectorView() {
         <button
           type="button"
           onClick={handleExportMINERD}
-          className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#152642] px-5 text-xs font-bold text-white shadow-md transition-all hover:bg-[#152642]/90 active:scale-[0.98] cursor-pointer self-start sm:self-auto"
+          className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-900 px-4 text-xs font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer self-start sm:self-auto"
         >
-          <Download className="size-4" />
-          <span>EXPORTAR REPORTE MINERD</span>
+          <Download className="size-3.5" />
+          <span>Exportar Reporte MINERD</span>
         </button>
       </section>
 
       {/* Mensaje de Acción Exitosa */}
       {successMsg && (
-        <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 animate-in fade-in">
-          <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+        <div className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-800">
+          <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* 2. Tarjetas de Métricas Globales del Área */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Horas Auditadas
             </span>
-            <Clock className="size-4 text-[#152642]" />
+            <Clock className="size-4 text-slate-700" />
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">
-            {totalHorasAuditadas.toFixed(1)} h
+          <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+            {totalHorasAuditadas.toFixed(1)}<span className="text-xl font-normal text-slate-500 ml-1">h</span>
           </p>
-          <p className="text-[11px] font-semibold text-emerald-600 mt-1">
+          <p className="text-[11px] font-medium text-emerald-700 mt-1">
             Validadas para MINERD
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Delta Cohorte
             </span>
             <TrendingUp className="size-4 text-emerald-600" />
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">
-            +{deltaPromedioGeneral} Δ
+          <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+            +{deltaPromedioGeneral}<span className="text-xl font-normal text-slate-500 ml-1">Δ</span>
           </p>
-          <p className="text-[11px] font-semibold text-slate-400 mt-1">
+          <p className="text-[11px] font-normal text-slate-500 mt-1">
             Crecimiento promedio
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Estudiantes
             </span>
-            <Users className="size-4 text-[#152642]" />
+            <Users className="size-4 text-slate-700" />
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">
+          <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
             {estudiantes.length}
           </p>
-          <p className="text-[11px] font-semibold text-blue-600 mt-1">
+          <p className="text-[11px] font-normal text-slate-600 mt-1">
             Activos en Refuerzo
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Por Auditar
             </span>
-            <ShieldAlert className="size-4 text-amber-500" />
+            <ShieldAlert className="size-4 text-amber-600" />
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">
+          <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
             {pendientesAuditoria.length}
           </p>
-          <p className="text-[11px] font-semibold text-amber-600 mt-1">
+          <p className="text-[11px] font-medium text-amber-700 mt-1">
             Pendientes de firma
           </p>
         </div>
       </section>
 
       {/* 3. Panel Exclusivo de Auditoría de Sesiones */}
-      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 className="text-base font-black uppercase tracking-tight text-slate-900">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-900">
               Auditoría Ejecutiva de Horas de Servicio Social
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 font-normal">
               Aprueba o rechaza con 1 clic las sesiones cargadas por los mentores
             </p>
           </div>
@@ -247,7 +247,7 @@ export function DirectorView() {
               <button
                 type="button"
                 onClick={handleSelectAllPending}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 {selectedSessionIds.length === pendientesAuditoria.length ? 'Deseleccionar' : 'Seleccionar Todo'}
               </button>
@@ -256,7 +256,7 @@ export function DirectorView() {
                 type="button"
                 onClick={handleAprobarMasivo}
                 disabled={selectedSessionIds.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-40 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-40 transition-colors cursor-pointer"
               >
                 <CheckCheck className="size-3.5" />
                 <span>Aprobar para MINERD ({selectedSessionIds.length})</span>
@@ -266,15 +266,15 @@ export function DirectorView() {
         </div>
 
         {pendientesAuditoria.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-xs font-bold text-emerald-800">
-            <CheckCircle2 className="size-6 text-emerald-600 shrink-0" />
+          <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-800">
+            <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
             <div>
-              <p className="text-sm">¡Bandeja de auditoría al día!</p>
-              <p className="text-xs font-medium text-emerald-700 mt-0.5">Todas las sesiones cuentan con validación y firma ministerial.</p>
+              <p className="text-sm font-semibold">¡Bandeja de auditoría al día!</p>
+              <p className="text-xs font-normal text-emerald-700 mt-0.5">Todas las sesiones cuentan con validación y firma ministerial.</p>
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {pendientesAuditoria.map((sesion) => {
               const estudiante = getEstudianteById(sesion.estudiante_id)
               const mentor = getMentorById(sesion.mentor_id)
@@ -284,8 +284,8 @@ export function DirectorView() {
                 <div
                   key={sesion.id}
                   className={cn(
-                    'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border p-4 transition-all',
-                    isSelected ? 'border-[#152642] bg-slate-50' : 'border-slate-200 bg-white'
+                    'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border p-3.5 transition-colors',
+                    isSelected ? 'border-slate-900 bg-slate-50/70' : 'border-slate-200 bg-white'
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -293,19 +293,19 @@ export function DirectorView() {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleToggleSelectSession(sesion.id)}
-                      className="mt-1 size-4 rounded-md accent-[#152642] cursor-pointer"
+                      className="mt-1 size-4 rounded-sm accent-slate-900 cursor-pointer"
                     />
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-slate-900">
+                        <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
                           {sesion.tema}
                         </h4>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[10px] font-bold text-slate-600">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[10px] font-medium text-slate-600">
                           {sesion.duracion_minutos} min ({(sesion.duracion_minutos / 60).toFixed(1)} h)
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      <p className="text-xs text-slate-500 font-normal mt-0.5">
                         Mentor: <strong>{mentor?.nombre}</strong> · Estudiante: <strong>{estudiante?.nombre}</strong> · {sesion.fecha_programada}
                       </p>
                     </div>
@@ -315,7 +315,7 @@ export function DirectorView() {
                     <button
                       type="button"
                       onClick={() => handleAprobarIndividual(sesion.id)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 text-xs font-bold text-white hover:bg-emerald-700 transition-all active:scale-95 cursor-pointer shadow-2xs"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-medium text-white hover:bg-emerald-700 transition-colors cursor-pointer"
                     >
                       <CheckCircle2 className="size-3.5" />
                       <span>Aprobar</span>
@@ -324,7 +324,7 @@ export function DirectorView() {
                     <button
                       type="button"
                       onClick={() => handleRechazarIndividual(sesion.id)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-bold text-red-600 hover:bg-red-100 transition-all active:scale-95 cursor-pointer"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
                     >
                       <XCircle className="size-3.5" />
                       <span>Rechazar</span>
@@ -338,12 +338,12 @@ export function DirectorView() {
       </section>
 
       {/* 4. Gestión de Cohortes y Graduación PRAM */}
-      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
         <div className="border-b border-slate-100 pb-3">
-          <h3 className="text-base font-black uppercase tracking-tight text-slate-900">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-900">
             Gestión de Cohortes & Graduación PRAM
           </h3>
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-normal">
             Reasignación de mentores titulares y autorización de certificados de culminación
           </p>
         </div>
@@ -356,36 +356,37 @@ export function DirectorView() {
             return (
               <div
                 key={est.id}
-                className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs flex flex-col justify-between gap-3"
+                className="rounded-lg border border-slate-200 bg-white p-3.5 flex flex-col justify-between gap-3"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">
+                      <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
                         {est.nombre}
                       </h4>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        Grado {est.grado} · Nivel Actual: <strong className="text-slate-800">{est.nivel_actual}.0</strong>
+                      <p className="text-xs text-slate-500 font-normal mt-0.5">
+                        Grado {est.grado} · Nivel Actual: <strong className="font-mono text-slate-900">{est.nivel_actual}.0</strong>
                       </p>
                     </div>
 
                     {est.graduado_pram ? (
-                      <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold">
-                        Graduado PRAM ✓
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-medium">
+                        <CheckCircle2 className="size-3 text-emerald-600" />
+                        <span>Graduado PRAM</span>
                       </span>
                     ) : (
-                      <span className="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-bold">
+                      <span className="rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium">
                         Activo
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-600 mt-2">
-                    Mentor: <strong className="text-slate-900">{mentorAsignado?.nombre || 'Sin asignar'}</strong>
+                  <p className="text-xs text-slate-600 mt-2 font-normal">
+                    Mentor: <strong className="text-slate-900 font-medium">{mentorAsignado?.nombre || 'Sin asignar'}</strong>
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
+                <div className="flex items-center gap-2 border-t border-slate-100 pt-2.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -393,7 +394,7 @@ export function DirectorView() {
                         setSelectedStudentForReassign(est.id)
                       })
                     }}
-                    className="flex-1 inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="flex-1 inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     <ArrowRightLeft className="size-3" />
                     <span>Reasignar</span>
@@ -404,10 +405,10 @@ export function DirectorView() {
                       type="button"
                       onClick={() => handleGraduar(est.id, est.nombre)}
                       className={cn(
-                        'flex-1 inline-flex h-8 items-center justify-center gap-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-2xs',
+                        'flex-1 inline-flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer',
                         nivelSuperado
                           ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                          : 'bg-[#152642] text-white hover:bg-[#152642]/90'
+                          : 'bg-slate-900 text-white hover:bg-slate-800'
                       )}
                     >
                       <GraduationCap className="size-3.5" />
@@ -423,19 +424,19 @@ export function DirectorView() {
 
       {/* Modal de Reasignación de Mentor */}
       {selectedStudentForReassign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <h4 className="text-base font-black text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
+            <h4 className="text-base font-semibold text-slate-900">
               Reasignar Mentor
             </h4>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
               Selecciona el nuevo mentor titular para el estudiante:
             </p>
 
             <select
               value={targetMentorId}
               onChange={(e) => setTargetMentorId(e.target.value)}
-              className="mt-4 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-800 outline-none"
+              className="mt-3 w-full rounded-md border border-slate-200 bg-white p-2 text-xs font-medium text-slate-800 outline-none"
             >
               {mentores.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -444,18 +445,18 @@ export function DirectorView() {
               ))}
             </select>
 
-            <div className="mt-5 flex gap-2">
+            <div className="mt-4 flex gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedStudentForReassign(null)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="flex-1 rounded-md border border-slate-200 bg-white py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleEjecutarReasignacion}
-                className="flex-1 rounded-xl bg-[#152642] py-2 text-xs font-bold text-white hover:bg-[#152642]/90 cursor-pointer"
+                className="flex-1 rounded-md bg-slate-900 py-1.5 text-xs font-medium text-white hover:bg-slate-800 cursor-pointer"
               >
                 Confirmar
               </button>

@@ -1,27 +1,38 @@
-# Security
-.env.local
-.env.*.local
+# Environment Variables & Secrets (Blindaje Anti-Hackeo)
 .env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Next.js
+# Dependencies
+node_modules/
+
+# Next.js Build Output
 .next/
 out/
 build/
+dist/
 
-# Node
-node_modules/
+# Logs & Cache
+*.log
 npm-debug.log*
-yarn-error.log
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+.vercel/
 
-# OS
+# OS & Editor
 .DS_Store
 Thumbs.db
-
-# Editor
 .vscode/
 .idea/
 *.swp
 
-# PWA
+# PWA Generated Files
+public/sw.js
+public/workbox-*.js
 sw.js
 workbox-*.js

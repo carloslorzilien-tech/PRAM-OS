@@ -82,12 +82,12 @@ export function Dashboard() {
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
 
       {/* Barra de Control, Selector RBAC y Conmutador Modo Demo */}
-      <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 bg-white px-3 sm:px-4 py-2 text-xs shadow-2xs">
+      <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 sm:px-4 py-1.5 text-xs shadow-2xs">
         {/* Lado Izquierdo: Estado del Sistema y Toggle Modo Demo */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse shrink-0" />
-            <span className="font-bold text-slate-800">PRAM OS</span>
+            <span className="font-semibold text-slate-900">PRAM OS</span>
           </div>
 
           {/* Toggle Discreto: Modo Demo / Offline */}
@@ -95,31 +95,31 @@ export function Dashboard() {
             type="button"
             onClick={() => setIsDemoMode(!isDemoMode)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all border cursor-pointer',
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors border cursor-pointer',
               isDemoMode
-                ? 'border-amber-300 bg-amber-50 text-amber-900 shadow-2xs'
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
                 : 'border-slate-200 bg-slate-100 text-slate-600'
             )}
             title="Activa datos de prueba locales en mockData.js y persistencia en localStorage"
           >
             {isDemoMode ? <WifiOff className="size-3 text-amber-600" /> : <Wifi className="size-3 text-emerald-600" />}
-            <span>Modo Demo / Offline: <strong className="uppercase">{isDemoMode ? 'ON' : 'OFF'}</strong></span>
+            <span>Modo Demo: <strong className="uppercase">{isDemoMode ? 'ON' : 'OFF'}</strong></span>
           </button>
         </div>
 
-        {/* Centro / Selector Rápido de Roles RBAC (Para pruebas del usuario) */}
-        <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
-          <span className="text-[10px] font-bold text-slate-400 px-1.5 hidden md:inline">
+        {/* Centro / Selector Rápido de Roles RBAC */}
+        <div className="flex items-center gap-0.5 rounded-md bg-slate-100 p-0.5">
+          <span className="text-[10px] font-medium text-slate-400 px-1 hidden md:inline">
             Rol RBAC:
           </span>
           <button
             type="button"
             onClick={() => setCurrentUserRole('guest')}
             className={cn(
-              'rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+              'rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
               currentUser.role === 'guest'
-                ? 'bg-white text-[#152642] shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Invitado
@@ -128,10 +128,10 @@ export function Dashboard() {
             type="button"
             onClick={() => setCurrentUserRole('estudiante')}
             className={cn(
-              'rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+              'rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
               currentUser.role === 'estudiante'
-                ? 'bg-white text-[#152642] shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Estudiante
@@ -140,10 +140,10 @@ export function Dashboard() {
             type="button"
             onClick={() => setCurrentUserRole('mentor_junior')}
             className={cn(
-              'rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+              'rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
               currentUser.role === 'mentor_junior'
-                ? 'bg-white text-[#152642] shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Mentor Junior
@@ -152,10 +152,10 @@ export function Dashboard() {
             type="button"
             onClick={() => setCurrentUserRole('head_mentor')}
             className={cn(
-              'rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+              'rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
               currentUser.role === 'head_mentor'
-                ? 'bg-white text-[#152642] shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Head Mentor
@@ -164,10 +164,10 @@ export function Dashboard() {
             type="button"
             onClick={() => setCurrentUserRole('director')}
             className={cn(
-              'rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+              'rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
               currentUser.role === 'director'
-                ? 'bg-white text-[#152642] shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             )}
           >
             Director
@@ -176,15 +176,15 @@ export function Dashboard() {
 
         {/* Lado Derecho: Selector de Dispositivo */}
         <div className="flex items-center gap-1">
-          <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+          <div className="flex items-center gap-0.5 rounded-md bg-slate-100 p-0.5">
             <button
               type="button"
               onClick={() => setDeviceMode('desktop')}
               className={cn(
-                'flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+                'flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
                 deviceMode === 'desktop'
-                  ? 'bg-white text-[#152642] shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900'
               )}
             >
               <Monitor className="size-3" />
@@ -194,10 +194,10 @@ export function Dashboard() {
               type="button"
               onClick={() => setDeviceMode('tablet')}
               className={cn(
-                'flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+                'flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
                 deviceMode === 'tablet'
-                  ? 'bg-white text-[#152642] shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900'
               )}
             >
               <Tablet className="size-3" />
@@ -207,10 +207,10 @@ export function Dashboard() {
               type="button"
               onClick={() => setDeviceMode('mobile')}
               className={cn(
-                'flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold transition-all cursor-pointer',
+                'flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer',
                 deviceMode === 'mobile'
-                  ? 'bg-white text-[#152642] shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900'
               )}
             >
               <Smartphone className="size-3" />
@@ -221,9 +221,9 @@ export function Dashboard() {
           <button
             type="button"
             onClick={() => setShowSplash(true)}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+            className="flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
           >
-            <Play className="size-3 text-[#152642]" />
+            <Play className="size-3 text-slate-700" />
             <span className="hidden sm:inline">Splash</span>
           </button>
         </div>
@@ -233,8 +233,8 @@ export function Dashboard() {
       <div
         className={cn(
           'mx-auto transition-all duration-300 w-full',
-          deviceMode === 'tablet' && 'my-6 max-w-[768px] rounded-3xl border-8 border-slate-900 bg-white shadow-2xl overflow-hidden min-h-[900px]',
-          deviceMode === 'mobile' && 'my-6 max-w-[420px] rounded-[2.5rem] border-8 border-slate-900 bg-white shadow-2xl overflow-hidden min-h-[844px]'
+          deviceMode === 'tablet' && 'my-6 max-w-[768px] rounded-2xl border-8 border-slate-900 bg-white shadow-xl overflow-hidden min-h-[900px]',
+          deviceMode === 'mobile' && 'my-6 max-w-[420px] rounded-2xl border-8 border-slate-900 bg-white shadow-xl overflow-hidden min-h-[844px]'
         )}
       >
         <div className="min-h-dvh bg-slate-50">
@@ -250,12 +250,12 @@ export function Dashboard() {
               {connectionError && <ConnectionBanner message={connectionError} />}
               {/* Título Dinámico según RBAC */}
               <div className="mb-5 flex flex-col items-center gap-1.5 text-center">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#152642]/5 border border-[#152642]/15 px-3 py-0.5 text-[10px] font-bold text-[#152642] uppercase tracking-wide">
-                  <Shield className="size-3" />
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[10px] font-medium text-slate-700 uppercase tracking-wider">
+                  <Shield className="size-3 text-slate-500" />
                   <span>Perfil Activo: {currentUser.nombre} ({currentUser.role.replace('_', ' ')})</span>
                 </div>
 
-                <h1 className="text-xl font-black tracking-tight text-slate-900 md:text-2xl mt-1">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl mt-1">
                   {section === 'rankings'
                     ? 'Tablas de Clasificación PRAM'
                     : section === 'auditoria'
@@ -270,7 +270,7 @@ export function Dashboard() {
                     ? 'Mi Refuerzo Personal'
                     : sectionTitles[section]}
                 </h1>
-                <p className="text-xs font-medium text-slate-500">
+                <p className="text-xs font-normal text-slate-500">
                   Periodo 2026-2 · Modelo Phygital Minerva Mirabal (MINERD)
                 </p>
               </div>
