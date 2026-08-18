@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { SafeClerkProvider } from '@/components/pram/safe-clerk-provider'
+import { InstallPrompt } from '@/components/pram/install-prompt'
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -23,6 +24,13 @@ export const metadata: Metadata = {
   description:
     'Sistema de gestión pedagógica, validación ministerial de tutorías y acreditación de servicio social para estudiantes de secundaria (MINERD).',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/pram-logo.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/apple-icon.png',
+    shortcut: '/pram-logo.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -53,6 +61,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-slate-50 font-sans antialiased text-slate-900 selection:bg-slate-900 selection:text-white">
         <SafeClerkProvider publishableKey={clerkKey}>
           {children}
+          <InstallPrompt />
         </SafeClerkProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
