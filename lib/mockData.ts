@@ -122,7 +122,7 @@ export const mockSesiones: Sesion[] = [
     confirmacion_mentor: true,
     confirmacion_estudiante: true,
     validado_por_auditoria: true,
-    estado_auditoria: 'Aprobado_MINERD',
+    estado_auditoria: 'Aprobado_Institucional',
     notas: 'Despeje de variables y práctica de 5 ejercicios guiados.',
   },
   {

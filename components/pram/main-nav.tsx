@@ -36,7 +36,7 @@ export function MainNav() {
             PRAM OS
           </span>
           <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight font-mono block leading-tight mt-0.5">
-            Liceo Minerva Mirabal • MINERD
+            Liceo Minerva Mirabal
           </span>
         </div>
       </Link>
@@ -57,14 +57,6 @@ export function MainNav() {
         >
           <ShieldCheck className="size-3.5 text-slate-500" />
           <span>Verificar CUV</span>
-        </Link>
-
-        <Link
-          href="/demo"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-950 bg-slate-100 hover:bg-slate-200/80 transition-colors px-3 py-1.5 rounded-lg border border-slate-200"
-        >
-          <PlayCircle className="size-3.5 text-indigo-900" />
-          <span>Demo de Roles</span>
         </Link>
 
         <Link
@@ -105,15 +97,6 @@ export function MainNav() {
           >
             <ShieldCheck className="size-4 text-slate-500" />
             <span>Validador de Certificados CUV</span>
-          </Link>
-
-          <Link
-            href="/demo"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2 p-2.5 rounded-lg text-xs font-medium text-indigo-950 bg-slate-100"
-          >
-            <PlayCircle className="size-4 text-indigo-900" />
-            <span>Vista Demo de Roles</span>
           </Link>
 
           <div className="pt-2 border-t border-slate-100">

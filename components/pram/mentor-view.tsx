@@ -44,11 +44,11 @@ export function MentorView() {
     getMentorById(activeMentorId) ||
     mentores[0]
 
-  const metaHorasMinerd = 60
+  const metaHorasInstitucional = 60
   const horasAcumuladas = activeMentor.horas_acumuladas || 48.5
   const porcentajeHoras = Math.min(
     100,
-    Math.round((horasAcumuladas / metaHorasMinerd) * 100)
+    Math.round((horasAcumuladas / metaHorasInstitucional) * 100)
   )
 
   const radius = 54
@@ -159,7 +159,7 @@ export function MentorView() {
           </div>
 
           <h3 className="mt-3 text-base font-semibold tracking-tight text-slate-900">
-            Progreso de Servicio Social MINERD
+            Progreso de Servicio Social Institucional
           </h3>
           <p className="mt-0.5 text-xs text-slate-500 font-normal max-w-sm">
             Requisito de 60 Horas Institucionales Validadas
@@ -168,7 +168,7 @@ export function MentorView() {
           <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-1.5">
             <Award className="size-4 text-slate-700" />
             <span className="text-xs font-medium text-slate-800">
-              {horasAcumuladas.toFixed(1)} / {metaHorasMinerd} Horas
+              {horasAcumuladas.toFixed(1)} / {metaHorasInstitucional} Horas
             </span>
             <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.2 text-[10px] font-medium">
               ({porcentajeHoras}%)
@@ -258,7 +258,7 @@ export function MentorView() {
               Validación de Sesiones
             </h3>
             <p className="text-xs text-slate-500 font-normal mt-0.5">
-              Doble confirmación para acreditación de horas MINERD
+              Doble confirmación para acreditación de horas Institucional
             </p>
           </div>
 

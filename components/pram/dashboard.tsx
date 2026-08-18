@@ -40,7 +40,7 @@ const sectionTitles: Record<SectionId, string> = {
   rankings: 'Tablas de Clasificación',
   checkpoint: 'Checkpoint de Dominio',
   'micro-rutas': 'Micro-Rutas de Aprendizaje',
-  auditoria: 'Auditoría Ejecutiva MINERD',
+  auditoria: 'Auditoría Ejecutiva Institucional',
 }
 
 type DeviceMode = 'desktop' | 'tablet' | 'mobile'
@@ -259,7 +259,7 @@ export function Dashboard() {
                   {section === 'rankings'
                     ? 'Tablas de Clasificación PRAM'
                     : section === 'auditoria'
-                    ? 'Bandeja de Auditoría MINERD'
+                    ? 'Bandeja de Auditoría Institucional'
                     : currentUser.role === 'mentor_junior'
                     ? 'Panel del Mentor Junior'
                     : currentUser.role === 'head_mentor'
@@ -271,7 +271,7 @@ export function Dashboard() {
                     : sectionTitles[section]}
                 </h1>
                 <p className="text-xs font-normal text-slate-500">
-                  Periodo 2026-2 · Modelo Phygital Minerva Mirabal (MINERD)
+                  Periodo 2026-2 · Modelo Phygital Minerva Mirabal (Institucional)
                 </p>
               </div>
 

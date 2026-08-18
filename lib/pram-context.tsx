@@ -203,7 +203,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
       const est = estudiantes.find((e) => e.id === 'e-1') || estudiantes[0]
       setCurrentUser({
         id: est.id,
-        email: 'carlos.reyes@estudiante.minerd.edu.do',
+        email: 'carlos.reyes@estudiante.Institucional.edu.do',
         nombre: est.nombre,
         role: 'estudiante',
         estudianteData: est,
@@ -212,7 +212,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
       const men = mentores.find((m) => m.id === 'm-3') || mentores[mentores.length - 1]
       setCurrentUser({
         id: men.id,
-        email: 'sofia.castillo@minerd.edu.do',
+        email: 'sofia.castillo@Institucional.edu.do',
         nombre: men.nombre,
         role: 'mentor_junior',
         mentorData: men,
@@ -222,7 +222,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
       const men = mentores.find((m) => m.id === 'm-1') || mentores[0]
       setCurrentUser({
         id: men.id,
-        email: 'altagracia.pena@minerd.edu.do',
+        email: 'altagracia.pena@Institucional.edu.do',
         nombre: men.nombre,
         role: 'head_mentor',
         mentorData: men,
@@ -232,7 +232,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
       const sup = supervisores[0]
       setCurrentUser({
         id: sup.id,
-        email: 'carmen.batlle@director.minerd.edu.do',
+        email: 'carmen.batlle@director.Institucional.edu.do',
         nombre: sup.nombre,
         role: 'director',
         supervisorData: sup,
@@ -733,7 +733,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
   const aprobarAuditoriaManual = async (sesionId: string): Promise<boolean> => {
     const updatedSesiones = sesiones.map((s) =>
       s.id === sesionId
-        ? { ...s, validado_por_auditoria: true, estado_auditoria: 'Aprobado_MINERD' as EstadoAuditoria }
+        ? { ...s, validado_por_auditoria: true, estado_auditoria: 'Aprobado_Institucional' as EstadoAuditoria }
         : s
     )
     setSesiones(updatedSesiones)
@@ -742,18 +742,18 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
     if (!isDemoMode && isCloudConnected) {
       SupabaseService.updateSesion(sesionId, {
         validado_por_auditoria: true,
-        estado_auditoria: 'Aprobado_MINERD',
+        estado_auditoria: 'Aprobado_Institucional',
       })
     }
-    showToast('success', 'Sesión aprobada MINERD', 'La sesión fue validada y registrada.')
+    showToast('success', 'Sesión aprobada Institucional', 'La sesión fue validada y registrada.')
     return true
   }
 
-  // Aprobación Masiva de Auditoría MINERD
+  // Aprobación Masiva de Auditoría Institucional
   const aprobarAuditoriaMasiva = async (sesionIds: string[]): Promise<boolean> => {
     const updatedSesiones = sesiones.map((s) =>
       sesionIds.includes(s.id)
-        ? { ...s, validado_por_auditoria: true, estado_auditoria: 'Aprobado_MINERD' as EstadoAuditoria }
+        ? { ...s, validado_por_auditoria: true, estado_auditoria: 'Aprobado_Institucional' as EstadoAuditoria }
         : s
     )
     setSesiones(updatedSesiones)
@@ -763,11 +763,11 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
       for (const id of sesionIds) {
         SupabaseService.updateSesion(id, {
           validado_por_auditoria: true,
-          estado_auditoria: 'Aprobado_MINERD',
+          estado_auditoria: 'Aprobado_Institucional',
         })
       }
     }
-    showToast('success', 'Aprobación masiva completada', `${sesionIds.length} sesiones aprobadas para MINERD.`)
+    showToast('success', 'Aprobación masiva completada', `${sesionIds.length} sesiones aprobadas para Institucional.`)
     return true
   }
 

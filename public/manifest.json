@@ -1,7 +1,7 @@
 {
   "name": "PRAM · Programa de Refuerzo Académico Minerva Mirabal",
   "short_name": "PRAM",
-  "description": "Sistema de gestión académica, validación ministerial y acreditación de servicio social MINERD.",
+  "description": "Sistema de gestión académica y acreditación de servicio social · Liceo Minerva Mirabal.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

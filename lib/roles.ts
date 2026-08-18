@@ -1,9 +1,9 @@
 /**
  * PRAM OS — Role Types & Access Control
- * Sistema de Roles para Gestión Pedagógica MINERD
+ * Sistema de Roles para Gestión Pedagógica Institucional
  *
  * Jerarquía de Roles:
- *   DIRECTOR        → Acceso total: auditoría, bloqueo, reportes, firma ministerial
+ *   DIRECTOR        → Acceso total: auditoría, bloqueo, reportes, firma institucional
  *   AREA_DIRECTOR   → Acceso a auditoría y firma, sin configuración global
  *   MENTOR          → Registro de sesiones, progreso personal hacia las 60h
  *   STUDENT         → Vista de historial académico personal (futuro)

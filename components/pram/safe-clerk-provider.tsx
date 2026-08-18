@@ -52,7 +52,7 @@ export function SafeClerkProvider({ children, publishableKey }: SafeClerkProvide
             <span>PRAM OS V1 · Modo Autónomo Activo (Neon DB Online + Local Auth)</span>
           </div>
           <span className="hidden sm:inline text-slate-400">
-            Liceo Minerva Mirabal · MINERD
+            Liceo Minerva Mirabal
           </span>
         </div>
         {children}

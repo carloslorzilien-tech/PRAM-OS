@@ -50,7 +50,7 @@ export function DirectorView() {
   const supervisor = supervisores[0] || { nombre: 'Dra. Carmen Batlle', area: 'Matemáticas' }
 
   const totalHorasAuditadas = sesiones
-    .filter((s) => s.estado_auditoria === 'Aprobado_MINERD' || s.validado_por_auditoria)
+    .filter((s) => s.estado_auditoria === 'Aprobado_Institucional' || s.validado_por_auditoria)
     .reduce((acc, s) => acc + s.duracion_minutos / 60, 0)
 
   let totalDelta = 0
@@ -77,14 +77,14 @@ export function DirectorView() {
     requireAuth('aprobar sesiones masivamente como Director', async () => {
       if (selectedSessionIds.length === 0) return
       await aprobarAuditoriaMasiva(selectedSessionIds)
-      setSuccessMsg(`¡${selectedSessionIds.length} sesiones aprobadas oficialmente para el MINERD!`)
+      setSuccessMsg(`¡${selectedSessionIds.length} sesiones aprobadas oficialmente para el Institucional!`)
       setSelectedSessionIds([])
       setTimeout(() => setSuccessMsg(null), 3000)
     })
   }
 
   const handleAprobarIndividual = (id: string) => {
-    requireAuth('auditar sesión ministerial', async () => {
+    requireAuth('auditar sesión institucional', async () => {
       await aprobarAuditoriaManual(id)
       setSuccessMsg('Sesión auditada y validada para servicio social.')
       setTimeout(() => setSuccessMsg(null), 2500)
@@ -117,17 +117,17 @@ export function DirectorView() {
     })
   }
 
-  const handleExportMINERD = () => {
-    requireAuth('exportar reportes certificados MINERD', () => {
+  const handleExportInstitucional = () => {
+    requireAuth('exportar reportes certificados Institucional', () => {
       alert(
-        `[CERTIFICACIÓN MINERD]\n\nGenerando expediente oficial en PDF/Excel:\n- Área: ${supervisor.area}\n- Supervisor: ${supervisor.nombre}\n- Total Horas Validadas: ${totalHorasAuditadas.toFixed(1)} h\n- Cohorte: ${estudiantes.length} alumnos\n\nListo para firma y sello oficial.`
+        `[CERTIFICACIÓN Institucional]\n\nGenerando expediente oficial en PDF/Excel:\n- Área: ${supervisor.area}\n- Supervisor: ${supervisor.nombre}\n- Total Horas Validadas: ${totalHorasAuditadas.toFixed(1)} h\n- Cohorte: ${estudiantes.length} alumnos\n\nListo para firma y sello oficial.`
       )
     })
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-8">
-      {/* 1. Encabezado Institucional Dirección MINERD */}
+      {/* 1. Encabezado Institucional Dirección Institucional */}
       <section className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
           <div className="flex size-11 items-center justify-center rounded-lg bg-slate-900 text-white">
@@ -148,14 +148,14 @@ export function DirectorView() {
           </div>
         </div>
 
-        {/* Botón Exportación MINERD */}
+        {/* Botón Exportación Institucional */}
         <button
           type="button"
-          onClick={handleExportMINERD}
+          onClick={handleExportInstitucional}
           className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-900 px-4 text-xs font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer self-start sm:self-auto"
         >
           <Download className="size-3.5" />
-          <span>Exportar Reporte MINERD</span>
+          <span>Exportar Reporte Institucional</span>
         </button>
       </section>
 
@@ -180,7 +180,7 @@ export function DirectorView() {
             {totalHorasAuditadas.toFixed(1)}<span className="text-xl font-normal text-slate-500 ml-1">h</span>
           </p>
           <p className="text-[11px] font-medium text-emerald-700 mt-1">
-            Validadas para MINERD
+            Validadas para Institucional
           </p>
         </div>
 
@@ -259,7 +259,7 @@ export function DirectorView() {
                 className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-40 transition-colors cursor-pointer"
               >
                 <CheckCheck className="size-3.5" />
-                <span>Aprobar para MINERD ({selectedSessionIds.length})</span>
+                <span>Aprobar para Institucional ({selectedSessionIds.length})</span>
               </button>
             </div>
           )}
@@ -270,7 +270,7 @@ export function DirectorView() {
             <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
             <div>
               <p className="text-sm font-semibold">¡Bandeja de auditoría al día!</p>
-              <p className="text-xs font-normal text-emerald-700 mt-0.5">Todas las sesiones cuentan con validación y firma ministerial.</p>
+              <p className="text-xs font-normal text-emerald-700 mt-0.5">Todas las sesiones cuentan con validación y firma institucional.</p>
             </div>
           </div>
         ) : (

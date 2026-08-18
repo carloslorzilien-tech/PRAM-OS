@@ -128,7 +128,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-[11px] font-mono text-slate-400">
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-emerald-400 inline-block animate-ping" />
-            <span>Iniciando Entorno Académico MINERD...</span>
+            <span>Iniciando Entorno Académico Institucional...</span>
           </div>
           <span className="text-slate-500 hover:text-slate-300 underline uppercase tracking-widest text-[10px]">
             Presiona para entrar →

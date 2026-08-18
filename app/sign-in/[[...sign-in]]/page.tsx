@@ -24,7 +24,7 @@ export default function SignInPage() {
           </span>
         </Link>
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">
-          Liceo Minerva Mirabal · MINERD
+          Liceo Minerva Mirabal
         </span>
       </div>
 

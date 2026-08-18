@@ -99,7 +99,7 @@ export default async function DashboardHubPage() {
                 <FileCheck className="size-5" />
               </div>
               <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
-                Auditoría MINERD
+                Auditoría Académica
               </span>
             </div>
 
@@ -129,7 +129,7 @@ export default async function DashboardHubPage() {
                 Biblioteca de Recursos y Plantillas Imprimibles
               </h4>
               <p className="text-[11px] text-slate-500 font-normal">
-                Descarga la plantilla física de asistencia y accede a guías curriculares del MINERD.
+                Descarga la plantilla física de asistencia y accede a guías de apoyo pedagógico.
               </p>
             </div>
           </div>

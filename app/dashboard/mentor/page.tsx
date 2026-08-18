@@ -84,7 +84,7 @@ export default async function MentorDashboardPage({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Acreditación Servicio Social MINERD
+                Acreditación Servicio Social
               </span>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">

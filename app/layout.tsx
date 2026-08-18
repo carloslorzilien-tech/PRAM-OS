@@ -20,17 +20,17 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'PRAM OS · Programa de Refuerzo Académico Minerva Mirabal',
+  title: 'PRAM OS · Sistema de Refuerzo Académico',
   description:
-    'Sistema de gestión pedagógica, validación ministerial de tutorías y acreditación de servicio social para estudiantes de secundaria (MINERD).',
+    'Sistema de gestión de tutorías y acreditación de servicio social para estudiantes de secundaria · Liceo Minerva Mirabal.',
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/pram-icon.png', type: 'image/png', sizes: '512x512' },
-      { url: '/pram-logo.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.ico', sizes: 'any' },
     ],
     apple: '/apple-icon.png',
-    shortcut: '/pram-icon.png',
+    shortcut: '/favicon.ico',
   },
   appleWebApp: {
     capable: true,
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#0F172A',
+  themeColor: '#152642',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

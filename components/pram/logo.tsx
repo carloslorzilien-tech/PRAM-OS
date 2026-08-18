@@ -65,7 +65,7 @@ export function LogoFull({
           PRAM OS
         </span>
         <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tight font-mono mt-0.5 leading-tight">
-          Liceo Minerva Mirabal • MINERD
+          Liceo Minerva Mirabal • Institucional
         </span>
       </div>
     </div>

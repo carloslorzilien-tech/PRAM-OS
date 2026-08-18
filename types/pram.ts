@@ -19,7 +19,7 @@ export type EstadoSesion =
   | 'Ausente_Injustificado' 
   | 'Ausente_Justificado';
 
-export type EstadoAuditoria = 'Pendiente' | 'Aprobado_MINERD' | 'Rechazado';
+export type EstadoAuditoria = 'Pendiente' | 'Aprobado_Institucional' | 'Aprobado_MINERD' | 'Rechazado';
 
 export type TipoExamen = 'Pre-Test' | 'Checkpoint' | 'Post-Test';
 
@@ -51,7 +51,7 @@ export interface Mentor {
   id: string;
   nombre: string;
   rango: MentorRango;
-  horas_acumuladas: number; // Conteo para servicio social MINERD
+  horas_acumuladas: number; // Conteo para acreditación de servicio social
   avatar?: string;
   especialidad?: string;
   supervisor_id?: string;

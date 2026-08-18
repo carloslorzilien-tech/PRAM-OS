@@ -47,7 +47,7 @@ export default async function HomePage() {
           <div className="flex flex-col items-center md:items-start text-center md:text-left gap-3 max-w-md">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1 text-[11px] font-medium text-slate-700 shadow-xs">
               <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-              <span>Plataforma Oficial MINERD · Período 2026-2</span>
+              <span>PRAM OS · Sistema de Refuerzo Académico · Período 2026-2</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 leading-none">
@@ -57,7 +57,7 @@ export default async function HomePage() {
               Liceo Minerva Mirabal
             </p>
             <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
-              Gestión inmutable de horas de tutoría, acreditación ministerial de servicio social (60h) y emisión de certificados verificables por código CUV.
+              Gestión de horas de tutoría, acreditación de servicio social (60h) y emisión de certificados verificables por código CUV.
             </p>
           </div>
         </section>
@@ -124,7 +124,7 @@ export default async function HomePage() {
                 Cuadro de Honor de Mentores
               </h2>
               <p className="text-xs text-slate-500 font-normal">
-                Docentes y tutores con mayor aporte al servicio social MINERD
+                Docentes y tutores con mayor aporte al programa de servicio social
               </p>
             </div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -225,7 +225,7 @@ export default async function HomePage() {
                 </h3>
               </div>
               <p className="text-xs text-slate-500 font-normal mt-1">
-                Auditoría y bloqueo inmutable de sesiones MINERD.
+                Auditoría y bloqueo inmutable de sesiones académicas.
               </p>
             </div>
             <div className="mt-4 flex items-center justify-between text-[11px] font-medium text-slate-900">
@@ -235,22 +235,22 @@ export default async function HomePage() {
           </Link>
 
           <Link
-            href="/demo"
+            href="/recursos"
             className="p-5 bg-slate-900 text-white rounded-xl shadow-sm hover:bg-slate-800 transition-all flex flex-col justify-between group"
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <PlayCircle className="size-4 text-slate-300" />
+                <BookOpen className="size-4 text-slate-300" />
                 <h3 className="text-sm font-semibold text-white">
-                  Demo de Roles
+                  Recursos & Plantillas
                 </h3>
               </div>
               <p className="text-xs text-slate-300 font-normal mt-1">
-                Prueba instantáneamente las 3 vistas en vivo sin iniciar sesión.
+                Plantilla física de asistencia y materiales pedagógicos de apoyo.
               </p>
             </div>
             <div className="mt-4 flex items-center justify-between text-[11px] font-medium text-white">
-              <span>Ver Demo Interactiva</span>
+              <span>Explorar Recursos</span>
               <ArrowRight className="size-3.5 text-slate-300 group-hover:translate-x-0.5 transition-all" />
             </div>
           </Link>
@@ -263,7 +263,7 @@ export default async function HomePage() {
           Programa de Refuerzo Académico Minerva Mirabal (PRAM OS) · República Dominicana
         </p>
         <p className="text-[11px] text-slate-400 mt-1">
-          Acreditado bajo normativas del Ministerio de Educación (MINERD)
+          Liceo Minerva Mirabal · Sistema de Refuerzo Académico
         </p>
       </footer>
     </div>

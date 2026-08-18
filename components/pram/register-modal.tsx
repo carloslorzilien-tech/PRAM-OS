@@ -72,7 +72,7 @@ export function RegisterModal({
       especialidad: especialidadMentor,
     })
 
-    setSuccessMessage(`¡Mentor ${nuevo.nombre} registrado para servicio social MINERD!`)
+    setSuccessMessage(`¡Mentor ${nuevo.nombre} registrado para servicio social Institucional!`)
     setTimeout(() => {
       setSuccessMessage(null)
       setNombreMentor('')
@@ -286,7 +286,7 @@ export function RegisterModal({
               type="submit"
               className="w-full h-10 inline-flex items-center justify-center rounded-md bg-slate-900 text-xs font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer mt-2"
             >
-              Registrar Mentor MINERD →
+              Registrar Mentor Institucional →
             </button>
           </form>
         )}

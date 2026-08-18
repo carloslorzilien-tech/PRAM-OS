@@ -15,7 +15,7 @@ import { PrintAttendanceTemplate } from '@/components/pram/print-template'
 
 export const metadata = {
   title: 'Biblioteca de Recursos y Plantillas · PRAM OS',
-  description: 'Materiales oficiales de apoyo, plantillas de asistencia ministerial y enlaces curriculares.',
+  description: 'Materiales de apoyo, plantillas de asistencia y enlaces pedagógicos · Liceo Minerva Mirabal.',
 }
 
 export default function RecursosPage() {
@@ -28,24 +28,10 @@ export default function RecursosPage() {
       badge: 'Matemáticas',
     },
     {
-      title: 'Adecuación Curricular MINERD (Nivel Secundario)',
-      category: 'Documento Oficial',
-      description: 'Malla curricular y competencias específicas para 3ro y 4to de bachillerato de República Dominicana.',
-      url: 'https://www.ministeriodeeducacion.gob.do',
-      badge: 'Currículo MINERD',
-    },
-    {
-      title: 'Olimpíada Nacional de Matemáticas (ONM)',
-      category: 'Entrenamiento Académico',
-      description: 'Problemas y bancos de ejercicios de razonamiento lógico, combinatoria y teoría de números.',
-      url: 'https://www.ministeriodeeducacion.gob.do',
-      badge: 'Competencias',
-    },
-    {
-      title: 'Guías de Lectura y Comprensión (MINERD)',
+      title: 'Biblioteca y Recursos de Lengua Española',
       category: 'Lengua Española',
-      description: 'Estrategias pedagógicas de análisis textual, redacción de ensayos y análisis sintáctico.',
-      url: 'https://www.ministeriodeeducacion.gob.do',
+      description: 'Obras clásicas, análisis textual, recursos de comprensión lectora y materiales de estudio literario.',
+      url: 'https://www.cervantesvirtual.com/nd/ark:/59851/bmc1220428',
       badge: 'Español',
     },
   ]
@@ -67,7 +53,7 @@ export default function RecursosPage() {
               PRAM OS · Materiales Pedagógicos
             </span>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              Biblioteca y Plantillas Oficiales
+              Biblioteca y Plantillas
             </h1>
           </div>
         </div>
@@ -88,7 +74,7 @@ export default function RecursosPage() {
               <div className="flex items-center gap-2">
                 <FileText className="size-4 text-slate-900" />
                 <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                  Plantilla Oficial de Asistencia y Bitácora PRAM
+                  Plantilla de Asistencia y Bitácora PRAM
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-normal">
@@ -119,8 +105,8 @@ export default function RecursosPage() {
                 <span className="font-medium text-slate-800">DD / MM / 2026</span>
               </div>
               <div className="bg-white p-2 rounded border border-slate-200">
-                <span className="text-[10px] text-slate-400 block uppercase">Horas</span>
-                <span className="font-medium text-slate-800">45 - 90 min</span>
+                <span className="text-[10px] text-slate-400 block uppercase">Duración</span>
+                <span className="font-medium text-slate-800">45 min</span>
               </div>
             </div>
             <p className="text-[11px] text-slate-500 italic">
@@ -129,14 +115,14 @@ export default function RecursosPage() {
           </div>
         </section>
 
-        {/* Sección 2: Enlaces Curriculares y Recursos Externos */}
+        {/* Sección 2: Enlaces Pedagógicos Verificados */}
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold tracking-tight text-slate-900">
               Recursos Pedagógicos Recomendados
             </h2>
             <p className="text-xs text-slate-500 font-normal">
-              Materiales alineados con el currículo dominicano y pruebas nacionales
+              Plataformas verificadas de apoyo académico
             </p>
           </div>
 
@@ -150,7 +136,7 @@ export default function RecursosPage() {
                 className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 transition-all space-y-2 group block"
               >
                 <div className="flex items-center justify-between">
-                  <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.2 text-[10px] font-medium">
+                  <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
                     {res.badge}
                   </span>
                   <ExternalLink className="size-3.5 text-slate-400 group-hover:text-slate-900 transition-colors" />

@@ -32,7 +32,7 @@ export function RankingsView() {
           Tablas de Clasificación PRAM
         </h2>
         <p className="mt-0.5 text-xs text-slate-500 font-normal">
-          Gamificación pedagógica oficial · Medición de efectividad y esfuerzo MINERD
+          Gamificación pedagógica oficial · Medición de efectividad y esfuerzo Institucional
         </p>
 
         {/* Pestañas de Rankings */}
@@ -110,7 +110,7 @@ export function RankingsView() {
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 truncate mt-0.5 font-normal">
-                        +{item.delta_promedio} Δ · {item.horas.toFixed(1)} h MINERD
+                        +{item.delta_promedio} Δ · {item.horas.toFixed(1)} h Institucional
                       </p>
                     </div>
                   </div>

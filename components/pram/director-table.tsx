@@ -37,7 +37,7 @@ export function DirectorAuditTable({ initialSessions }: { initialSessions: Sesio
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-100">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Bandeja de Validación MINERD
+            Bandeja de Validación Institucional
           </span>
           <p className="text-xs text-slate-500 font-normal">
             {sessions.length} sesión(es) pendientes de firma y acreditación

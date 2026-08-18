@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { RefreshCw, Home } from 'lucide-react'
 
 export default function ErrorBoundary({
   error,
@@ -11,23 +11,23 @@ export default function ErrorBoundary({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  useEffect(() => {
-    console.error('PRAM OS Handled Error:', error)
-  }, [error])
-
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-slate-900 font-sans">
       <div className="max-w-md w-full p-6 sm:p-8 bg-white rounded-xl border border-slate-200 shadow-sm text-center space-y-4">
-        <div className="flex size-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 mx-auto border border-amber-200">
-          <AlertTriangle className="size-6" />
+        <div className="flex size-12 items-center justify-center rounded-xl bg-[#152642] p-2 mx-auto shadow-sm">
+          <img
+            src="/pram-logo.svg"
+            alt="PRAM"
+            className="size-full object-contain invert brightness-0 contrast-200"
+          />
         </div>
 
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            Aviso de Recuperación del Sistema
+            Algo salió mal
           </h2>
           <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
-            Se ha activado el mecanismo de protección de PRAM OS. Puedes reintentar la acción o volver al portal de impacto.
+            Se produjo un error al cargar esta sección. Puedes reintentar o volver al inicio.
           </p>
         </div>
 

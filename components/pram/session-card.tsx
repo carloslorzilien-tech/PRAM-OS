@@ -130,7 +130,7 @@ export function SessionCard() {
         {isConfirmed ? (
           <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-xs font-medium text-emerald-800">
             <Check className="size-4 text-emerald-600 shrink-0" />
-            <span>Asistencia Confirmada por el Estudiante · Horas MINERD Validadas</span>
+            <span>Asistencia Confirmada por el Estudiante · Horas Institucional Validadas</span>
           </div>
         ) : (
           <div className="space-y-3">

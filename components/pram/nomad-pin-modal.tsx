@@ -86,7 +86,7 @@ export function NomadPinModal({ isOpen, onClose, sesion }: NomadPinModalProps) {
           </div>
           <div>
             <h3 className="text-base font-black tracking-tight text-slate-900">
-              Terminal Nómada MINERD
+              Terminal Nómada Institucional
             </h3>
             <p className="text-xs text-slate-500 font-medium">
               Validación de Asistencia por PIN Compartido

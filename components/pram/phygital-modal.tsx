@@ -158,7 +158,7 @@ export function PhygitalModal({
               >
                 <option value="Pre-Test">Pre-Test Diagnóstico</option>
                 <option value="Checkpoint">Checkpoint Intermedio</option>
-                <option value="Post-Test">Post-Test Cierre MINERD</option>
+                <option value="Post-Test">Post-Test Cierre Institucional</option>
               </select>
             </div>
 

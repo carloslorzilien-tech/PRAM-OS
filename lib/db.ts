@@ -71,7 +71,7 @@ const fallbackMentores: Mentor[] = [
   {
     id: 'm-1',
     nombre: 'Prof. Altagracia Peña',
-    email: 'altagracia.pena@minerd.edu.do',
+    email: 'altagracia.pena@Institucional.edu.do',
     rango: 'Head',
     horas_acumuladas: 48.5,
     meta_horas: 60.0,
@@ -80,7 +80,7 @@ const fallbackMentores: Mentor[] = [
   {
     id: 'm-2',
     nombre: 'Lic. Marcos Santana',
-    email: 'marcos.santana@minerd.edu.do',
+    email: 'marcos.santana@Institucional.edu.do',
     rango: 'Senior',
     horas_acumuladas: 34.0,
     meta_horas: 60.0,
@@ -89,7 +89,7 @@ const fallbackMentores: Mentor[] = [
   {
     id: 'm-3',
     nombre: 'Ing. Sofía Castillo',
-    email: 'sofia.castillo@minerd.edu.do',
+    email: 'sofia.castillo@Institucional.edu.do',
     rango: 'Junior',
     horas_acumuladas: 19.5,
     meta_horas: 60.0,
@@ -178,7 +178,7 @@ const fallbackSesiones: Sesion[] = [
     cantidad_alumnos: 3,
     fecha_sesion: '2026-08-16',
     estado: 'pending',
-    notas: 'Pendiente de validación ministerial.',
+    notas: 'Pendiente de validación institucional.',
   },
   {
     id: 's-107',
@@ -202,7 +202,7 @@ const fallbackCertificados: CertificadoCUV[] = [
     mentor_nombre: 'Prof. Altagracia Peña',
     horas_certificadas: 60.0,
     fecha_emision: '2026-08-15',
-    entidad_emisora: 'Dirección General de Educación Secundaria · MINERD',
+    entidad_emisora: 'Dirección General de Educación Secundaria · Institucional',
     liceo: 'Liceo Minerva Mirabal',
     estado: 'valid',
   },
@@ -213,7 +213,7 @@ const fallbackCertificados: CertificadoCUV[] = [
     mentor_nombre: 'Lic. Marcos Santana',
     horas_certificadas: 45.0,
     fecha_emision: '2026-08-14',
-    entidad_emisora: 'Dirección General de Educación Secundaria · MINERD',
+    entidad_emisora: 'Dirección General de Educación Secundaria · Institucional',
     liceo: 'Liceo Minerva Mirabal',
     estado: 'valid',
   },

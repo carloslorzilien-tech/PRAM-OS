@@ -57,7 +57,7 @@ export default async function DirectorDashboardPage() {
       {/* Cabecera Imprimible (Solo visible en Print) */}
       <div className="hidden print:block p-8 border-b border-slate-300 text-center space-y-2">
         <h1 className="text-xl font-bold text-slate-900 uppercase">
-          Ministerio de Educación de la República Dominicana (MINERD)
+          Liceo Minerva Mirabal · Sistema de Refuerzo Académico
         </h1>
         <h2 className="text-sm font-semibold text-slate-700">
           Programa de Refuerzo Académico Minerva Mirabal (PRAM OS) — Expediente de Auditoría
@@ -114,7 +114,7 @@ export default async function DirectorDashboardPage() {
               {kpis.sesionesValidadas}
             </p>
             <p className="text-[11px] font-normal text-slate-500 mt-1">
-              MINERD Acreditadas
+              Acreditadas
             </p>
           </div>
         </section>
@@ -147,7 +147,7 @@ export default async function DirectorDashboardPage() {
                   <th className="px-4 py-2.5">Mentor</th>
                   <th className="px-4 py-2.5">Especialidad</th>
                   <th className="px-4 py-2.5">Horas Acumuladas</th>
-                  <th className="px-4 py-2.5">Meta MINERD</th>
+                  <th className="px-4 py-2.5">Meta (60h)</th>
                   <th className="px-4 py-2.5 text-right">Estatus</th>
                 </tr>
               </thead>
