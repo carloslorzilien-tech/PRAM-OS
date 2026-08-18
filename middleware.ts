@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-// Rutas públicas que NUNCA requieren autenticación ni muestran bloqueos
+// Rutas públicas que NUNCA requieren autenticación
 const isPublicRoute = createRouteMatcher([
   '/',
   '/recursos(.*)',
@@ -12,18 +12,51 @@ const isPublicRoute = createRouteMatcher([
   '/api(.*)',
 ])
 
+// Rutas restringidas solo a DIRECTOR y AREA_DIRECTOR
+const isDirectorRoute = createRouteMatcher([
+  '/dashboard/director(.*)',
+])
+
+// Roles con acceso a la vista de Director/Auditoría
+const DIRECTOR_ROLES = ['DIRECTOR', 'AREA_DIRECTOR', 'org:director', 'org:area_director']
+
 export default clerkMiddleware(async (auth, req) => {
-  // Si no hay llaves de Clerk configuradas en .env.local, permitir paso a todo
+  // Sin llaves de Clerk → modo autónomo local, permitir todo
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
     return NextResponse.next()
   }
 
-  // Si la ruta es pública o es /demo, permitir paso sin bloqueo
+  // Rutas públicas: libre acceso
   if (isPublicRoute(req)) {
     return NextResponse.next()
   }
 
-  // En producción con llaves de Clerk configuradas, proteger rutas privadas
+  // Para rutas de director, verificar que el usuario tenga el rol adecuado
+  if (isDirectorRoute(req)) {
+    const { sessionClaims } = await auth()
+
+    // Si no está autenticado, redirigir al sign-in
+    if (!sessionClaims) {
+      const signInUrl = new URL('/sign-in', req.url)
+      signInUrl.searchParams.set('redirect_url', req.url)
+      return NextResponse.redirect(signInUrl)
+    }
+
+    // Verificar rol en publicMetadata o orgRole
+    const role =
+      (sessionClaims?.publicMetadata as { role?: string })?.role ||
+      (sessionClaims as { orgRole?: string })?.orgRole ||
+      ''
+
+    if (!DIRECTOR_ROLES.some(r => role === r)) {
+      // Usuario sin rol de director → redirigir al panel de mentor
+      return NextResponse.redirect(new URL('/dashboard/mentor', req.url))
+    }
+
+    return NextResponse.next()
+  }
+
+  // Resto de rutas privadas → solo requieren estar autenticado
   await auth.protect()
 })
 

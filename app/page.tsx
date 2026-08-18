@@ -31,19 +31,35 @@ export default async function HomePage() {
       <MainNav />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 md:py-12 space-y-10">
-        {/* 2. Hero Section Institucional */}
-        <section className="text-center space-y-3.5 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1 text-xs font-medium text-slate-700 shadow-xs">
-            <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-            <span>Plataforma Oficial de Refuerzo Académico y Servicio Social</span>
+        {/* 2. Hero Institucional — Logo PRAM M grande + texto, responsive */}
+        <section className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-14 py-6 md:py-10 max-w-3xl mx-auto">
+          {/* Isotipo "M" de PRAM — escalado grande */}
+          <div className="flex-shrink-0 flex items-center justify-center size-28 sm:size-36 md:size-44 rounded-2xl md:rounded-3xl bg-slate-900 shadow-lg p-4 md:p-6">
+            <img
+              src="/pram-logo.svg"
+              alt="PRAM M Logo"
+              className="size-full object-contain invert brightness-0 contrast-200 select-none"
+              draggable={false}
+            />
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
-            Impacto Pedagógico y Acreditación Ministerial
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
-            Gestión inmutable de horas de tutoría, refuerzo académico personalizado y emisión de certificados verificables bajo lineamientos del MINERD.
-          </p>
+          {/* Bloque de Texto Institucional */}
+          <div className="flex flex-col items-center md:items-start text-center md:text-left gap-3 max-w-md">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1 text-[11px] font-medium text-slate-700 shadow-xs">
+              <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
+              <span>Plataforma Oficial MINERD · Período 2026-2</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 leading-none">
+              PRAM OS
+            </h1>
+            <p className="text-sm text-slate-500 font-semibold uppercase tracking-widest">
+              Liceo Minerva Mirabal
+            </p>
+            <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
+              Gestión inmutable de horas de tutoría, acreditación ministerial de servicio social (60h) y emisión de certificados verificables por código CUV.
+            </p>
+          </div>
         </section>
 
         {/* 3. Grid de 4 KPIs Gigantes con Animación Count-Up y Manejo Día-0 */}
