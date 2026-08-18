@@ -62,13 +62,6 @@ export default function RecursosPage() {
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <div className="flex size-8 items-center justify-center rounded-lg bg-slate-900 p-1 shadow-sm shrink-0">
-            <img
-              src="/pram-logo.svg"
-              alt="PRAM Logo"
-              className="size-full object-contain invert brightness-0 contrast-200"
-            />
-          </div>
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               PRAM OS · Materiales Pedagógicos
