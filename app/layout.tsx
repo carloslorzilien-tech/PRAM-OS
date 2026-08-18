@@ -26,10 +26,11 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
+      { url: '/pram-icon.png', type: 'image/png', sizes: '512x512' },
       { url: '/pram-logo.svg', type: 'image/svg+xml' },
     ],
     apple: '/apple-icon.png',
-    shortcut: '/pram-logo.svg',
+    shortcut: '/pram-icon.png',
   },
   appleWebApp: {
     capable: true,

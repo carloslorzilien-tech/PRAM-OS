@@ -1,7 +1,7 @@
 {
   "name": "PRAM · Programa de Refuerzo Académico Minerva Mirabal",
   "short_name": "PRAM",
-  "description": "Sistema de gestión académica, validación dual MINERD y evaluación Phygital.",
+  "description": "Sistema de gestión académica, validación ministerial y acreditación de servicio social MINERD.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -11,10 +11,10 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "/pram-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/pram-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-192.svg",
@@ -33,11 +33,6 @@
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/icon-dark-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
     }
   ]
 }
