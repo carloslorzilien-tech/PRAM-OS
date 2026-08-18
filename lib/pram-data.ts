@@ -15,7 +15,7 @@ export const session = {
   mentorNote:
     'Repasaremos el despeje de variables y practicaremos con 5 ejercicios guiados. Trae tu cuaderno de la sesión anterior.',
   mentor: 'Prof. Altagracia Peña',
-  subject: 'Matemáticas · Álgebra',
+  subject: 'Matemáticas',
   pin: '1234',
 }
 

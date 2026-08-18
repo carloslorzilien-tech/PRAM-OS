@@ -64,10 +64,6 @@ export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
             >
               <option value="Matemáticas">Matemáticas</option>
               <option value="Lengua Española">Lengua Española</option>
-              <option value="Ciencias Naturales">Ciencias Naturales</option>
-              <option value="Ciencias Sociales">Ciencias Sociales</option>
-              <option value="Inglés">Inglés</option>
-              <option value="Informática">Informática</option>
             </select>
           </div>
         </div>

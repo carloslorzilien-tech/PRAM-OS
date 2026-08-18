@@ -32,7 +32,7 @@ export default function RecursosPage() {
       category: 'Lengua Española',
       description: 'Obras clásicas, análisis textual, recursos de comprensión lectora y materiales de estudio literario.',
       url: 'https://www.cervantesvirtual.com/nd/ark:/59851/bmc1220428',
-      badge: 'Español',
+      badge: 'Lengua Española',
     },
   ]
 

@@ -22,7 +22,7 @@ export function NewSessionModal({ isOpen, onClose }: NewSessionModalProps) {
   const [mentorId, setMentorId] = useState(activeMentorId || mentores[0]?.id || 'm-1')
   const [estudianteId, setEstudianteId] = useState(estudiantes[0]?.id || 'e-1')
   const [tema, setTema] = useState('')
-  const [materia, setMateria] = useState('Matemáticas · Álgebra')
+  const [materia, setMateria] = useState<'Matemáticas' | 'Lengua Española'>('Matemáticas')
   const [fecha, setFecha] = useState('15 ago 2026 · 4:00 PM')
   const [duracion, setDuracion] = useState(45)
   const [notas, setNotas] = useState(
@@ -147,12 +147,14 @@ export function NewSessionModal({ isOpen, onClose }: NewSessionModalProps) {
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Materia / Área:
               </label>
-              <input
-                type="text"
+              <select
                 value={materia}
-                onChange={(e) => setMateria(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none"
-              />
+                onChange={(e) => setMateria(e.target.value as 'Matemáticas' | 'Lengua Española')}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#152642] focus:ring-2 focus:ring-[#152642]/10 outline-none cursor-pointer"
+              >
+                <option value="Matemáticas">Matemáticas</option>
+                <option value="Lengua Española">Lengua Española</option>
+              </select>
             </div>
 
             <div>

@@ -1,5 +1,5 @@
 // types/pram.ts
-// PRAM SYSTEM SPECIFICATION (VERSION 3.2 RBAC) - Programa de Refuerzo Académico Minerva Mirabal
+// PRAM SYSTEM SPECIFICATION — Programa de Refuerzo Académico Minerva Mirabal
 
 export type GradoSecundaria = '3ro' | '4to';
 
@@ -11,7 +11,11 @@ export type MentorRango = 'Junior' | 'Senior' | 'Head';
 
 export type UserRole = 'guest' | 'estudiante' | 'mentor_junior' | 'head_mentor' | 'director';
 
-export type AreaSupervision = 'Matemáticas' | 'Lengua Española' | 'General';
+/** Materias oficiales de PRAM OS (estrictamente restringidas a 2 opciones) */
+export type Materia = 'Matemáticas' | 'Lengua Española';
+
+/** Áreas pedagógicas de supervisión */
+export type AreaSupervision = 'Matemáticas' | 'Lengua Española';
 
 export type EstadoSesion = 
   | 'Programada' 
@@ -19,7 +23,7 @@ export type EstadoSesion =
   | 'Ausente_Injustificado' 
   | 'Ausente_Justificado';
 
-export type EstadoAuditoria = 'Pendiente' | 'Aprobado_Institucional' | 'Aprobado_MINERD' | 'Rechazado';
+export type EstadoAuditoria = 'Pendiente' | 'Aprobado_Institucional' | 'Rechazado';
 
 export type TipoExamen = 'Pre-Test' | 'Checkpoint' | 'Post-Test';
 
@@ -53,7 +57,7 @@ export interface Mentor {
   rango: MentorRango;
   horas_acumuladas: number; // Conteo para acreditación de servicio social
   avatar?: string;
-  especialidad?: string;
+  especialidad: AreaSupervision;
   supervisor_id?: string;
   puntos_ranking?: number;
 }
@@ -73,7 +77,7 @@ export interface Sesion {
   estudiante_id: string;
   mentor_id: string;
   tema: string;
-  materia: string;
+  materia: Materia;
   fecha_programada: string;
   duracion_minutos: number;
   estado: EstadoSesion;
@@ -101,7 +105,7 @@ export interface SolicitudRefuerzo {
   id: string;
   estudiante_id: string;
   tema: string;
-  materia: string;
+  materia: Materia;
   fecha_solicitud: string;
   estado: 'Pendiente' | 'Asignada';
 }

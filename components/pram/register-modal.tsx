@@ -7,7 +7,7 @@ import {
   X,
 } from 'lucide-react'
 import { usePram } from '@/lib/pram-context'
-import { GradoSecundaria, MentorRango } from '@/types/pram'
+import { GradoSecundaria, MentorRango, AreaSupervision } from '@/types/pram'
 import { cn } from '@/lib/utils'
 
 interface RegisterModalProps {
@@ -36,7 +36,7 @@ export function RegisterModal({
   // Formulario Mentor
   const [nombreMentor, setNombreMentor] = useState('')
   const [rangoMentor, setRangoMentor] = useState<MentorRango>('Junior')
-  const [especialidadMentor, setEspecialidadMentor] = useState('Matemáticas · Álgebra')
+  const [especialidadMentor, setEspecialidadMentor] = useState<AreaSupervision>('Matemáticas')
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -271,14 +271,16 @@ export function RegisterModal({
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Especialidad:
+                  Área / Especialidad:
                 </label>
-                <input
-                  type="text"
+                <select
                   value={especialidadMentor}
-                  onChange={(e) => setEspecialidadMentor(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
-                />
+                  onChange={(e) => setEspecialidadMentor(e.target.value as AreaSupervision)}
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none cursor-pointer"
+                >
+                  <option value="Matemáticas">Matemáticas</option>
+                  <option value="Lengua Española">Lengua Española</option>
+                </select>
               </div>
             </div>
 

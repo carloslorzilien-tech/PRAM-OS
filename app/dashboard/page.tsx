@@ -1,5 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { currentUser } from '@clerk/nextjs/server'
 import {
   Award,
   FileCheck,
@@ -7,14 +9,44 @@ import {
   ArrowRight,
   ShieldCheck,
   BookOpen,
-  Users,
-  GraduationCap,
 } from 'lucide-react'
-import { getPublicKPIs } from '@/lib/db'
+import { getPublicKPIs, getUserByEmail } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardHubPage() {
+  // Auto-detección y redirección según estado en Neon DB
+  try {
+    const clerkUser = await currentUser()
+    const email = clerkUser?.emailAddresses?.[0]?.emailAddress
+
+    if (email) {
+      const dbUser = await getUserByEmail(email)
+
+      if (!dbUser) {
+        redirect('/onboarding')
+      }
+
+      if (dbUser.status === 'PENDING') {
+        redirect('/solicitud-pendiente')
+      }
+
+      if (dbUser.status === 'APPROVED') {
+        if (dbUser.rol === 'DIRECTOR' || dbUser.rol === 'AREA_DIRECTOR') {
+          redirect('/dashboard/director')
+        } else {
+          redirect('/dashboard/mentor')
+        }
+      }
+    }
+  } catch (error: any) {
+    // Si es NEXT_REDIRECT, permitir que fluya
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    // En caso de modo autónomo sin llaves de Clerk, continúa al render
+  }
+
   const kpis = await getPublicKPIs()
 
   return (
@@ -59,71 +91,73 @@ export default async function DashboardHubPage() {
 
         {/* Tarjetas de Selección de Rol */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Opción 1: Tutor / Mentor */}
+          {/* Opción 1: Panel del Tutor / Mentor */}
           <Link
             href="/dashboard/mentor"
-            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-400 hover:shadow-md transition-all space-y-4 group block"
+            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-slate-900 text-white">
-                <Award className="size-5" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                  <Award className="size-5" />
+                </div>
+                <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
+                  Tutor Académico
+                </span>
               </div>
-              <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
-                Tutoría & Servicio
-              </span>
+
+              <div>
+                <h3 className="text-base font-semibold tracking-tight text-slate-900 group-hover:text-slate-800">
+                  Panel del Tutor
+                </h3>
+                <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
+                  Registro ágil de horas pedagógicas (&lt;30s), seguimiento a la meta de 60 horas y balance de materias (Matemáticas y Lengua Española).
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-800 flex items-center justify-between">
-                <span>Panel del Tutor</span>
-                <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
-              </h3>
-              <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
-                Registro rápido de sesiones de refuerzo, seguimiento del progreso hacia las 60 horas y consulta de estado de aprobación.
-              </p>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-              <span>Formularios &lt; 30 seg</span>
-              <span className="text-slate-900 font-semibold">Acceder →</span>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-medium text-slate-900">
+              <span>Ingresar al Módulo</span>
+              <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
 
-          {/* Opción 2: Director / Auditor */}
+          {/* Opción 2: Panel de Dirección y Auditoría */}
           <Link
             href="/dashboard/director"
-            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-400 hover:shadow-md transition-all space-y-4 group block"
+            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-slate-900 text-white">
-                <FileCheck className="size-5" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                  <FileCheck className="size-5" />
+                </div>
+                <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
+                  Auditoría Académica
+                </span>
               </div>
-              <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
-                Auditoría Académica
-              </span>
+
+              <div>
+                <h3 className="text-base font-semibold tracking-tight text-slate-900 group-hover:text-slate-800">
+                  Panel de Dirección
+                </h3>
+                <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
+                  Bandeja de auditoría, aprobación y bloqueo inmutable de sesiones y emisión oficial de certificados CUV.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-800 flex items-center justify-between">
-                <span>Panel de Dirección</span>
-                <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
-              </h3>
-              <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
-                Revisión, aprobación y bloqueo inmutable de horas de tutoría con generación de expedientes institucionales imprimibles.
-              </p>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-              <span>Firma y validación</span>
-              <span className="text-slate-900 font-semibold">Acceder →</span>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-medium text-slate-900">
+              <span>Ingresar al Módulo</span>
+              <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
         </div>
 
         {/* Acceso a Recursos */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 bg-slate-100/80 rounded-xl border border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <BookOpen className="size-5 text-slate-700" />
+            <BookOpen className="size-5 text-slate-600 shrink-0" />
             <div>
               <h4 className="text-xs font-semibold text-slate-900">
                 Biblioteca de Recursos y Plantillas Imprimibles
@@ -135,9 +169,9 @@ export default async function DashboardHubPage() {
           </div>
           <Link
             href="/recursos"
-            className="text-xs font-medium text-slate-900 hover:underline shrink-0 whitespace-nowrap ml-4"
+            className="text-xs font-medium text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors shrink-0"
           >
-            Ver recursos →
+            Ver Recursos
           </Link>
         </div>
       </main>

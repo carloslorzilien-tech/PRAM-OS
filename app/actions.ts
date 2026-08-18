@@ -1,11 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import {
   createSessionInDb,
   approveSessionInDb,
   rejectSessionInDb,
+  registerPendingUser,
   Sesion,
+  MateriaValida,
 } from '@/lib/db'
 
 export async function submitSessionAction(formData: FormData) {
@@ -65,4 +68,35 @@ export async function rejectSessionAction(sessionId: string) {
     console.error('Error rejecting session:', error)
     return { success: false, error: 'Error al rechazar la sesión.' }
   }
+}
+
+export async function submitOnboardingAction(formData: FormData) {
+  const email = (formData.get('email') as string) || ''
+  const nombre = (formData.get('nombre') as string) || ''
+  const rol = (formData.get('rol') as 'MENTOR' | 'STUDENT') || 'STUDENT'
+  const grado = (formData.get('grado') as string) || ''
+  const rawArea = (formData.get('area') as string) || 'Matemáticas'
+  const area: MateriaValida = rawArea === 'Lengua Española' ? 'Lengua Española' : 'Matemáticas'
+
+  if (!email || !email.includes('@')) {
+    return { success: false, error: 'Por favor ingresa un correo electrónico válido.' }
+  }
+
+  try {
+    await registerPendingUser({
+      email,
+      nombre,
+      rol,
+      grado: rol === 'STUDENT' ? grado : undefined,
+      area: rol === 'MENTOR' ? area : undefined,
+    })
+
+    revalidatePath('/solicitud-pendiente')
+    revalidatePath('/onboarding')
+  } catch (error) {
+    console.error('Error in submitOnboardingAction:', error)
+    return { success: false, error: 'Error al registrar la solicitud.' }
+  }
+
+  redirect('/solicitud-pendiente')
 }

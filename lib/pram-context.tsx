@@ -20,6 +20,8 @@ import {
   MentorRango,
   UserRole,
   CurrentUser,
+  Materia,
+  AreaSupervision,
 } from '@/types/pram'
 import { SupabaseService } from './supabase/supabase-service'
 import { supabase, isSupabaseConfigured } from './supabase/client'
@@ -69,7 +71,7 @@ interface PramContextType {
   registrarNuevoMentor: (data: {
     nombre: string
     rango: MentorRango
-    especialidad: string
+    especialidad: AreaSupervision
   }) => Promise<Mentor>
   registrarNuevoEstudiante: (data: {
     nombre: string
@@ -83,7 +85,7 @@ interface PramContextType {
     estudiante_id: string
     mentor_id: string
     tema: string
-    materia: string
+    materia: Materia
     fecha_programada: string
     duracion_minutos: number
     notas: string
@@ -93,7 +95,7 @@ interface PramContextType {
   verificarPinEstudiante: (pin: string) => Estudiante | null
   confirmarAsistenciaNomada: (sesionId: string, pin: string) => { success: boolean; message: string }
   confirmarAsistenciaEstudiante: (sesionId: string) => Promise<boolean>
-  solicitarMicroRuta: (data: { estudiante_id: string; tema: string; materia: string }) => Promise<SolicitudRefuerzo>
+  solicitarMicroRuta: (data: { estudiante_id: string; tema: string; materia: Materia }) => Promise<SolicitudRefuerzo>
   
   // Mentor Actions
   confirmarSesionPorMentor: (sesionId: string) => void
@@ -423,7 +425,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
   const registrarNuevoMentor = async (data: {
     nombre: string
     rango: MentorRango
-    especialidad: string
+    especialidad: AreaSupervision
   }): Promise<Mentor> => {
     const nuevoMentor: Mentor = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `m-${Date.now()}`,
@@ -496,7 +498,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
     estudiante_id: string
     mentor_id: string
     tema: string
-    materia: string
+    materia: Materia
     fecha_programada: string
     duracion_minutos: number
     notas: string
@@ -617,7 +619,7 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Solicitar Micro-Ruta
-  const solicitarMicroRuta = async (data: { estudiante_id: string; tema: string; materia: string }): Promise<SolicitudRefuerzo> => {
+  const solicitarMicroRuta = async (data: { estudiante_id: string; tema: string; materia: Materia }): Promise<SolicitudRefuerzo> => {
     const nueva: SolicitudRefuerzo = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sol-${Date.now()}`,
       estudiante_id: data.estudiante_id,
