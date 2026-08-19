@@ -1,6 +1,6 @@
 import { SignUp } from '@clerk/nextjs'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ShieldCheck } from 'lucide-react'
 
 export const metadata = {
   title: 'Crear Cuenta · PRAM OS',
@@ -10,25 +10,34 @@ export const metadata = {
 export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      <div className="mb-6 flex flex-col items-center gap-2">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-[#152642] p-2 shadow-sm transition-transform group-hover:scale-105">
+      {/* Header Institucional */}
+      <div className="mb-8 flex flex-col items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-[#152642] p-2.5 shadow-md transition-transform group-hover:scale-105">
             <img
               src="/pram-logo.svg"
               alt="PRAM Logo"
               className="size-full object-contain invert brightness-0 contrast-200"
             />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">
-            PRAM OS
-          </span>
+          <div className="text-left">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 block leading-tight">
+              PRAM OS
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 font-mono block">
+              Liceo Minerva Mirabal
+            </span>
+          </div>
         </Link>
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">
-          Liceo Minerva Mirabal
-        </span>
+
+        <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 shadow-xs">
+          <ShieldCheck className="size-3 text-emerald-500" />
+          <span>Registro con Google · Acceso Institucional</span>
+        </div>
       </div>
 
-      <div className="w-full max-w-md flex justify-center">
+      {/* Widget de Clerk con tema PRAM */}
+      <div className="w-full max-w-md">
         <SignUp
           path="/sign-up"
           routing="path"

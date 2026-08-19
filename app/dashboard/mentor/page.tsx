@@ -11,8 +11,9 @@ import {
   AlertCircle,
   FileCheck,
 } from 'lucide-react'
-import { getMentorSessions } from '@/lib/db'
+import { getMentorSessions, getTopMentores } from '@/lib/db'
 import { MentorSessionForm } from '@/components/pram/mentor-form'
+import { currentUser } from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,17 +23,38 @@ export default async function MentorDashboardPage({
   searchParams: Promise<{ mentor?: string }>
 }) {
   const params = await searchParams
-  const mentorId = params.mentor || 'm-1'
+
+  // Auto-detecta el mentor según el email autenticado en Clerk
+  let clerkEmail = ''
+  let clerkName = ''
+  try {
+    const clerkUser = await currentUser()
+    if (clerkUser) {
+      clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress || ''
+      clerkName = clerkUser.fullName || clerkUser.firstName || ''
+    }
+  } catch { /* modo autónomo */ }
+
+  // Buscar mentor en la lista por email si no viene query param
+  let mentorId = params.mentor || 'm-1'
+  if (clerkEmail && !params.mentor) {
+    const allMentores = await getTopMentores(50)
+    const found = allMentores.find(
+      (m) => m.email.toLowerCase() === clerkEmail.toLowerCase()
+    )
+    if (found) mentorId = found.id
+  }
+
   const { mentor, sesiones } = await getMentorSessions(mentorId)
 
   const currentMentor = mentor || {
-    id: 'm-1',
-    nombre: 'Prof. Altagracia Peña',
-    email: 'altagracia.pena@minerd.edu.do',
+    id: mentorId,
+    nombre: clerkName || 'Prof. Carlos Omar Lorzilien',
+    email: clerkEmail || 'carlosomarlorzilienservilien@gmail.com',
     rango: 'Head' as const,
-    horas_acumuladas: 48.5,
+    horas_acumuladas: 0,
     meta_horas: 60.0,
-    especialidad: 'Matemáticas y Razonamiento Lógico',
+    especialidad: 'Matemáticas' as const,
   }
 
   const porcentaje = Math.min(

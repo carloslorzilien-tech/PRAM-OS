@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores, getPendingUsers } from '@/lib/db'
 import { DirectorAuditTable } from '@/components/pram/director-table'
+import { currentUser } from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,14 @@ export default async function DirectorDashboardPage() {
   const pendingUsers = await getPendingUsers()
   const kpis = await getPublicKPIs()
   const topMentores = await getTopMentores(5)
+
+  let directorName = 'Director Académico'
+  try {
+    const clerkUser = await currentUser()
+    if (clerkUser) {
+      directorName = clerkUser.fullName || clerkUser.firstName || clerkUser.emailAddresses?.[0]?.emailAddress || 'Director Académico'
+    }
+  } catch { /* modo autónomo */ }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -40,7 +49,7 @@ export default async function DirectorDashboardPage() {
               </span>
             </div>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              Dra. Carmen Batlle · Supervisión Académica
+              {directorName} · Panel de Dirección y Auditoría
             </h1>
           </div>
         </div>

@@ -8,8 +8,14 @@ interface SafeClerkProviderProps {
   publishableKey?: string
 }
 
-// Personalización visual de Clerk para que use la estética de PRAM OS
-const clerkAppearance = {
+// Personalización visual de Clerk para que use la estética institucional de PRAM OS
+export const pramClerkAppearance = {
+  layout: {
+    socialButtonsPlacement: 'top' as const,
+    socialButtonsVariant: 'blockButton' as const,
+    logoPlacement: 'inside' as const,
+    showOptionalFields: false,
+  },
   variables: {
     colorPrimary: '#152642',
     colorText: '#0F172A',
@@ -17,23 +23,37 @@ const clerkAppearance = {
     colorBackground: '#FFFFFF',
     colorInputBackground: '#F8FAFC',
     colorInputText: '#0F172A',
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem',
     fontFamily: 'Plus Jakarta Sans, system-ui, -apple-system, sans-serif',
     fontSize: '14px',
   },
   elements: {
-    card: 'shadow-xl border border-slate-200 rounded-xl',
-    headerTitle: 'text-slate-900 font-bold text-lg',
-    headerSubtitle: 'text-slate-500 text-sm',
+    rootBox: 'w-full max-w-md mx-auto',
+    card: 'shadow-2xl border border-slate-200/90 rounded-2xl bg-white p-6 sm:p-8',
+    headerTitle: 'text-slate-900 font-bold text-xl tracking-tight text-center',
+    headerSubtitle: 'text-slate-500 text-xs font-normal text-center mt-1',
     socialButtonsBlockButton:
-      'border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 font-medium rounded-lg shadow-sm transition-colors',
-    socialButtonsBlockButtonText: 'text-sm font-medium',
+      'border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 font-semibold rounded-xl shadow-sm transition-all h-12 flex items-center justify-center gap-2 hover:border-slate-400 cursor-pointer',
+    socialButtonsBlockButtonText: 'text-sm font-semibold text-slate-900 font-sans',
+    socialButtonsBlockButtonLogo: 'size-5',
     formButtonPrimary:
-      'bg-[#152642] hover:bg-[#1e3a5f] text-white font-semibold rounded-lg shadow-sm transition-colors',
+      'bg-[#152642] hover:bg-[#1e3a5f] text-white font-semibold rounded-xl shadow-sm transition-all h-12 text-sm cursor-pointer',
+    formFieldLabel: 'text-xs font-semibold text-slate-700 uppercase tracking-wider',
     formFieldInput:
-      'border-slate-300 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 rounded-lg text-sm',
-    footerActionLink: 'text-[#152642] hover:text-[#1e3a5f] font-medium',
+      'border-slate-300 focus:ring-2 focus:ring-[#152642]/10 focus:border-[#152642] rounded-xl text-xs sm:text-sm bg-slate-50/50 h-11',
+    footerActionLink: 'text-[#152642] hover:text-[#1e3a5f] font-semibold text-xs transition-colors',
+    footerActionText: 'text-xs text-slate-500',
+    footer: 'border-t border-slate-100 mt-4 pt-4 text-center',
     logoBox: 'hidden',
+    dividerLine: 'bg-slate-200',
+    dividerText: 'text-xs text-slate-400 font-medium uppercase tracking-wider',
+    identityPreview: 'bg-slate-50 border border-slate-200 rounded-xl p-3',
+    identityPreviewText: 'text-xs font-semibold text-slate-900',
+    identityPreviewEditButtonIcon: 'text-slate-500 hover:text-slate-900',
+    userButtonAvatarBox: 'size-8 rounded-lg border border-slate-300',
+    userButtonPopoverCard: 'rounded-xl shadow-2xl border border-slate-200 bg-white p-2',
+    userPreviewMainIdentifier: 'font-semibold text-slate-900 text-sm',
+    userPreviewSecondaryIdentifier: 'text-xs text-slate-500',
   },
 }
 
@@ -63,7 +83,7 @@ export function SafeClerkProvider({ children, publishableKey }: SafeClerkProvide
   return (
     <ClerkProvider
       publishableKey={publishableKey}
-      appearance={clerkAppearance}
+      appearance={pramClerkAppearance}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignOutUrl="/"

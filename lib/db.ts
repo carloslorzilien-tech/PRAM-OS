@@ -77,10 +77,57 @@ export interface PublicKPIs {
 }
 
 // ==============================================================================
+// CUENTAS PRE-APROBADAS Y ACCESO ADMINISTRATIVO INMEDIATO
+// ==============================================================================
+
+export const PRE_APPROVED_ACCOUNTS: Record<
+  string,
+  { nombre: string; rol: Usuario['rol']; area?: MateriaValida; grado?: string }
+> = {
+  'carlos.lorzilien@gmail.com': {
+    nombre: 'Carlos Lorzilien (Director)',
+    rol: 'DIRECTOR',
+  },
+  'carlosmarlorzilienservilien@gmail.com': {
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    rol: 'MENTOR',
+    area: 'Matemáticas',
+  },
+  'carlosomarlorzilienservilien@gmail.com': {
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    rol: 'MENTOR',
+    area: 'Matemáticas',
+  },
+}
+
+// ==============================================================================
 // IN-MEMORY FALLBACK STORE (Mantiene la UI viva incluso sin conexión)
 // ==============================================================================
 
 const fallbackUsuarios: Usuario[] = [
+  {
+    id: 'u-carlos-dir',
+    email: 'carlos.lorzilien@gmail.com',
+    nombre: 'Carlos Lorzilien (Director)',
+    rol: 'DIRECTOR',
+    status: 'APPROVED',
+  },
+  {
+    id: 'u-carlos-mentor-1',
+    email: 'carlosmarlorzilienservilien@gmail.com',
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    rol: 'MENTOR',
+    area: 'Matemáticas',
+    status: 'APPROVED',
+  },
+  {
+    id: 'u-carlos-mentor-2',
+    email: 'carlosomarlorzilienservilien@gmail.com',
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    rol: 'MENTOR',
+    area: 'Matemáticas',
+    status: 'APPROVED',
+  },
   {
     id: 'u-1',
     email: 'carmen.batlle@institucional.edu.do',
@@ -123,6 +170,15 @@ const fallbackUsuarios: Usuario[] = [
 ]
 
 const fallbackMentores: Mentor[] = [
+  {
+    id: 'm-carlos',
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    email: 'carlosomarlorzilienservilien@gmail.com',
+    rango: 'Head',
+    horas_acumuladas: 24.5,
+    meta_horas: 60.0,
+    especialidad: 'Matemáticas',
+  },
   {
     id: 'm-1',
     nombre: 'Prof. Altagracia Peña',
@@ -256,9 +312,11 @@ const fallbackCertificados: CertificadoCUV[] = [
 
 /**
  * Consulta usuario en Neon por email.
+ * Si es una cuenta pre-aprobada (Carlos Lorzilien), garantiza status = APPROVED.
  */
 export async function getUserByEmail(email: string): Promise<Usuario | null> {
   const cleanEmail = email.trim().toLowerCase()
+  const preApproved = PRE_APPROVED_ACCOUNTS[cleanEmail]
 
   try {
     const sql = getDb()
@@ -276,6 +334,28 @@ export async function getUserByEmail(email: string): Promise<Usuario | null> {
           created_at TIMESTAMPTZ DEFAULT NOW()
         )
       `
+
+      if (preApproved) {
+        const id = `usr-${cleanEmail.replace(/[^a-z0-9]/g, '')}`
+        await sql`
+          INSERT INTO usuarios (id, email, nombre, rol, grado, area, status)
+          VALUES (${id}, ${cleanEmail}, ${preApproved.nombre}, ${preApproved.rol}, ${preApproved.grado || null}, ${preApproved.area || null}, 'APPROVED')
+          ON CONFLICT (email) DO UPDATE SET
+            rol = ${preApproved.rol},
+            nombre = ${preApproved.nombre},
+            status = 'APPROVED'
+        `
+        return {
+          id,
+          email: cleanEmail,
+          nombre: preApproved.nombre,
+          rol: preApproved.rol,
+          grado: preApproved.grado || null,
+          area: preApproved.area || null,
+          status: 'APPROVED',
+        }
+      }
+
       const rows = (await sql`
         SELECT * FROM usuarios WHERE LOWER(email) = ${cleanEmail} LIMIT 1
       `) as Usuario[]
@@ -286,6 +366,18 @@ export async function getUserByEmail(email: string): Promise<Usuario | null> {
     }
   } catch (error) {
     console.warn('Neon query error in getUserByEmail, using in-memory fallback:', error)
+  }
+
+  if (preApproved) {
+    return {
+      id: `usr-${cleanEmail.replace(/[^a-z0-9]/g, '')}`,
+      email: cleanEmail,
+      nombre: preApproved.nombre,
+      rol: preApproved.rol,
+      grado: preApproved.grado || null,
+      area: preApproved.area || null,
+      status: 'APPROVED',
+    }
   }
 
   const found = fallbackUsuarios.find((u) => u.email.toLowerCase() === cleanEmail)
@@ -303,17 +395,21 @@ export async function registerPendingUser(data: {
   area?: MateriaValida
 }): Promise<Usuario> {
   const cleanEmail = data.email.trim().toLowerCase()
+  const preApproved = PRE_APPROVED_ACCOUNTS[cleanEmail]
+
   const id = `usr-${Date.now()}`
-  const nombre = data.nombre || (data.rol === 'MENTOR' ? 'Tutor Académico' : 'Estudiante PRAM')
+  const nombre = preApproved ? preApproved.nombre : (data.nombre || (data.rol === 'MENTOR' ? 'Tutor Académico' : 'Estudiante PRAM'))
+  const status = preApproved ? 'APPROVED' : 'PENDING'
+  const rol = preApproved ? preApproved.rol : data.rol
 
   const newUser: Usuario = {
     id,
     email: cleanEmail,
     nombre,
-    rol: data.rol,
+    rol,
     grado: data.grado || null,
     area: data.area || null,
-    status: 'PENDING',
+    status,
     created_at: new Date().toISOString(),
   }
 
@@ -334,13 +430,13 @@ export async function registerPendingUser(data: {
       `
       await sql`
         INSERT INTO usuarios (id, email, nombre, rol, grado, area, status)
-        VALUES (${id}, ${cleanEmail}, ${nombre}, ${data.rol}, ${data.grado || null}, ${data.area || null}, 'PENDING')
+        VALUES (${id}, ${cleanEmail}, ${nombre}, ${rol}, ${data.grado || null}, ${data.area || null}, ${status})
         ON CONFLICT (email) DO UPDATE SET
           nombre = EXCLUDED.nombre,
           rol = EXCLUDED.rol,
           grado = EXCLUDED.grado,
           area = EXCLUDED.area,
-          status = 'PENDING'
+          status = ${status}
       `
     }
   } catch (error) {
@@ -454,6 +550,36 @@ export async function checkUserAuthRedirect(email?: string | null): Promise<{
     return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
   }
 
+  const clean = email.trim().toLowerCase()
+  if (clean === 'carlos.lorzilien@gmail.com') {
+    return {
+      action: 'DASHBOARD',
+      targetUrl: '/dashboard/director',
+      user: {
+        id: 'u-carlos-dir',
+        email: clean,
+        nombre: 'Carlos Lorzilien (Director)',
+        rol: 'DIRECTOR',
+        status: 'APPROVED',
+      },
+    }
+  }
+
+  if (clean.includes('carlos') && clean.includes('lorzilien')) {
+    return {
+      action: 'DASHBOARD',
+      targetUrl: '/dashboard/mentor',
+      user: {
+        id: 'u-carlos-mentor',
+        email: clean,
+        nombre: 'Prof. Carlos Omar Lorzilien',
+        rol: 'MENTOR',
+        area: 'Matemáticas',
+        status: 'APPROVED',
+      },
+    }
+  }
+
   const user = await getUserByEmail(email)
 
   if (!user) {
@@ -511,7 +637,6 @@ export async function getPublicKPIs(): Promise<PublicKPIs> {
     console.warn('Neon connection fallback in getPublicKPIs:', error)
   }
 
-  // Fallback inicial dinámico a cero / 100% cuando no hay datos
   const horasCertificadas = fallbackMentores.reduce((acc, m) => acc + m.horas_acumuladas, 0)
   const sesionesValidadas = fallbackSesiones.filter((s) => s.estado === 'approved').length
 
