@@ -10,13 +10,14 @@ import {
   Printer,
   Building,
 } from 'lucide-react'
-import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores } from '@/lib/db'
+import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores, getPendingUsers } from '@/lib/db'
 import { DirectorAuditTable } from '@/components/pram/director-table'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DirectorDashboardPage() {
   const pendingSessions = await getPendingSessionsForAudit()
+  const pendingUsers = await getPendingUsers()
   const kpis = await getPublicKPIs()
   const topMentores = await getTopMentores(5)
 
@@ -45,6 +46,18 @@ export default async function DirectorDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/director/solicitudes"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900 bg-amber-50 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors shadow-xs"
+          >
+            <Users className="size-3.5 text-amber-700" />
+            <span>Solicitudes</span>
+            {pendingUsers.length > 0 && (
+              <span className="rounded-full bg-amber-600 text-white px-1.5 py-0.2 text-[10px] font-bold">
+                {pendingUsers.length}
+              </span>
+            )}
+          </Link>
           <Link
             href="/dashboard/mentor"
             className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"

@@ -18,6 +18,7 @@ import {
 import { getPublicKPIs, getTopMentores } from '@/lib/db'
 import { MainNav } from '@/components/pram/main-nav'
 import { AnimatedKPIs } from '@/components/pram/animated-kpis'
+import { Google1ClickButton } from '@/components/pram/google-1click-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,22 @@ export default async function HomePage() {
             <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
               Gestión de horas de tutoría, acreditación de servicio social (60h) y emisión de certificados verificables por código CUV.
             </p>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 pt-2">
+              <Google1ClickButton
+                mode="sign-in"
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#152642] px-4 text-xs font-semibold text-white shadow-sm hover:bg-[#1e3a5f] transition-all cursor-pointer"
+              >
+                <span>Acceder con Google</span>
+                <ArrowRight className="size-3.5" />
+              </Google1ClickButton>
+              <Link
+                href="/recursos"
+                className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <BookOpen className="size-3.5 text-slate-500" />
+                <span>Ver Recursos</span>
+              </Link>
+            </div>
           </div>
         </section>
 

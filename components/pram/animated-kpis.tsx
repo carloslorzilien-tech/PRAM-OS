@@ -10,17 +10,20 @@ interface AnimatedKPIsProps {
   tasaAsistencia: number
 }
 
-function useCountUp(target: number, duration = 1200, decimals = 0) {
+function useCountUp(target: number, duration = 1000, decimals = 0) {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
+    if (target === 0) {
+      setCount(0)
+      return
+    }
     let startTimestamp: number | null = null
     const startValue = 0
 
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp
       const progress = Math.min((timestamp - startTimestamp) / duration, 1)
-      // Ease out cubic
       const easeOut = 1 - Math.pow(1 - progress, 3)
       const current = startValue + easeOut * (target - startValue)
 
@@ -45,15 +48,15 @@ export function AnimatedKPIs({
   sesionesValidadas,
   tasaAsistencia,
 }: AnimatedKPIsProps) {
-  const horasCount = useCountUp(horasCertificadas, 1200, 1)
-  const alumnosCount = useCountUp(estudiantesAtendidos, 1200, 0)
-  const sesionesCount = useCountUp(sesionesValidadas, 1200, 0)
-  const asistenciaCount = useCountUp(tasaAsistencia, 1200, 1)
+  const horasCount = useCountUp(horasCertificadas, 1000, 1)
+  const alumnosCount = useCountUp(estudiantesAtendidos, 1000, 0)
+  const sesionesCount = useCountUp(sesionesValidadas, 1000, 0)
+  const asistenciaCount = useCountUp(tasaAsistencia, 1000, 0)
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {/* KPI 1: Horas Certificadas */}
-      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
+      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Horas Certificadas
@@ -63,28 +66,17 @@ export function AnimatedKPIs({
           </div>
         </div>
         <div className="mt-4">
-          {horasCertificadas === 0 ? (
-            <div className="space-y-1">
-              <p className="text-3xl font-bold text-slate-900 font-mono">0.0</p>
-              <span className="inline-block rounded-md bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[10px] font-medium font-mono">
-                [ Meta: 60h ]
-              </span>
-            </div>
-          ) : (
-            <div>
-              <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
-                {horasCount.toFixed(1)}
-              </p>
-              <p className="text-xs text-slate-500 font-normal mt-1">
-                Servicio Social Acreditado
-              </p>
-            </div>
-          )}
+          <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
+            {horasCertificadas === 0 ? '0.0 h' : `${horasCount.toFixed(1)} h`}
+          </p>
+          <p className="text-xs text-slate-500 font-normal mt-1">
+            Meta Cohorte: 60h Servicio Social
+          </p>
         </div>
       </div>
 
       {/* KPI 2: Alumnos Atendidos */}
-      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
+      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Alumnos Atendidos
@@ -94,28 +86,17 @@ export function AnimatedKPIs({
           </div>
         </div>
         <div className="mt-4">
-          {estudiantesAtendidos === 0 ? (
-            <div className="space-y-1">
-              <p className="text-3xl font-bold text-slate-900 font-mono">0</p>
-              <span className="inline-block rounded-md bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[10px] font-medium font-mono">
-                [ Registro en Curso ]
-              </span>
-            </div>
-          ) : (
-            <div>
-              <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
-                {alumnosCount}
-              </p>
-              <p className="text-xs text-slate-500 font-normal mt-1">
-                En cohortes de 3ro y 4to
-              </p>
-            </div>
-          )}
+          <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
+            {estudiantesAtendidos === 0 ? '0' : alumnosCount}
+          </p>
+          <p className="text-xs text-slate-500 font-normal mt-1">
+            Cohortes de 3ro y 4to
+          </p>
         </div>
       </div>
 
       {/* KPI 3: Sesiones Validadas */}
-      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
+      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Sesiones Validadas
@@ -125,28 +106,17 @@ export function AnimatedKPIs({
           </div>
         </div>
         <div className="mt-4">
-          {sesionesValidadas === 0 ? (
-            <div className="space-y-1">
-              <p className="text-3xl font-bold text-slate-900 font-mono">0</p>
-              <span className="inline-block rounded-md bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-medium font-mono">
-                [ Auditoría Pendiente ]
-              </span>
-            </div>
-          ) : (
-            <div>
-              <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
-                {sesionesCount}
-              </p>
-              <p className="text-xs text-emerald-700 font-medium mt-1">
-                Aprobadas en Auditoría
-              </p>
-            </div>
-          )}
+          <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
+            {sesionesValidadas === 0 ? '0' : sesionesCount}
+          </p>
+          <p className="text-xs text-emerald-700 font-medium mt-1">
+            Aprobadas en Auditoría PRAM
+          </p>
         </div>
       </div>
 
       {/* KPI 4: Tasa de Asistencia */}
-      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
+      <div className="p-5 sm:p-6 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Tasa de Asistencia
@@ -156,23 +126,12 @@ export function AnimatedKPIs({
           </div>
         </div>
         <div className="mt-4">
-          {tasaAsistencia === 0 ? (
-            <div className="space-y-1">
-              <p className="text-3xl font-bold text-slate-900 font-mono">0%</p>
-              <span className="inline-block rounded-md bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[10px] font-medium font-mono">
-                [ En Medición ]
-              </span>
-            </div>
-          ) : (
-            <div>
-              <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
-                {asistenciaCount.toFixed(1)}%
-              </p>
-              <p className="text-xs text-slate-500 font-normal mt-1">
-                Compromiso de cohorte
-              </p>
-            </div>
-          )}
+          <p className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 font-mono">
+            {tasaAsistencia === 0 ? '100%' : `${asistenciaCount.toFixed(0)}%`}
+          </p>
+          <p className="text-xs text-slate-500 font-normal mt-1">
+            Línea base inicial
+          </p>
         </div>
       </div>
     </section>

@@ -223,30 +223,6 @@ const fallbackSesiones: Sesion[] = [
     fecha_aprobacion: '2026-08-14 16:00:00Z',
     notas: 'Cálculo de áreas y perímetros.',
   },
-  {
-    id: 's-106',
-    mentor_id: 'm-1',
-    mentor_nombre: 'Prof. Altagracia Peña',
-    materia: 'Matemáticas',
-    tema: 'Trigonometría Básica',
-    duracion_minutos: 60,
-    cantidad_alumnos: 3,
-    fecha_sesion: '2026-08-16',
-    estado: 'pending',
-    notas: 'Pendiente de validación institucional.',
-  },
-  {
-    id: 's-107',
-    mentor_id: 'm-2',
-    mentor_nombre: 'Lic. Marcos Santana',
-    materia: 'Lengua Española',
-    tema: 'Análisis Sintáctico de Oraciones Compuestas',
-    duracion_minutos: 45,
-    cantidad_alumnos: 4,
-    fecha_sesion: '2026-08-17',
-    estado: 'pending',
-    notas: 'Sesión realizada en aula de lectura.',
-  },
 ]
 
 const fallbackCertificados: CertificadoCUV[] = [
@@ -275,7 +251,7 @@ const fallbackCertificados: CertificadoCUV[] = [
 ]
 
 // ==============================================================================
-// GESTIÓN DE USUARIOS Y ONBOARDING (NEON SQL + FALLBACK)
+// GESTIÓN DE USUARIOS, ONBOARDING Y BANDEJA DE AUDITORÍA
 // ==============================================================================
 
 /**
@@ -345,9 +321,22 @@ export async function registerPendingUser(data: {
     const sql = getDb()
     if (sql) {
       await sql`
+        CREATE TABLE IF NOT EXISTS usuarios (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          nombre TEXT,
+          rol TEXT NOT NULL,
+          grado TEXT,
+          area TEXT,
+          status TEXT NOT NULL DEFAULT 'PENDING',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `
+      await sql`
         INSERT INTO usuarios (id, email, nombre, rol, grado, area, status)
         VALUES (${id}, ${cleanEmail}, ${nombre}, ${data.rol}, ${data.grado || null}, ${data.area || null}, 'PENDING')
         ON CONFLICT (email) DO UPDATE SET
+          nombre = EXCLUDED.nombre,
           rol = EXCLUDED.rol,
           grado = EXCLUDED.grado,
           area = EXCLUDED.area,
@@ -367,6 +356,87 @@ export async function registerPendingUser(data: {
   }
 
   return newUser
+}
+
+/**
+ * Obtiene todas las solicitudes pendientes de usuarios para el panel del Director.
+ */
+export async function getPendingUsers(): Promise<Usuario[]> {
+  try {
+    const sql = getDb()
+    if (sql) {
+      await sql`
+        CREATE TABLE IF NOT EXISTS usuarios (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          nombre TEXT,
+          rol TEXT NOT NULL,
+          grado TEXT,
+          area TEXT,
+          status TEXT NOT NULL DEFAULT 'PENDING',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `
+      const rows = (await sql`
+        SELECT * FROM usuarios 
+        WHERE status = 'PENDING' 
+        ORDER BY created_at DESC
+      `) as Usuario[]
+      if (rows) return rows
+    }
+  } catch (error) {
+    console.warn('Neon query error in getPendingUsers, using in-memory fallback:', error)
+  }
+
+  return fallbackUsuarios.filter((u) => u.status === 'PENDING')
+}
+
+/**
+ * Aprueba un usuario en Neon y en memoria.
+ */
+export async function approveUserInDb(userId: string): Promise<boolean> {
+  try {
+    const sql = getDb()
+    if (sql) {
+      await sql`
+        UPDATE usuarios 
+        SET status = 'APPROVED' 
+        WHERE id = ${userId}
+      `
+    }
+  } catch (error) {
+    console.warn('Neon update error in approveUserInDb:', error)
+  }
+
+  const idx = fallbackUsuarios.findIndex((u) => u.id === userId)
+  if (idx !== -1) {
+    fallbackUsuarios[idx].status = 'APPROVED'
+  }
+  return true
+}
+
+/**
+ * Rechaza un usuario en Neon y en memoria.
+ */
+export async function rejectUserInDb(userId: string): Promise<boolean> {
+  try {
+    const sql = getDb()
+    if (sql) {
+      await sql`
+        UPDATE usuarios 
+        SET status = 'REJECTED' 
+        WHERE id = ${userId}
+      `
+    }
+  } catch (error) {
+    console.warn('Neon update error in rejectUserInDb:', error)
+  }
+
+  const idx = fallbackUsuarios.findIndex((u) => u.id === userId)
+  if (idx !== -1) {
+    fallbackUsuarios[idx].status = 'REJECTED'
+  }
+  return true
 }
 
 /**
@@ -405,7 +475,7 @@ export async function checkUserAuthRedirect(email?: string | null): Promise<{
 }
 
 // ==============================================================================
-// FUNCIONES PÚBLICAS Y CONSULTAS DE IMPACTO
+// FUNCIONES PÚBLICAS Y CONSULTAS DE IMPACTO (CONECTADAS DINÁMICAMENTE A NEON)
 // ==============================================================================
 
 export async function getPublicKPIs(): Promise<PublicKPIs> {
@@ -426,25 +496,30 @@ export async function getPublicKPIs(): Promise<PublicKPIs> {
         WHERE estado = 'approved' OR estado = 'Completada'
       `
 
+      const horas = Number(totalHoras[0]?.total || 0)
+      const estudiantes = Number(totalEstudiantes[0]?.total || 0)
+      const sesiones = Number(totalSesiones[0]?.total || 0)
+
       return {
-        horasCertificadas: Math.max(102, Math.round(Number(totalHoras[0]?.total || 102))),
-        estudiantesAtendidos: Math.max(48, Number(totalEstudiantes[0]?.total || 48)),
-        sesionesValidadas: Math.max(14, Number(totalSesiones[0]?.total || 14)),
-        tasaAsistencia: 94.2,
+        horasCertificadas: horas,
+        estudiantesAtendidos: estudiantes,
+        sesionesValidadas: sesiones,
+        tasaAsistencia: sesiones > 0 ? 94.2 : 100,
       }
     }
   } catch (error) {
     console.warn('Neon connection fallback in getPublicKPIs:', error)
   }
 
+  // Fallback inicial dinámico a cero / 100% cuando no hay datos
   const horasCertificadas = fallbackMentores.reduce((acc, m) => acc + m.horas_acumuladas, 0)
   const sesionesValidadas = fallbackSesiones.filter((s) => s.estado === 'approved').length
 
   return {
-    horasCertificadas: Math.max(102, Math.round(horasCertificadas)),
-    estudiantesAtendidos: 48,
-    sesionesValidadas: Math.max(14, sesionesValidadas),
-    tasaAsistencia: 94.2,
+    horasCertificadas: horasCertificadas > 0 ? horasCertificadas : 0,
+    estudiantesAtendidos: 0,
+    sesionesValidadas: sesionesValidadas > 0 ? sesionesValidadas : 0,
+    tasaAsistencia: 100,
   }
 }
 

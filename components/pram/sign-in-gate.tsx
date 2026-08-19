@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { LogIn, UserPlus, X } from 'lucide-react'
+import { Google1ClickButton } from '@/components/pram/google-1click-auth'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -24,7 +25,6 @@ export function GoogleAuthModal({
   const modalMessage = message || (mode === 'sign-up'
     ? 'Únete como tutor o estudiante en el programa del Liceo Minerva Mirabal con tu cuenta de Google.'
     : '¿Eres mentor o estudiante de PRAM OS? Inicia sesión con Google para acceder a las funciones del sistema.')
-  const redirectUrl = mode === 'sign-up' ? '/sign-up' : '/sign-in'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -67,10 +67,10 @@ export function GoogleAuthModal({
           </p>
         </div>
 
-        {/* Botón principal exclusivo: Continuar con Google */}
-        <a
-          href={redirectUrl}
-          className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#152642] hover:bg-[#1e3a5f] px-4 py-3 text-xs font-semibold text-white transition-all shadow-sm group"
+        {/* Botón directo 1-Click con Google */}
+        <Google1ClickButton
+          mode={mode}
+          className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#152642] hover:bg-[#1e3a5f] px-4 py-3 text-xs font-semibold text-white transition-all shadow-sm group cursor-pointer"
         >
           <svg className="size-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -79,7 +79,7 @@ export function GoogleAuthModal({
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
           <span>{mode === 'sign-up' ? 'Registrarse con Google' : 'Continuar con Google'}</span>
-        </a>
+        </Google1ClickButton>
 
         {/* Footer info */}
         <p className="text-[11px] text-slate-400 text-center font-normal pt-1 border-t border-slate-100">
