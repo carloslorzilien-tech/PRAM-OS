@@ -1,19 +1,17 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import {
   Clock,
   CheckCircle2,
   Calendar,
-  BookOpen,
   ArrowLeft,
   Users,
-  Award,
-  AlertCircle,
-  FileCheck,
 } from 'lucide-react'
 import { getMentorSessions, getTopMentores } from '@/lib/db'
 import { MentorSessionForm } from '@/components/pram/mentor-form'
-import { currentUser } from '@clerk/nextjs/server'
+import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { UserProfileBadge } from '@/components/pram/user-profile-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,33 +22,49 @@ export default async function MentorDashboardPage({
 }) {
   const params = await searchParams
 
-  // Auto-detecta el mentor según el email autenticado en Clerk
-  let clerkEmail = ''
-  let clerkName = ''
+  // 1. Autenticación y Redirección Inteligente por Rol y Estado
+  let currentUser = null
   try {
-    const clerkUser = await currentUser()
-    if (clerkUser) {
-      clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress || ''
-      clerkName = clerkUser.fullName || clerkUser.firstName || ''
-    }
-  } catch { /* modo autónomo */ }
-
-  // Buscar mentor en la lista por email si no viene query param
-  let mentorId = params.mentor || 'm-1'
-  if (clerkEmail && !params.mentor) {
-    const allMentores = await getTopMentores(50)
-    const found = allMentores.find(
-      (m) => m.email.toLowerCase() === clerkEmail.toLowerCase()
-    )
-    if (found) mentorId = found.id
+    currentUser = await getOrCreateCurrentUser()
+  } catch (err) {
+    console.error('[PRAM Auth Error in MentorDashboardPage]:', err)
   }
 
-  const { mentor, sesiones } = await getMentorSessions(mentorId)
+  if (currentUser) {
+    if (currentUser.status === 'PENDING') {
+      redirect('/solicitud-pendiente')
+    }
+    // Redirección inteligente de rol: Si es DIRECTOR intentando entrar a mentor, redirigir a director
+    if (currentUser.rol === 'DIRECTOR' || currentUser.rol === 'AREA_DIRECTOR') {
+      redirect('/dashboard/director')
+    }
+  }
 
-  const currentMentor = mentor || {
+  // 2. Consulta blindada a Neon DB (Cero errores sintácticos o de null)
+  let mentorId = params.mentor || 'm-1'
+  let dbMentor = null
+  let sesiones: any[] = []
+
+  try {
+    if (currentUser?.email && !params.mentor) {
+      const allMentores = await getTopMentores(50)
+      const found = allMentores.find(
+        (m) => m.email.toLowerCase() === currentUser.email.toLowerCase()
+      )
+      if (found) mentorId = found.id
+    }
+
+    const sessionData = await getMentorSessions(mentorId)
+    dbMentor = sessionData.mentor
+    sesiones = sessionData.sesiones || []
+  } catch (error) {
+    console.error('[PRAM DB Error in MentorDashboardPage]:', error)
+  }
+
+  const currentMentor = dbMentor || {
     id: mentorId,
-    nombre: clerkName || 'Prof. Carlos Omar Lorzilien',
-    email: clerkEmail || 'carlosomarlorzilienservilien@gmail.com',
+    nombre: currentUser?.nombre || 'Prof. Carlos Omar Lorzilien',
+    email: currentUser?.email || 'carlosomarlorzilienservilien@gmail.com',
     rango: 'Head' as const,
     horas_acumuladas: 0,
     meta_horas: 60.0,
@@ -90,13 +104,12 @@ export default async function MentorDashboardPage({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard/director"
-            className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
-          >
-            Ver Auditoría Director
-          </Link>
+        <div className="flex items-center gap-3">
+          <UserProfileBadge
+            userRole={currentUser?.rol}
+            userStatus={currentUser?.status}
+            userArea={currentUser?.area}
+          />
         </div>
       </header>
 

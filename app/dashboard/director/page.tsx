@@ -1,34 +1,60 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import {
   ArrowLeft,
-  ShieldCheck,
-  FileCheck,
   Users,
-  Clock,
   CheckCircle2,
-  Printer,
-  Building,
 } from 'lucide-react'
-import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores, getPendingUsers } from '@/lib/db'
+import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores, getPendingUsers, Sesion, Usuario, Mentor } from '@/lib/db'
 import { DirectorAuditTable } from '@/components/pram/director-table'
-import { currentUser } from '@clerk/nextjs/server'
+import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { UserProfileBadge } from '@/components/pram/user-profile-card'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DirectorDashboardPage() {
-  const pendingSessions = await getPendingSessionsForAudit()
-  const pendingUsers = await getPendingUsers()
-  const kpis = await getPublicKPIs()
-  const topMentores = await getTopMentores(5)
-
-  let directorName = 'Director Académico'
+  // 1. Verificación de Autenticación y Redirección Inteligente según Rol y Estado
+  let currentUser = null
   try {
-    const clerkUser = await currentUser()
-    if (clerkUser) {
-      directorName = clerkUser.fullName || clerkUser.firstName || clerkUser.emailAddresses?.[0]?.emailAddress || 'Director Académico'
+    currentUser = await getOrCreateCurrentUser()
+  } catch (err) {
+    console.error('[PRAM Auth Error in DirectorDashboardPage]:', err)
+  }
+
+  if (currentUser) {
+    if (currentUser.status === 'PENDING') {
+      redirect('/solicitud-pendiente')
     }
-  } catch { /* modo autónomo */ }
+    // Redirección inteligente de rol: Si es MENTOR intentando acceder a director, redirigir a mentor
+    if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
+      redirect('/dashboard/mentor')
+    }
+  }
+
+  // 2. Carga protegida con try/catch en todas las llamadas DB (Cero errores sintácticos o de null)
+  let pendingSessions: Sesion[] = []
+  let pendingUsers: Usuario[] = []
+  let kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
+  let topMentores: Mentor[] = []
+
+  try {
+    const results = await Promise.allSettled([
+      getPendingSessionsForAudit(),
+      getPendingUsers(),
+      getPublicKPIs(),
+      getTopMentores(5),
+    ])
+
+    if (results[0].status === 'fulfilled' && results[0].value) pendingSessions = results[0].value
+    if (results[1].status === 'fulfilled' && results[1].value) pendingUsers = results[1].value
+    if (results[2].status === 'fulfilled' && results[2].value) kpis = results[2].value
+    if (results[3].status === 'fulfilled' && results[3].value) topMentores = results[3].value
+  } catch (error) {
+    console.error('[PRAM DB Error in DirectorDashboardPage]:', error)
+  }
+
+  const directorName = currentUser?.nombre || 'Director Académico'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -49,12 +75,12 @@ export default async function DirectorDashboardPage() {
               </span>
             </div>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              {directorName} · Panel de Dirección y Auditoría
+              {directorName} · Dirección Académica
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link
             href="/dashboard/director/solicitudes"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900 bg-amber-50 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors shadow-xs"
@@ -67,12 +93,11 @@ export default async function DirectorDashboardPage() {
               </span>
             )}
           </Link>
-          <Link
-            href="/dashboard/mentor"
-            className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
-          >
-            Ir a Panel Tutor
-          </Link>
+          <UserProfileBadge
+            userRole={currentUser?.rol}
+            userStatus={currentUser?.status}
+            userArea={currentUser?.area}
+          />
         </div>
       </header>
 
@@ -174,29 +199,37 @@ export default async function DirectorDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {topMentores.map((m) => {
-                  const isComplete = m.horas_acumuladas >= m.meta_horas
-                  return (
-                    <tr key={m.id}>
-                      <td className="px-4 py-2.5 font-medium text-slate-900">{m.nombre}</td>
-                      <td className="px-4 py-2.5 text-slate-600">{m.especialidad}</td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{m.horas_acumuladas.toFixed(1)} h</td>
-                      <td className="px-4 py-2.5 font-mono text-slate-500">{m.meta_horas.toFixed(0)} h</td>
-                      <td className="px-4 py-2.5 text-right">
-                        {isComplete ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium">
-                            <CheckCircle2 className="size-3 text-emerald-600" />
-                            <span>Listo para Certificar</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
-                            <span>En Progreso</span>
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
+                {topMentores.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-4 text-center text-slate-400">
+                      No hay mentores registrados aún
+                    </td>
+                  </tr>
+                ) : (
+                  topMentores.map((m) => {
+                    const isComplete = m.horas_acumuladas >= m.meta_horas
+                    return (
+                      <tr key={m.id}>
+                        <td className="px-4 py-2.5 font-medium text-slate-900">{m.nombre}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{m.especialidad}</td>
+                        <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{m.horas_acumuladas.toFixed(1)} h</td>
+                        <td className="px-4 py-2.5 font-mono text-slate-500">{m.meta_horas.toFixed(0)} h</td>
+                        <td className="px-4 py-2.5 text-right">
+                          {isComplete ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium">
+                              <CheckCircle2 className="size-3 text-emerald-600" />
+                              <span>Listo para Certificar</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
+                              <span>En Progreso</span>
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>

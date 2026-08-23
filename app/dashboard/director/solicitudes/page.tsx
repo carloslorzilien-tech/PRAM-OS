@@ -1,8 +1,11 @@
 import React from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Users, Clock, ShieldCheck, LayoutDashboard } from 'lucide-react'
-import { getPendingUsers } from '@/lib/db'
+import { redirect } from 'next/navigation'
+import { ArrowLeft, Users, Clock } from 'lucide-react'
+import { getPendingUsers, Usuario } from '@/lib/db'
 import { DirectorRequestsTable } from '@/components/pram/director-requests-table'
+import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { UserProfileBadge } from '@/components/pram/user-profile-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +15,30 @@ export const metadata = {
 }
 
 export default async function DirectorSolicitudesPage() {
-  const pendingUsers = await getPendingUsers()
+  // 1. Verificación de Autenticación y Redirección por Rol/Estado
+  let currentUser = null
+  try {
+    currentUser = await getOrCreateCurrentUser()
+  } catch (err) {
+    console.error('[PRAM Auth Error in DirectorSolicitudesPage]:', err)
+  }
+
+  if (currentUser) {
+    if (currentUser.status === 'PENDING') {
+      redirect('/solicitud-pendiente')
+    }
+    if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
+      redirect('/dashboard/mentor')
+    }
+  }
+
+  // 2. Consulta blindada a Neon DB con try/catch y fallback seguro
+  let pendingUsers: Usuario[] = []
+  try {
+    pendingUsers = await getPendingUsers()
+  } catch (error) {
+    console.error('[PRAM DB Error in DirectorSolicitudesPage]:', error)
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -36,13 +62,18 @@ export default async function DirectorSolicitudesPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link
             href="/dashboard/director"
             className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
           >
             Panel de Auditoría
           </Link>
+          <UserProfileBadge
+            userRole={currentUser?.rol}
+            userStatus={currentUser?.status}
+            userArea={currentUser?.area}
+          />
         </div>
       </header>
 

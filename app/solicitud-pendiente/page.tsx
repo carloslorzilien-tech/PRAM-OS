@@ -1,13 +1,30 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { ArrowLeft, Clock, CheckCircle2 } from 'lucide-react'
+import { getOrCreateCurrentUser } from '@/lib/auth-user'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Solicitud Pendiente · PRAM OS',
   description: 'Tu solicitud de acceso está siendo revisada por la administración del Liceo Minerva Mirabal.',
 }
 
-export default function SolicitudPendientePage() {
+export default async function SolicitudPendientePage() {
+  // Redirección Inteligente: Si el usuario ya fue aprobado, llevarlo directamente a su dashboard
+  try {
+    const currentUser = await getOrCreateCurrentUser()
+    if (currentUser && currentUser.status === 'APPROVED') {
+      redirect('/dashboard')
+    }
+  } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    console.error('[PRAM Auth Error in SolicitudPendientePage]:', error)
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-6 py-12">
@@ -26,7 +43,7 @@ export default function SolicitudPendientePage() {
           {/* Badge de estado */}
           <div className="flex justify-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3.5 py-1 text-xs font-semibold text-amber-700">
-              <Clock className="size-3.5" />
+              <Clock className="size-3.5 animate-pulse" />
               Solicitud en Revisión
             </span>
           </div>
