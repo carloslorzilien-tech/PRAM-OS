@@ -7,8 +7,9 @@ import {
   Calendar,
   ArrowLeft,
   Users,
+  AlertTriangle,
 } from 'lucide-react'
-import { getMentorSessions, getTopMentores } from '@/lib/db'
+import { getMentorSessions, getTopMentores, Sesion, Mentor, Usuario } from '@/lib/db'
 import { MentorSessionForm } from '@/components/pram/mentor-form'
 import { getOrCreateCurrentUser } from '@/lib/auth-user'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
@@ -20,65 +21,83 @@ export default async function MentorDashboardPage({
 }: {
   searchParams: Promise<{ mentor?: string }>
 }) {
-  const params = await searchParams
+  let currentUser: Usuario | null = null
+  let currentMentor: Mentor = {
+    id: 'm-1',
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    email: 'carlosomarlorzilienservilien@gmail.com',
+    rango: 'Head',
+    horas_acumuladas: 0,
+    meta_horas: 60.0,
+    especialidad: 'Matemáticas',
+  }
+  let sesiones: Sesion[] = []
+  let isOfflineMode = false
 
-  // 1. Autenticación y Redirección Inteligente por Rol y Estado
-  let currentUser = null
   try {
+    const params = await searchParams
+
+    // 1. Autenticación y Redirección Inteligente por Rol y Estado
     currentUser = await getOrCreateCurrentUser()
-  } catch (err) {
-    console.error('[PRAM Auth Error in MentorDashboardPage]:', err)
-  }
 
-  if (currentUser) {
-    if (currentUser.status === 'PENDING') {
-      redirect('/solicitud-pendiente')
+    if (currentUser) {
+      if (currentUser.status === 'PENDING') {
+        redirect('/solicitud-pendiente')
+      }
+      if (currentUser.rol === 'DIRECTOR' || currentUser.rol === 'AREA_DIRECTOR') {
+        redirect('/dashboard/director')
+      }
     }
-    // Redirección inteligente de rol: Si es DIRECTOR intentando entrar a mentor, redirigir a director
-    if (currentUser.rol === 'DIRECTOR' || currentUser.rol === 'AREA_DIRECTOR') {
-      redirect('/dashboard/director')
-    }
-  }
 
-  // 2. Consulta blindada a Neon DB (Cero errores sintácticos o de null)
-  let mentorId = params.mentor || 'm-1'
-  let dbMentor = null
-  let sesiones: any[] = []
-
-  try {
+    // 2. Consulta a Neon DB
+    let mentorId = params.mentor || 'm-1'
     if (currentUser?.email && !params.mentor) {
       const allMentores = await getTopMentores(50)
-      const found = allMentores.find(
-        (m) => m.email.toLowerCase() === currentUser.email.toLowerCase()
+      const found = (allMentores || []).find(
+        (m) => m.email.toLowerCase() === currentUser?.email.toLowerCase()
       )
       if (found) mentorId = found.id
     }
 
     const sessionData = await getMentorSessions(mentorId)
-    dbMentor = sessionData.mentor
-    sesiones = sessionData.sesiones || []
-  } catch (error) {
-    console.error('[PRAM DB Error in MentorDashboardPage]:', error)
-  }
-
-  const currentMentor = dbMentor || {
-    id: mentorId,
-    nombre: currentUser?.nombre || 'Prof. Carlos Omar Lorzilien',
-    email: currentUser?.email || 'carlosomarlorzilienservilien@gmail.com',
-    rango: 'Head' as const,
-    horas_acumuladas: 0,
-    meta_horas: 60.0,
-    especialidad: 'Matemáticas' as const,
+    if (sessionData?.mentor) {
+      currentMentor = sessionData.mentor
+    } else if (currentUser) {
+      currentMentor = {
+        id: mentorId,
+        nombre: currentUser.nombre || 'Prof. Carlos Omar Lorzilien',
+        email: currentUser.email,
+        rango: 'Head',
+        horas_acumuladas: 0,
+        meta_horas: 60.0,
+        especialidad: 'Matemáticas',
+      }
+    }
+    sesiones = sessionData?.sesiones || []
+  } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    console.error('Error en Mentor Dashboard:', error)
+    isOfflineMode = true
   }
 
   const porcentaje = Math.min(
     100,
-    Math.round((currentMentor.horas_acumuladas / currentMentor.meta_horas) * 100)
+    Math.round(((currentMentor?.horas_acumuladas || 0) / (currentMentor?.meta_horas || 60.0)) * 100)
   )
-  const horasFaltantes = Math.max(0, currentMentor.meta_horas - currentMentor.horas_acumuladas)
+  const horasFaltantes = Math.max(0, (currentMentor?.meta_horas || 60.0) - (currentMentor?.horas_acumuladas || 0))
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Alerta de Modo Desconectado si aplica */}
+      {isOfflineMode && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 py-2 flex items-center justify-center gap-2 font-medium">
+          <AlertTriangle className="size-4 text-amber-600 shrink-0" />
+          <span>Modo desconectado: mostrando vista base. Se reestablecerá automáticamente al reconectar.</span>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8">
         <div className="flex items-center gap-3">
@@ -95,11 +114,11 @@ export default async function MentorDashboardPage({
                 PRAM OS · Panel del Tutor
               </span>
               <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.2 text-[10px] font-medium">
-                {currentMentor.rango}
+                {currentMentor?.rango || 'Head'}
               </span>
             </div>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              {currentMentor.nombre}
+              {currentMentor?.nombre || 'Tutor Académico'}
             </h1>
           </div>
         </div>
@@ -123,10 +142,10 @@ export default async function MentorDashboardPage({
               </span>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
-                  {currentMentor.horas_acumuladas.toFixed(1)}
+                  {(currentMentor?.horas_acumuladas || 0).toFixed(1)}
                 </span>
                 <span className="text-sm text-slate-500 font-normal">
-                  / {currentMentor.meta_horas.toFixed(0)} horas requeridas ({porcentaje}%)
+                  / {(currentMentor?.meta_horas || 60.0).toFixed(0)} horas requeridas ({porcentaje}%)
                 </span>
               </div>
             </div>
@@ -166,7 +185,7 @@ export default async function MentorDashboardPage({
             </p>
           </div>
 
-          <MentorSessionForm mentorId={currentMentor.id} />
+          <MentorSessionForm mentorId={currentMentor?.id || 'm-1'} />
         </section>
 
         {/* 3. Historial de Sesiones con Badges de Estado */}
@@ -181,51 +200,51 @@ export default async function MentorDashboardPage({
               </p>
             </div>
             <span className="text-xs font-medium text-slate-500">
-              {sesiones.length} sesiones
+              {(sesiones || []).length} sesiones
             </span>
           </div>
 
-          {sesiones.length === 0 ? (
+          {(sesiones || []).length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500">
               No tienes sesiones registradas aún. Registra tu primera sesión arriba.
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {sesiones.map((sesion) => {
-                const isApproved = sesion.estado === 'approved'
-                const isPending = sesion.estado === 'pending'
+              {(sesiones || []).map((sesion) => {
+                const isApproved = sesion?.estado === 'approved'
+                const isPending = sesion?.estado === 'pending'
 
                 return (
                   <div
-                    key={sesion.id}
+                    key={sesion?.id || Math.random().toString()}
                     className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-                          {sesion.tema}
+                          {sesion?.tema || 'Sesión de Refuerzo'}
                         </h3>
                         <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.2 text-[10px] font-medium">
-                          {sesion.materia}
+                          {sesion?.materia || 'Matemáticas'}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-slate-500 font-normal">
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3 text-slate-400" />
-                          {sesion.fecha_sesion}
+                          {sesion?.fecha_sesion || '2026-08-15'}
                         </span>
                         <span>·</span>
                         <span className="flex items-center gap-1">
                           <Clock className="size-3 text-slate-400" />
-                          {sesion.duracion_minutos} min ({(sesion.duracion_minutos / 60).toFixed(2)} h)
+                          {sesion?.duracion_minutos || 45} min ({((sesion?.duracion_minutos || 45) / 60).toFixed(2)} h)
                         </span>
                         <span>·</span>
                         <span className="flex items-center gap-1">
                           <Users className="size-3 text-slate-400" />
-                          {sesion.cantidad_alumnos} alumno(s)
+                          {sesion?.cantidad_alumnos || 1} alumno(s)
                         </span>
                       </div>
-                      {sesion.notas && (
+                      {sesion?.notas && (
                         <p className="text-[11px] text-slate-500 italic">
                           "{sesion.notas}"
                         </p>

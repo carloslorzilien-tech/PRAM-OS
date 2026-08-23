@@ -1,7 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, Users, Clock } from 'lucide-react'
+import { ArrowLeft, Users, Clock, AlertTriangle } from 'lucide-react'
 import { getPendingUsers, Usuario } from '@/lib/db'
 import { DirectorRequestsTable } from '@/components/pram/director-requests-table'
 import { getOrCreateCurrentUser } from '@/lib/auth-user'
@@ -15,33 +15,43 @@ export const metadata = {
 }
 
 export default async function DirectorSolicitudesPage() {
-  // 1. Verificación de Autenticación y Redirección por Rol/Estado
   let currentUser = null
-  try {
-    currentUser = await getOrCreateCurrentUser()
-  } catch (err) {
-    console.error('[PRAM Auth Error in DirectorSolicitudesPage]:', err)
-  }
-
-  if (currentUser) {
-    if (currentUser.status === 'PENDING') {
-      redirect('/solicitud-pendiente')
-    }
-    if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
-      redirect('/dashboard/mentor')
-    }
-  }
-
-  // 2. Consulta blindada a Neon DB con try/catch y fallback seguro
   let pendingUsers: Usuario[] = []
+  let isOfflineMode = false
+
   try {
+    // 1. Verificación de Autenticación y Redirección por Rol/Estado
+    currentUser = await getOrCreateCurrentUser()
+
+    if (currentUser) {
+      if (currentUser.status === 'PENDING') {
+        redirect('/solicitud-pendiente')
+      }
+      if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
+        redirect('/dashboard/mentor')
+      }
+    }
+
+    // 2. Consulta blindada a Neon DB
     pendingUsers = await getPendingUsers()
-  } catch (error) {
-    console.error('[PRAM DB Error in DirectorSolicitudesPage]:', error)
+  } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    console.error('Error en Solicitudes Dashboard:', error)
+    isOfflineMode = true
   }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Alerta de Modo Desconectado si aplica */}
+      {isOfflineMode && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 py-2 flex items-center justify-center gap-2 font-medium">
+          <AlertTriangle className="size-4 text-amber-600 shrink-0" />
+          <span>Modo desconectado: mostrando vista base. Se reestablecerá automáticamente al reconectar.</span>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8">
         <div className="flex items-center gap-3">
@@ -95,13 +105,13 @@ export default async function DirectorSolicitudesPage() {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3.5 py-1 text-xs font-bold text-amber-700">
               <Clock className="size-3.5" />
-              <span>{pendingUsers.length} pendientes</span>
+              <span>{(pendingUsers || []).length} pendientes</span>
             </span>
           </div>
         </div>
 
         {/* Tabla Interactiva de Solicitudes */}
-        <DirectorRequestsTable initialUsers={pendingUsers} />
+        <DirectorRequestsTable initialUsers={pendingUsers || []} />
       </main>
     </div>
   )

@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Users,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react'
 import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores, getPendingUsers, Sesion, Usuario, Mentor } from '@/lib/db'
 import { DirectorAuditTable } from '@/components/pram/director-table'
@@ -14,31 +15,27 @@ import { UserProfileBadge } from '@/components/pram/user-profile-card'
 export const dynamic = 'force-dynamic'
 
 export default async function DirectorDashboardPage() {
-  // 1. Verificación de Autenticación y Redirección Inteligente según Rol y Estado
   let currentUser = null
-  try {
-    currentUser = await getOrCreateCurrentUser()
-  } catch (err) {
-    console.error('[PRAM Auth Error in DirectorDashboardPage]:', err)
-  }
-
-  if (currentUser) {
-    if (currentUser.status === 'PENDING') {
-      redirect('/solicitud-pendiente')
-    }
-    // Redirección inteligente de rol: Si es MENTOR intentando acceder a director, redirigir a mentor
-    if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
-      redirect('/dashboard/mentor')
-    }
-  }
-
-  // 2. Carga protegida con try/catch en todas las llamadas DB (Cero errores sintácticos o de null)
   let pendingSessions: Sesion[] = []
   let pendingUsers: Usuario[] = []
   let kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
   let topMentores: Mentor[] = []
+  let isOfflineMode = false
 
   try {
+    // 1. Verificación de Autenticación y Redirección Inteligente según Rol y Estado
+    currentUser = await getOrCreateCurrentUser()
+
+    if (currentUser) {
+      if (currentUser.status === 'PENDING') {
+        redirect('/solicitud-pendiente')
+      }
+      if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
+        redirect('/dashboard/mentor')
+      }
+    }
+
+    // 2. Carga protegida con try/catch en todas las llamadas DB
     const results = await Promise.allSettled([
       getPendingSessionsForAudit(),
       getPendingUsers(),
@@ -50,14 +47,26 @@ export default async function DirectorDashboardPage() {
     if (results[1].status === 'fulfilled' && results[1].value) pendingUsers = results[1].value
     if (results[2].status === 'fulfilled' && results[2].value) kpis = results[2].value
     if (results[3].status === 'fulfilled' && results[3].value) topMentores = results[3].value
-  } catch (error) {
-    console.error('[PRAM DB Error in DirectorDashboardPage]:', error)
+  } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    console.error('Error en Director Dashboard:', error)
+    isOfflineMode = true
   }
 
   const directorName = currentUser?.nombre || 'Director Académico'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Alerta de Modo Desconectado si aplica */}
+      {isOfflineMode && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 py-2 flex items-center justify-center gap-2 font-medium">
+          <AlertTriangle className="size-4 text-amber-600 shrink-0" />
+          <span>Modo desconectado: mostrando vista base. Se reestablecerá automáticamente al reconectar.</span>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8 print:hidden">
         <div className="flex items-center gap-3">
@@ -87,9 +96,9 @@ export default async function DirectorDashboardPage() {
           >
             <Users className="size-3.5 text-amber-700" />
             <span>Solicitudes</span>
-            {pendingUsers.length > 0 && (
+            {(pendingUsers || []).length > 0 && (
               <span className="rounded-full bg-amber-600 text-white px-1.5 py-0.2 text-[10px] font-bold">
-                {pendingUsers.length}
+                {(pendingUsers || []).length}
               </span>
             )}
           </Link>
@@ -122,7 +131,7 @@ export default async function DirectorDashboardPage() {
               Horas Validadas
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis.horasCertificadas} <span className="text-lg font-normal text-slate-500">h</span>
+              {kpis?.horasCertificadas || 0} <span className="text-lg font-normal text-slate-500">h</span>
             </p>
             <p className="text-[11px] font-medium text-emerald-700 mt-1">
               Bloqueadas e Inmutables
@@ -134,7 +143,7 @@ export default async function DirectorDashboardPage() {
               Pendientes Firma
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {pendingSessions.length}
+              {(pendingSessions || []).length}
             </p>
             <p className="text-[11px] font-medium text-amber-700 mt-1">
               En bandeja de espera
@@ -146,7 +155,7 @@ export default async function DirectorDashboardPage() {
               Alumnos Atendidos
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis.estudiantesAtendidos}
+              {kpis?.estudiantesAtendidos || 0}
             </p>
             <p className="text-[11px] font-normal text-slate-500 mt-1">
               En cohortes activas
@@ -158,7 +167,7 @@ export default async function DirectorDashboardPage() {
               Sesiones Aprobadas
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis.sesionesValidadas}
+              {kpis?.sesionesValidadas || 0}
             </p>
             <p className="text-[11px] font-normal text-slate-500 mt-1">
               Acreditadas
@@ -168,7 +177,7 @@ export default async function DirectorDashboardPage() {
 
         {/* 2. Tabla de Auditoría con Aprobación */}
         <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-          <DirectorAuditTable initialSessions={pendingSessions} />
+          <DirectorAuditTable initialSessions={pendingSessions || []} />
         </section>
 
         {/* 3. Expediente Resumido de Mentores (Apto para Impresión) */}
@@ -199,21 +208,21 @@ export default async function DirectorDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {topMentores.length === 0 ? (
+                {(topMentores || []).length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-4 text-center text-slate-400">
                       No hay mentores registrados aún
                     </td>
                   </tr>
                 ) : (
-                  topMentores.map((m) => {
-                    const isComplete = m.horas_acumuladas >= m.meta_horas
+                  (topMentores || []).map((m) => {
+                    const isComplete = (m?.horas_acumuladas || 0) >= (m?.meta_horas || 60)
                     return (
-                      <tr key={m.id}>
-                        <td className="px-4 py-2.5 font-medium text-slate-900">{m.nombre}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{m.especialidad}</td>
-                        <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{m.horas_acumuladas.toFixed(1)} h</td>
-                        <td className="px-4 py-2.5 font-mono text-slate-500">{m.meta_horas.toFixed(0)} h</td>
+                      <tr key={m?.id || Math.random().toString()}>
+                        <td className="px-4 py-2.5 font-medium text-slate-900">{m?.nombre || 'Mentor'}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{m?.especialidad || 'Matemáticas'}</td>
+                        <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{(m?.horas_acumuladas || 0).toFixed(1)} h</td>
+                        <td className="px-4 py-2.5 font-mono text-slate-500">{(m?.meta_horas || 60).toFixed(0)} h</td>
                         <td className="px-4 py-2.5 text-right">
                           {isComplete ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium">

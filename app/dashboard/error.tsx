@@ -2,9 +2,9 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { RefreshCw, Home } from 'lucide-react'
+import { RefreshCw, LayoutDashboard } from 'lucide-react'
 
-export default function ErrorBoundary({
+export default function DashboardErrorBoundary({
   error,
   reset,
 }: {
@@ -24,10 +24,10 @@ export default function ErrorBoundary({
 
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            Algo salió mal
+            Conexión Interrumpida en el Dashboard
           </h2>
           <p className="text-xs text-slate-500 font-normal mt-1 leading-relaxed">
-            Se produjo una interrupción temporal al cargar esta sección. Haz clic en reintentar para recargar la vista limpiamente.
+            No se pudo conectar con el servidor en este momento. Haz clic en reintentar para cargar en Modo Seguro.
           </p>
         </div>
 
@@ -45,8 +45,8 @@ export default function ErrorBoundary({
             href="/"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg px-4 py-2 text-xs font-medium transition-all"
           >
-            <Home className="size-3.5" />
-            <span>Ir al Inicio</span>
+            <LayoutDashboard className="size-3.5" />
+            <span>Volver al Inicio</span>
           </Link>
         </div>
       </div>
