@@ -7,7 +7,16 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react'
-import { getPendingSessionsForAudit, getPublicKPIs, getTopMentores, getPendingUsers, Sesion, Usuario, Mentor } from '@/lib/db'
+import {
+  getPendingSessionsForAudit,
+  getPublicKPIs,
+  getTopMentores,
+  getPendingUsers,
+  Sesion,
+  Usuario,
+  Mentor,
+  withRetry,
+} from '@/lib/db'
 import { DirectorAuditTable } from '@/components/pram/director-table'
 import { getOrCreateCurrentUser } from '@/lib/auth-user'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
@@ -15,7 +24,7 @@ import { UserProfileBadge } from '@/components/pram/user-profile-card'
 export const dynamic = 'force-dynamic'
 
 export default async function DirectorDashboardPage() {
-  let currentUser = null
+  let currentUser: Usuario | null = null
   let pendingSessions: Sesion[] = []
   let pendingUsers: Usuario[] = []
   let kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
@@ -35,12 +44,12 @@ export default async function DirectorDashboardPage() {
       }
     }
 
-    // 2. Carga protegida con try/catch en todas las llamadas DB
+    // 2. Carga protegida con retry ante Cold Starts de Neon DB
     const results = await Promise.allSettled([
-      getPendingSessionsForAudit(),
-      getPendingUsers(),
-      getPublicKPIs(),
-      getTopMentores(5),
+      withRetry(() => getPendingSessionsForAudit(), 3, 1500),
+      withRetry(() => getPendingUsers(), 3, 1500),
+      withRetry(() => getPublicKPIs(), 3, 1500),
+      withRetry(() => getTopMentores(5), 3, 1500),
     ])
 
     if (results[0].status === 'fulfilled' && results[0].value) pendingSessions = results[0].value

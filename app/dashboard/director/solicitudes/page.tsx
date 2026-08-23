@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowLeft, Users, Clock, AlertTriangle } from 'lucide-react'
-import { getPendingUsers, Usuario } from '@/lib/db'
+import { getPendingUsers, Usuario, withRetry } from '@/lib/db'
 import { DirectorRequestsTable } from '@/components/pram/director-requests-table'
 import { getOrCreateCurrentUser } from '@/lib/auth-user'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
@@ -15,7 +15,7 @@ export const metadata = {
 }
 
 export default async function DirectorSolicitudesPage() {
-  let currentUser = null
+  let currentUser: Usuario | null = null
   let pendingUsers: Usuario[] = []
   let isOfflineMode = false
 
@@ -32,8 +32,8 @@ export default async function DirectorSolicitudesPage() {
       }
     }
 
-    // 2. Consulta blindada a Neon DB
-    pendingUsers = await getPendingUsers()
+    // 2. Consulta blindada a Neon DB con retry
+    pendingUsers = await withRetry(() => getPendingUsers(), 3, 1500)
   } catch (error: any) {
     if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
       throw error

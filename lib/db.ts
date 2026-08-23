@@ -1,9 +1,30 @@
 import { neon } from '@neondatabase/serverless'
 
-const connectionString =
+const rawConnectionString =
   process.env.DATABASE_URL ||
   process.env.POSTGRES_URL ||
   'postgresql://neondb_owner:npg_HeZYmnNo50Fy@ep-solitary-butterfly-avk45iz8-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require'
+
+// Limpieza de channel_binding para evitar caídas de conexión en cold start / idle de Neon
+const connectionString = rawConnectionString
+  .replace(/&channel_binding=[^&]*/gi, '')
+  .replace(/\?channel_binding=[^&]*&?/gi, '?')
+
+// Helper de reintento para consultas Serverless contra bases de datos en reposo (Neon Idle)
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 1500
+): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    if (retries <= 0) throw error
+    console.warn(`[PRAM DB Retry] Reintentando consulta DB en ${delay}ms (intentos restantes: ${retries})...`)
+    await new Promise((resolve) => setTimeout(resolve, delay))
+    return withRetry(fn, retries - 1, delay)
+  }
+}
 
 // Helper seguro para obtener conexión a Neon
 export function getDb() {

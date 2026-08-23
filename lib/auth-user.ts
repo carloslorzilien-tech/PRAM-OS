@@ -1,11 +1,11 @@
 import { currentUser } from '@clerk/nextjs/server'
-import { getUserByEmail, registerPendingUser, PRE_APPROVED_ACCOUNTS, Usuario } from '@/lib/db'
+import { getUserByEmail, registerPendingUser, PRE_APPROVED_ACCOUNTS, Usuario, withRetry } from '@/lib/db'
 
 /**
  * Self-Healing DB Helper: getOrCreateCurrentUser()
  * 
  * 1. Obtiene el usuario autenticado desde Clerk (currentUser()).
- * 2. Consulta la base de datos de Neon DB.
+ * 2. Consulta la base de datos de Neon DB con reintentos automáticos (withRetry).
  * 3. SI NO EXISTE: Lo crea inmediatamente con sus datos de Clerk y auto-aprueba según reglas:
  *    - carlos.lorzilien@gmail.com -> role = 'DIRECTOR', status = 'APPROVED'
  *    - carlosomarlorzilienservilien@gmail.com / carlosmarlorzilienservilien@gmail.com -> role = 'MENTOR', status = 'APPROVED'
@@ -26,8 +26,8 @@ export async function getOrCreateCurrentUser(): Promise<Usuario | null> {
 
     const fullName = clerkUser.fullName || clerkUser.firstName || email.split('@')[0]
 
-    // 1. Consultar en Neon DB / Memoria
-    let dbUser = await getUserByEmail(email)
+    // 1. Consultar en Neon DB / Memoria con retry
+    let dbUser = await withRetry(() => getUserByEmail(email), 3, 1500)
 
     // 2. Autocreación e Inserción Inmediata si no existe
     if (!dbUser) {
@@ -49,12 +49,17 @@ export async function getOrCreateCurrentUser(): Promise<Usuario | null> {
         area = 'Matemáticas'
       }
 
-      dbUser = await registerPendingUser({
-        email,
-        nombre: fullName,
-        rol: rol === 'DIRECTOR' ? 'MENTOR' : rol,
-        area,
-      })
+      dbUser = await withRetry(
+        () =>
+          registerPendingUser({
+            email,
+            nombre: fullName,
+            rol: rol === 'DIRECTOR' ? 'MENTOR' : rol,
+            area,
+          }),
+        3,
+        1500
+      )
 
       // Asegurar sobreescritura exacta si es pre-aprobado
       if (isDirector || isMentor) {

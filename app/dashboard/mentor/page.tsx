@@ -9,7 +9,7 @@ import {
   Users,
   AlertTriangle,
 } from 'lucide-react'
-import { getMentorSessions, getTopMentores, Sesion, Mentor, Usuario } from '@/lib/db'
+import { getMentorSessions, getTopMentores, Sesion, Mentor, Usuario, withRetry } from '@/lib/db'
 import { MentorSessionForm } from '@/components/pram/mentor-form'
 import { getOrCreateCurrentUser } from '@/lib/auth-user'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
@@ -49,17 +49,17 @@ export default async function MentorDashboardPage({
       }
     }
 
-    // 2. Consulta a Neon DB
+    // 2. Consulta a Neon DB con retry automático en Cold Start
     let mentorId = params.mentor || 'm-1'
     if (currentUser?.email && !params.mentor) {
-      const allMentores = await getTopMentores(50)
+      const allMentores = await withRetry(() => getTopMentores(50), 3, 1500)
       const found = (allMentores || []).find(
         (m) => m.email.toLowerCase() === currentUser?.email.toLowerCase()
       )
       if (found) mentorId = found.id
     }
 
-    const sessionData = await getMentorSessions(mentorId)
+    const sessionData = await withRetry(() => getMentorSessions(mentorId), 3, 1500)
     if (sessionData?.mentor) {
       currentMentor = sessionData.mentor
     } else if (currentUser) {
