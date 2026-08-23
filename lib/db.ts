@@ -10,7 +10,7 @@ export function getDb() {
   try {
     return neon(connectionString)
   } catch (err) {
-    console.warn('Neon connection initialization warning:', err)
+    console.error('[PRAM DB Error] Neon connection initialization warning:', err)
     return null
   }
 }
@@ -77,7 +77,7 @@ export interface PublicKPIs {
 }
 
 // ==============================================================================
-// CUENTAS PRE-APROBADAS Y ACCESO ADMINISTRATIVO INMEDIATO
+// CUENTAS PRE-APROBADAS Y REGLAS EXPLICITAS DE ROL Y SERVIDOR
 // ==============================================================================
 
 export const PRE_APPROVED_ACCOUNTS: Record<
@@ -88,12 +88,12 @@ export const PRE_APPROVED_ACCOUNTS: Record<
     nombre: 'Carlos Lorzilien (Director)',
     rol: 'DIRECTOR',
   },
-  'carlosmarlorzilienservilien@gmail.com': {
+  'carlosomarlorzilienservilien@gmail.com': {
     nombre: 'Prof. Carlos Omar Lorzilien',
     rol: 'MENTOR',
     area: 'Matemáticas',
   },
-  'carlosomarlorzilienservilien@gmail.com': {
+  'carlosmarlorzilienservilien@gmail.com': {
     nombre: 'Prof. Carlos Omar Lorzilien',
     rol: 'MENTOR',
     area: 'Matemáticas',
@@ -101,7 +101,7 @@ export const PRE_APPROVED_ACCOUNTS: Record<
 }
 
 // ==============================================================================
-// IN-MEMORY FALLBACK STORE (Mantiene la UI viva incluso sin conexión)
+// IN-MEMORY FALLBACK STORE (Mantiene la UI viva incluso en contingencias)
 // ==============================================================================
 
 const fallbackUsuarios: Usuario[] = [
@@ -114,7 +114,7 @@ const fallbackUsuarios: Usuario[] = [
   },
   {
     id: 'u-carlos-mentor-1',
-    email: 'carlosmarlorzilienservilien@gmail.com',
+    email: 'carlosomarlorzilienservilien@gmail.com',
     nombre: 'Prof. Carlos Omar Lorzilien',
     rol: 'MENTOR',
     area: 'Matemáticas',
@@ -122,7 +122,7 @@ const fallbackUsuarios: Usuario[] = [
   },
   {
     id: 'u-carlos-mentor-2',
-    email: 'carlosomarlorzilienservilien@gmail.com',
+    email: 'carlosmarlorzilienservilien@gmail.com',
     nombre: 'Prof. Carlos Omar Lorzilien',
     rol: 'MENTOR',
     area: 'Matemáticas',
@@ -311,10 +311,11 @@ const fallbackCertificados: CertificadoCUV[] = [
 // ==============================================================================
 
 /**
- * Consulta usuario en Neon por email.
- * Si es una cuenta pre-aprobada (Carlos Lorzilien), garantiza status = APPROVED.
+ * Consulta usuario en Neon por email (insensible a mayúsculas/minúsculas).
+ * Garantiza auto-aprobación para cuentas configuradas.
  */
 export async function getUserByEmail(email: string): Promise<Usuario | null> {
+  if (!email) return null
   const cleanEmail = email.trim().toLowerCase()
   const preApproved = PRE_APPROVED_ACCOUNTS[cleanEmail]
 
@@ -365,7 +366,7 @@ export async function getUserByEmail(email: string): Promise<Usuario | null> {
       }
     }
   } catch (error) {
-    console.warn('Neon query error in getUserByEmail, using in-memory fallback:', error)
+    console.error('[PRAM DB Error in getUserByEmail]:', error)
   }
 
   if (preApproved) {
@@ -440,7 +441,7 @@ export async function registerPendingUser(data: {
       `
     }
   } catch (error) {
-    console.warn('Neon insert error in registerPendingUser, saving to in-memory store:', error)
+    console.error('[PRAM DB Error in registerPendingUser]:', error)
   }
 
   // Actualizar store in-memory
@@ -481,7 +482,7 @@ export async function getPendingUsers(): Promise<Usuario[]> {
       if (rows) return rows
     }
   } catch (error) {
-    console.warn('Neon query error in getPendingUsers, using in-memory fallback:', error)
+    console.error('[PRAM DB Error in getPendingUsers]:', error)
   }
 
   return fallbackUsuarios.filter((u) => u.status === 'PENDING')
@@ -501,7 +502,7 @@ export async function approveUserInDb(userId: string): Promise<boolean> {
       `
     }
   } catch (error) {
-    console.warn('Neon update error in approveUserInDb:', error)
+    console.error('[PRAM DB Error in approveUserInDb]:', error)
   }
 
   const idx = fallbackUsuarios.findIndex((u) => u.id === userId)
@@ -525,7 +526,7 @@ export async function rejectUserInDb(userId: string): Promise<boolean> {
       `
     }
   } catch (error) {
-    console.warn('Neon update error in rejectUserInDb:', error)
+    console.error('[PRAM DB Error in rejectUserInDb]:', error)
   }
 
   const idx = fallbackUsuarios.findIndex((u) => u.id === userId)
@@ -537,6 +538,8 @@ export async function rejectUserInDb(userId: string): Promise<boolean> {
 
 /**
  * Determina el flujo de redirección post-login:
+ * - Si usuario es Director (carlos.lorzilien@gmail.com) -> /dashboard/director
+ * - Si usuario es Mentor (carlosomarlorzilienservilien@gmail.com, etc.) -> /dashboard/mentor
  * - Si usuario existe y está 'APPROVED' -> Permite acceso a dashboard
  * - Si usuario existe y está 'PENDING' -> Redirige a /solicitud-pendiente
  * - Si usuario no existe en BD -> Redirige a /onboarding
@@ -551,6 +554,8 @@ export async function checkUserAuthRedirect(email?: string | null): Promise<{
   }
 
   const clean = email.trim().toLowerCase()
+
+  // 1. Regla explícita e inmutable para Director Académico
   if (clean === 'carlos.lorzilien@gmail.com') {
     return {
       action: 'DASHBOARD',
@@ -565,7 +570,11 @@ export async function checkUserAuthRedirect(email?: string | null): Promise<{
     }
   }
 
-  if (clean.includes('carlos') && clean.includes('lorzilien')) {
+  // 2. Regla explícita e inmutable para Mentores de Matemáticas
+  if (
+    clean === 'carlosomarlorzilienservilien@gmail.com' ||
+    clean === 'carlosmarlorzilienservilien@gmail.com'
+  ) {
     return {
       action: 'DASHBOARD',
       targetUrl: '/dashboard/mentor',
@@ -580,24 +589,29 @@ export async function checkUserAuthRedirect(email?: string | null): Promise<{
     }
   }
 
-  const user = await getUserByEmail(email)
+  try {
+    const user = await getUserByEmail(clean)
 
-  if (!user) {
+    if (!user) {
+      return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
+    }
+
+    if (user.status === 'PENDING') {
+      return { action: 'PENDING', targetUrl: '/solicitud-pendiente', user }
+    }
+
+    if (user.status === 'APPROVED') {
+      const targetUrl = user.rol === 'DIRECTOR' || user.rol === 'AREA_DIRECTOR'
+        ? '/dashboard/director'
+        : '/dashboard/mentor'
+      return { action: 'DASHBOARD', targetUrl, user }
+    }
+
+    return { action: 'PENDING', targetUrl: '/solicitud-pendiente', user }
+  } catch (error) {
+    console.error('[PRAM DB Error in checkUserAuthRedirect]:', error)
     return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
   }
-
-  if (user.status === 'PENDING') {
-    return { action: 'PENDING', targetUrl: '/solicitud-pendiente', user }
-  }
-
-  if (user.status === 'APPROVED') {
-    const targetUrl = user.rol === 'DIRECTOR' || user.rol === 'AREA_DIRECTOR'
-      ? '/dashboard/director'
-      : '/dashboard/mentor'
-    return { action: 'DASHBOARD', targetUrl, user }
-  }
-
-  return { action: 'PENDING', targetUrl: '/solicitud-pendiente', user }
 }
 
 // ==============================================================================
@@ -634,7 +648,7 @@ export async function getPublicKPIs(): Promise<PublicKPIs> {
       }
     }
   } catch (error) {
-    console.warn('Neon connection fallback in getPublicKPIs:', error)
+    console.error('[PRAM DB Error in getPublicKPIs]:', error)
   }
 
   const horasCertificadas = fallbackMentores.reduce((acc, m) => acc + m.horas_acumuladas, 0)
@@ -667,7 +681,7 @@ export async function getTopMentores(limit = 10): Promise<Mentor[]> {
       }
     }
   } catch (error) {
-    console.warn('Neon connection fallback in getTopMentores:', error)
+    console.error('[PRAM DB Error in getTopMentores]:', error)
   }
 
   return [...fallbackMentores]
@@ -694,7 +708,7 @@ export async function getCUVDetails(cuvCodigo: string): Promise<CertificadoCUV |
       }
     }
   } catch (error) {
-    console.warn('Neon connection fallback in getCUVDetails:', error)
+    console.error('[PRAM DB Error in getCUVDetails]:', error)
   }
 
   const found = fallbackCertificados.find((c) => c.cuv_codigo.toUpperCase() === cleanCode)
@@ -723,7 +737,7 @@ export async function getMentorSessions(mentorId: string): Promise<{ mentor: Men
       }
     }
   } catch (error) {
-    console.warn('Neon connection fallback in getMentorSessions:', error)
+    console.error('[PRAM DB Error in getMentorSessions]:', error)
   }
 
   const mentor = fallbackMentores.find((m) => m.id === mentorId) || fallbackMentores[0]
@@ -745,7 +759,7 @@ export async function getPendingSessionsForAudit(): Promise<Sesion[]> {
       if (rows) return rows
     }
   } catch (error) {
-    console.warn('Neon connection fallback in getPendingSessionsForAudit:', error)
+    console.error('[PRAM DB Error in getPendingSessionsForAudit]:', error)
   }
 
   return fallbackSesiones.filter((s) => s.estado === 'pending')
@@ -785,7 +799,7 @@ export async function createSessionInDb(data: {
       `
     }
   } catch (error) {
-    console.warn('Neon connection fallback in createSessionInDb:', error)
+    console.error('[PRAM DB Error in createSessionInDb]:', error)
   }
 
   fallbackSesiones.unshift(newSesion)
@@ -817,7 +831,7 @@ export async function approveSessionInDb(sessionId: string, directorName = 'Dra.
       }
     }
   } catch (error) {
-    console.warn('Neon connection fallback in approveSessionInDb:', error)
+    console.error('[PRAM DB Error in approveSessionInDb]:', error)
   }
 
   const sesionIdx = fallbackSesiones.findIndex((s) => s.id === sessionId)
@@ -846,7 +860,7 @@ export async function rejectSessionInDb(sessionId: string): Promise<boolean> {
       `
     }
   } catch (error) {
-    console.warn('Neon connection fallback in rejectSessionInDb:', error)
+    console.error('[PRAM DB Error in rejectSessionInDb]:', error)
   }
 
   const sesionIdx = fallbackSesiones.findIndex((s) => s.id === sessionId)

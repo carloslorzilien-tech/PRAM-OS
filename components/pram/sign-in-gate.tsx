@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { LogIn, UserPlus, X } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
 import { Google1ClickButton } from '@/components/pram/google-1click-auth'
 
 interface AuthModalProps {
@@ -91,20 +92,24 @@ export function GoogleAuthModal({
 }
 
 /**
- * SignInGate — CTA orgánico para acciones protegidas
+ * SignInGate — CTA orgánico para acciones protegidas.
+ * Evalúa useUser() de Clerk: si ya está autenticado, no abre modal alguno.
  */
 export function SignInGate({
   children,
-  isSignedIn = false,
+  isSignedIn: propIsSignedIn,
   message = '¿Eres mentor o estudiante de PRAM OS? Inicia sesión con Google para acceder a esta función.',
 }: {
   children: React.ReactNode
   isSignedIn?: boolean
   message?: string
 }) {
+  const { isSignedIn: clerkIsSignedIn, isLoaded } = useUser()
   const [isOpen, setIsOpen] = useState(false)
 
-  if (isSignedIn) {
+  const activeIsSignedIn = propIsSignedIn || (isLoaded && clerkIsSignedIn)
+
+  if (activeIsSignedIn) {
     return <>{children}</>
   }
 

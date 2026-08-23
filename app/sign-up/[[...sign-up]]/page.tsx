@@ -1,3 +1,5 @@
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import { SignUp } from '@clerk/nextjs'
 import Link from 'next/link'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
@@ -7,7 +9,18 @@ export const metadata = {
   description: 'Regístrate en el sistema de gestión pedagógica del Liceo Minerva Mirabal.',
 }
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  try {
+    const { userId } = await auth()
+    if (userId) {
+      redirect('/dashboard')
+    }
+  } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       {/* Header Institucional */}

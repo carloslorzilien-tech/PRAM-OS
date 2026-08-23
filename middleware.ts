@@ -1,17 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-// Rutas 100% públicas — NUNCA muestran avisos de seguridad, 403, ni bloqueos
+// Rutas 100% públicas — Libre acceso sin avisos, 403 ni bloqueos erróneos
 const isPublicRoute = createRouteMatcher([
   '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
   '/recursos(.*)',
   '/verify(.*)',
+  '/validar(.*)',
   '/demo(.*)',
   '/rankings(.*)',
   '/onboarding(.*)',
   '/solicitud-pendiente(.*)',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
   '/api(.*)',
 ])
 

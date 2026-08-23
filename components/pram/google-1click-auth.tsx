@@ -1,8 +1,9 @@
 'use client'
 
 import React from 'react'
-import { SignInButton, SignUpButton } from '@clerk/nextjs'
-import { LogIn, UserPlus } from 'lucide-react'
+import { SignInButton, SignUpButton, useUser } from '@clerk/nextjs'
+import Link from 'next/link'
+import { LogIn, UserPlus, LayoutDashboard } from 'lucide-react'
 
 interface GoogleAuthButtonProps {
   mode?: 'sign-in' | 'sign-up'
@@ -12,14 +13,33 @@ interface GoogleAuthButtonProps {
 
 /**
  * Botón de autenticación directa 1-Click con Clerk Google OAuth.
- * Utiliza <SignInButton> y <SignUpButton> en mode="modal" para lanzar directamente
- * el selector de cuentas de Google sin formularios previos ni inputs de texto.
+ * Si el usuario ya está autenticado (`isSignedIn === true`), NO renderiza o abre <SignInButton>
+ * para evitar el error `cannot_render_single_session_enabled`. En su lugar, muestra un botón directo
+ * que redirige a su dashboard ("/dashboard").
  */
 export function Google1ClickButton({
   mode = 'sign-in',
   className,
   children,
 }: GoogleAuthButtonProps) {
+  const { isSignedIn, isLoaded } = useUser()
+
+  // Si la sesión ya está activa, bypass directo al dashboard sin modal
+  if (isLoaded && isSignedIn) {
+    return (
+      <Link
+        href="/dashboard"
+        className={
+          className ||
+          'inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#152642] hover:bg-[#1e3a5f] transition-all px-3.5 py-2 rounded-lg shadow-sm cursor-pointer'
+        }
+      >
+        <LayoutDashboard className="size-3.5 text-slate-200" />
+        <span>Ir al Dashboard</span>
+      </Link>
+    )
+  }
+
   if (mode === 'sign-up') {
     return (
       <SignUpButton

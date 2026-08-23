@@ -10,41 +10,33 @@ import {
   ShieldCheck,
   BookOpen,
 } from 'lucide-react'
-import { getPublicKPIs, getUserByEmail } from '@/lib/db'
+import { getPublicKPIs, checkUserAuthRedirect } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardHubPage() {
-  // Auto-detección y redirección según estado en Neon DB
+  // Auto-detección y redirección según estado en Neon DB y reglas pre-aprobadas
   try {
     const clerkUser = await currentUser()
     const email = clerkUser?.emailAddresses?.[0]?.emailAddress
 
     if (email) {
-      const dbUser = await getUserByEmail(email)
-
-      if (!dbUser) {
+      const authResult = await checkUserAuthRedirect(email)
+      if (authResult.action === 'ONBOARDING') {
         redirect('/onboarding')
       }
-
-      if (dbUser.status === 'PENDING') {
+      if (authResult.action === 'PENDING') {
         redirect('/solicitud-pendiente')
       }
-
-      if (dbUser.status === 'APPROVED') {
-        if (dbUser.rol === 'DIRECTOR' || dbUser.rol === 'AREA_DIRECTOR') {
-          redirect('/dashboard/director')
-        } else {
-          redirect('/dashboard/mentor')
-        }
+      if (authResult.action === 'DASHBOARD' && authResult.targetUrl) {
+        redirect(authResult.targetUrl)
       }
     }
   } catch (error: any) {
-    // Si es NEXT_REDIRECT, permitir que fluya
     if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
       throw error
     }
-    // En caso de modo autónomo sin llaves de Clerk, continúa al render
+    console.error('[PRAM Auth Error in DashboardHubPage]:', error)
   }
 
   const kpis = await getPublicKPIs()
