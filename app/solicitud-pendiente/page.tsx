@@ -12,11 +12,15 @@ export const metadata = {
 }
 
 export default async function SolicitudPendientePage() {
-  // Redirección Inteligente: Si el usuario ya fue aprobado, llevarlo directamente a su dashboard
+  // Redirección Inteligente: Si el usuario ya fue aprobado, llevarlo directamente a su dashboard específico
   try {
     const currentUser = await getOrCreateCurrentUser()
     if (currentUser && currentUser.status === 'APPROVED') {
-      redirect('/dashboard')
+      const target =
+        currentUser.rol === 'DIRECTOR' || currentUser.rol === 'AREA_DIRECTOR'
+          ? '/dashboard/director'
+          : '/dashboard/mentor'
+      redirect(target)
     }
   } catch (error: any) {
     if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {

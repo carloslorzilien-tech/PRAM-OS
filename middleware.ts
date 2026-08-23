@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-// Rutas 100% públicas — Libre acceso sin avisos, 403 ni bloqueos erróneos
+// Rutas 100% públicas — Libre acceso sin bloqueos ni avisos
 const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
@@ -16,48 +16,34 @@ const isPublicRoute = createRouteMatcher([
   '/api(.*)',
 ])
 
-// Rutas restringidas solo a DIRECTOR y AREA_DIRECTOR
-const isDirectorRoute = createRouteMatcher([
-  '/dashboard/director(.*)',
-])
-
-const DIRECTOR_ROLES = ['DIRECTOR', 'AREA_DIRECTOR', 'org:director', 'org:area_director']
-
 export default clerkMiddleware(async (auth, req) => {
   // Sin llaves de Clerk → modo autónomo local, permitir todo sin avisos
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
     return NextResponse.next()
   }
 
-  // Rutas públicas: libre acceso sin ningún aviso ni bloqueo
+  // Rutas públicas: libre acceso
   if (isPublicRoute(req)) {
     return NextResponse.next()
   }
 
-  // Rutas de director: verificar rol
-  if (isDirectorRoute(req)) {
-    const { sessionClaims } = await auth()
+  const pathname = req.nextUrl.pathname
 
-    if (!sessionClaims) {
-      const signInUrl = new URL('/sign-in', req.url)
-      signInUrl.searchParams.set('redirect_url', req.url)
-      return NextResponse.redirect(signInUrl)
-    }
-
-    const role =
-      (sessionClaims?.publicMetadata as { role?: string })?.role ||
-      (sessionClaims as { orgRole?: string })?.orgRole ||
-      ''
-
-    if (!DIRECTOR_ROLES.some(r => role === r)) {
-      return NextResponse.redirect(new URL('/dashboard/mentor', req.url))
-    }
-
+  // Blindaje Anti-Bucle: Si la solicitud ya se dirige a un dashboard, permitir el paso.
+  // La verificación de rol y DB se delega exclusivamente a los Server Components sin rebotes circulares.
+  if (
+    pathname === '/dashboard' ||
+    pathname.startsWith('/dashboard/mentor') ||
+    pathname.startsWith('/dashboard/director') ||
+    pathname.startsWith('/solicitud-pendiente')
+  ) {
+    await auth.protect()
     return NextResponse.next()
   }
 
-  // Resto de rutas privadas → solo requieren estar autenticado
+  // Resto de rutas protegidas
   await auth.protect()
+  return NextResponse.next()
 })
 
 export const config = {
