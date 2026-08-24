@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, googleProvider, db } from '@/lib/firebase'
 import { Usuario } from '@/lib/db'
 
@@ -40,28 +40,44 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
           const userDocRef = doc(db, 'users', currentUser.uid)
           const userDocSnap = await getDoc(userDocRef)
 
+          const email = (currentUser.email || '').toLowerCase().trim()
+          const isDirector = email === 'carlos.lorzilien@gmail.com'
+          const isMentor =
+            email === 'carlosomarlorzilienservilien@gmail.com' ||
+            email === 'carlosmarlorzilienservilien@gmail.com'
+
           if (userDocSnap.exists()) {
-            setUserProfile(userDocSnap.data() as Usuario)
+            const data = userDocSnap.data() as Usuario
+            // Asegurar sincronización de rol para directores y mentores preaprobados
+            if (isDirector && (data.rol !== 'DIRECTOR' || data.status !== 'APPROVED')) {
+              data.rol = 'DIRECTOR'
+              data.status = 'APPROVED'
+              await setDoc(userDocRef, { role: 'DIRECTOR', rol: 'DIRECTOR', status: 'APPROVED' }, { merge: true })
+            } else if (isMentor && data.status !== 'APPROVED') {
+              data.rol = 'MENTOR'
+              data.status = 'APPROVED'
+              data.area = 'Matemáticas'
+              await setDoc(userDocRef, { role: 'MENTOR', rol: 'MENTOR', status: 'APPROVED', area: 'Matemáticas' }, { merge: true })
+            }
+            setUserProfile(data)
           } else {
             // Auto-creación de perfil al registrarse
-            const email = (currentUser.email || '').toLowerCase().trim()
-            const isDirector = email === 'carlos.lorzilien@gmail.com'
-            const isMentor =
-              email === 'carlosomarlorzilienservilien@gmail.com' ||
-              email === 'carlosmarlorzilienservilien@gmail.com'
-
-            const newProfile: Usuario = {
+            const newProfile = {
               id: currentUser.uid,
+              uid: currentUser.uid,
               email,
               nombre: currentUser.displayName || currentUser.email?.split('@')[0] || 'Usuario PRAM',
+              displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Usuario PRAM',
+              role: isDirector ? 'DIRECTOR' : 'MENTOR',
               rol: isDirector ? 'DIRECTOR' : 'MENTOR',
               area: isMentor ? 'Matemáticas' : undefined,
               status: isDirector || isMentor ? 'APPROVED' : 'PENDING',
               created_at: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
             }
 
             await setDoc(userDocRef, newProfile, { merge: true })
-            setUserProfile(newProfile)
+            setUserProfile(newProfile as unknown as Usuario)
           }
         } catch (error) {
           console.error('[Firebase Auth Profile Error]:', error)
@@ -93,27 +109,32 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
       let profile: Usuario
       if (userDocSnap.exists()) {
         profile = userDocSnap.data() as Usuario
-        if (isDirector && profile.rol !== 'DIRECTOR') {
+        if (isDirector && (profile.rol !== 'DIRECTOR' || profile.status !== 'APPROVED')) {
           profile.rol = 'DIRECTOR'
           profile.status = 'APPROVED'
-          await setDoc(userDocRef, { rol: 'DIRECTOR', status: 'APPROVED' }, { merge: true })
+          await setDoc(userDocRef, { role: 'DIRECTOR', rol: 'DIRECTOR', status: 'APPROVED' }, { merge: true })
         } else if (isMentor && profile.status !== 'APPROVED') {
           profile.rol = 'MENTOR'
           profile.status = 'APPROVED'
           profile.area = 'Matemáticas'
-          await setDoc(userDocRef, { rol: 'MENTOR', status: 'APPROVED', area: 'Matemáticas' }, { merge: true })
+          await setDoc(userDocRef, { role: 'MENTOR', rol: 'MENTOR', status: 'APPROVED', area: 'Matemáticas' }, { merge: true })
         }
       } else {
-        profile = {
+        const newProfile = {
           id: firebaseUser.uid,
+          uid: firebaseUser.uid,
           email,
           nombre: firebaseUser.displayName || email.split('@')[0] || 'Usuario PRAM',
+          displayName: firebaseUser.displayName || email.split('@')[0] || 'Usuario PRAM',
+          role: isDirector ? 'DIRECTOR' : 'MENTOR',
           rol: isDirector ? 'DIRECTOR' : 'MENTOR',
           area: isMentor ? 'Matemáticas' : undefined,
           status: isDirector || isMentor ? 'APPROVED' : 'PENDING',
           created_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
         }
-        await setDoc(userDocRef, profile, { merge: true })
+        await setDoc(userDocRef, newProfile, { merge: true })
+        profile = newProfile as unknown as Usuario
       }
 
       setUser(firebaseUser)

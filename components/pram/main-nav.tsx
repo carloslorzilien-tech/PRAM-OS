@@ -8,19 +8,22 @@ import {
   ShieldCheck,
   Menu,
   X,
+  LogOut,
   LogIn,
-  UserPlus,
 } from 'lucide-react'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
+import { useFirebaseAuth } from '@/lib/firebase-auth'
+import { Google1ClickButton } from '@/components/pram/google-1click-auth'
 
 export function MainNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, userProfile, signOut } = useFirebaseAuth()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8">
       {/* Isotipo con la 'M' de PRAM + Marca Principal */}
       <Link href="/" className="flex items-center gap-3 group">
-        <div className="flex size-9 sm:size-10 items-center justify-center rounded-lg bg-slate-900 p-1.5 shadow-sm shrink-0 transition-transform group-hover:scale-105">
+        <div className="flex size-9 sm:size-10 items-center justify-center rounded-xl bg-slate-900 p-1.5 shadow-sm shrink-0 transition-transform group-hover:scale-105">
           <Image
             src="/pram-logo.svg"
             alt="PRAM M Logo"
@@ -58,7 +61,22 @@ export function MainNav() {
           <span>Verificar CUV</span>
         </Link>
 
-        <UserProfileBadge userRole="DIRECTOR" userStatus="APPROVED" />
+        {user ? (
+          <div className="flex items-center gap-2">
+            <UserProfileBadge />
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer"
+              title="Cerrar Sesión"
+            >
+              <LogOut className="size-3.5" />
+              <span className="hidden lg:inline">Cerrar Sesión</span>
+            </button>
+          </div>
+        ) : (
+          <Google1ClickButton mode="sign-in" />
+        )}
       </nav>
 
       {/* Botón Menú Móvil */}
@@ -73,7 +91,7 @@ export function MainNav() {
 
       {/* Desplegable Móvil */}
       {mobileMenuOpen && (
-        <div className="absolute top-16 left-0 w-full bg-white border-b border-slate-200 p-4 shadow-lg md:hidden flex flex-col gap-2 z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-16 left-0 w-full bg-white border-b border-slate-200 p-4 shadow-lg md:hidden flex flex-col gap-2.5 z-40 animate-in fade-in slide-in-from-top-2 duration-200">
           <Link
             href="/recursos"
             onClick={() => setMobileMenuOpen(false)}
@@ -92,8 +110,25 @@ export function MainNav() {
             <span>Validador de Certificados CUV</span>
           </Link>
 
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-center">
-            <UserProfileBadge userRole="DIRECTOR" userStatus="APPROVED" />
+          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+            {user ? (
+              <>
+                <UserProfileBadge />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    signOut()
+                  }}
+                  className="flex w-full items-center justify-center gap-2 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 py-2 rounded-xl transition-colors cursor-pointer"
+                >
+                  <LogOut className="size-3.5" />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </>
+            ) : (
+              <Google1ClickButton mode="sign-in" className="w-full justify-center" />
+            )}
           </div>
         </div>
       )}

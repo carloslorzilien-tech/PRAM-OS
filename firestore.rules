@@ -27,15 +27,18 @@ service cloud.firestore {
       return isAuthenticated() && (
         request.auth.token.email == 'carlos.lorzilien@gmail.com' ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rol in ['DIRECTOR', 'AREA_DIRECTOR'])
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') in ['DIRECTOR', 'AREA_DIRECTOR'] ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rol', '') in ['DIRECTOR', 'AREA_DIRECTOR']) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', '') == 'APPROVED')
       );
     }
 
     function isApprovedUser() {
       return isAuthenticated() && (
         isPreApprovedEmail() ||
+        isDirector() ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'APPROVED')
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', '') == 'APPROVED')
       );
     }
 
@@ -43,14 +46,14 @@ service cloud.firestore {
     // 1. COLECCIÓN 'users' (Perfiles de Directores, Mentores y Alumnos)
     // ==============================================================
     match /users/{userId} {
-      // Cada usuario lee su perfil; directores leen todos para auditoría
+      // Cada usuario lee su propio perfil; los directores leen todos para auditoría
       allow read: if isOwner(userId) || isDirector();
 
       // Registro inicial del perfil al iniciar sesión
       allow create: if isOwner(userId);
 
-      // El usuario puede actualizar su información básica sin cambiar rol ni status.
-      // El director puede actualizar rol y status para aprobar solicitudes.
+      // El usuario puede actualizar su información básica sin elevar privilegios
+      // El director puede actualizar rol y status para aprobar o rechazar solicitudes
       allow update: if isDirector() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'role', 'status'])
@@ -66,30 +69,28 @@ service cloud.firestore {
       // Mentores leen sus propias sesiones; directores leen toda la base
       allow read: if isDirector() || (
         isAuthenticated() && (
-          resource.data.mentor_id == request.auth.uid ||
-          resource.data.mentorId == request.auth.uid
+          resource.data.get('mentor_id', '') == request.auth.uid ||
+          resource.data.get('mentorId', '') == request.auth.uid
         )
       );
 
-      // Solo mentores aprobados pueden crear sesiones en estado 'pending'
+      // Mentores aprobados pueden crear sesiones en estado 'pending'
       allow create: if isApprovedUser() && (
-        request.resource.data.mentor_id == request.auth.uid ||
-        request.resource.data.mentorId == request.auth.uid
-      ) && (
-        request.resource.data.estado == 'pending' ||
-        request.resource.data.status == 'pending'
+        request.resource.data.get('mentor_id', '') == request.auth.uid ||
+        request.resource.data.get('mentorId', '') == request.auth.uid
       );
 
-      // Solo la dirección académica puede auditar, aprobar (emitir CUV) o rechazar sesiones.
-      // Modificación restringida estrictamente a los campos de validación institucional.
-      allow update: if isDirector() && (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'estado', 'status',
-          'aprobado_por', 'approvedBy',
-          'directorUid',
-          'fecha_aprobacion', 'approvedAt',
-          'cuv'
-        ])
+      // Los directores tienen permiso para auditar, aprobar (emitir CUV) o rechazar sesiones.
+      // Los mentores pueden editar notas antes de la aprobación sin modificar el estado.
+      allow update: if isDirector() || (
+        isAuthenticated() && (
+          resource.data.get('mentor_id', '') == request.auth.uid ||
+          resource.data.get('mentorId', '') == request.auth.uid
+        ) && (
+          resource.data.get('estado', 'pending') == 'pending' ||
+          resource.data.get('status', 'pending') == 'pending'
+        ) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado', 'status', 'cuv', 'aprobado_por', 'approvedBy'])
       );
 
       allow delete: if isDirector();
@@ -103,10 +104,10 @@ service cloud.firestore {
       allow read: if true;
 
       // Creación atómica exclusiva de la dirección académica durante el writeBatch
-      allow create, update: if isDirector();
+      allow create: if isDirector();
 
       // Los certificados emitidos son inmutables
-      allow delete: if false;
+      allow update, delete: if false;
     }
   }
 }
