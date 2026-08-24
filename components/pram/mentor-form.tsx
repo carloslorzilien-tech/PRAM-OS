@@ -1,10 +1,19 @@
 'use client'
 
 import React, { useState } from 'react'
-import { submitSessionAction } from '@/app/actions'
-import { PlusCircle, Clock, BookOpen, Users, Calendar, Check, AlertCircle } from 'lucide-react'
+import { PlusCircle, Clock, BookOpen, Users, Calendar, Check, AlertCircle, Loader2 } from 'lucide-react'
+import { createFirebaseSession } from '@/lib/firebase-service'
+import { useFirebaseAuth } from '@/lib/firebase-auth'
+import { MateriaValida } from '@/lib/db'
 
-export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
+export function MentorSessionForm({
+  mentorId = 'm-1',
+  onSessionAdded,
+}: {
+  mentorId?: string
+  onSessionAdded?: () => void
+}) {
+  const { user, userProfile } = useFirebaseAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,18 +25,44 @@ export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
     setSuccess(false)
 
     const formData = new FormData(e.currentTarget)
-    formData.set('mentor_id', mentorId)
+    const materia = formData.get('materia') as MateriaValida
+    const tema = (formData.get('tema') as string) || ''
+    const duracionMinutos = Number(formData.get('duracion_minutos') || 45)
+    const cantidadAlumnos = Number(formData.get('cantidad_alumnos') || 1)
+    const fechaSesion = (formData.get('fecha_sesion') as string) || new Date().toISOString().split('T')[0]
+    const notas = (formData.get('notas') as string) || ''
 
-    const res = await submitSessionAction(formData)
-    setIsSubmitting(false)
+    if (!tema || !materia) {
+      setError('Por favor complete todos los campos requeridos.')
+      setIsSubmitting(false)
+      return
+    }
 
-    if (res.success) {
+    try {
+      const effectiveMentorId = user?.uid || mentorId || 'm-1'
+      const mentorNombre = user?.displayName || userProfile?.nombre || 'Prof. Carlos Omar Lorzilien'
+
+      await createFirebaseSession({
+        mentor_id: effectiveMentorId,
+        mentor_nombre: mentorNombre,
+        materia,
+        tema,
+        duracion_minutos: duracionMinutos,
+        cantidad_alumnos: cantidadAlumnos,
+        fecha_sesion: fechaSesion,
+        notas,
+      })
+
       setSuccess(true)
       const form = e.target as HTMLFormElement
       form.reset()
+      if (onSessionAdded) onSessionAdded()
       setTimeout(() => setSuccess(false), 4000)
-    } else {
-      setError(res.error || 'Error al guardar la sesión')
+    } catch (err) {
+      console.error('[Firebase MentorForm Error]:', err)
+      setError('Error al registrar la sesión en Firestore.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -37,7 +72,7 @@ export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
       {success && (
         <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs font-medium text-emerald-800">
           <Check className="size-4 text-emerald-600 shrink-0" />
-          <span>¡Sesión registrada exitosamente! Enviada a auditoría de dirección.</span>
+          <span>¡Sesión registrada exitosamente en Firestore! Enviada a auditoría de dirección.</span>
         </div>
       )}
 
@@ -48,7 +83,7 @@ export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
         </div>
       )}
 
-      {/* Grid de 4 Campos Principales (< 30 segundos) */}
+      {/* Grid de Campos (< 30 segundos) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Campo 1: Materia */}
         <div>
@@ -98,7 +133,7 @@ export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
             type="text"
             name="tema"
             required
-            placeholder="Ej: Resolución de ecuaciones de 1er grado con fracciones"
+            placeholder="Ej: Resolución de ecuaciones lineales y operaciones algebraicas"
             className="w-full h-10 px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           />
         </div>
@@ -134,15 +169,24 @@ export function MentorSessionForm({ mentorId = 'm-1' }: { mentorId?: string }) {
         </div>
       </div>
 
-      {/* Botón de Registro Rápido */}
+      {/* Botón de Registro */}
       <div className="pt-2">
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-6 py-2.5 text-xs font-medium shadow-sm transition-all cursor-pointer disabled:opacity-50"
         >
-          <PlusCircle className="size-4" />
-          <span>{isSubmitting ? 'Guardando en Neon...' : 'Registrar Sesión de Tutoría'}</span>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              <span>Guardando en Firestore...</span>
+            </>
+          ) : (
+            <>
+              <PlusCircle className="size-4" />
+              <span>Registrar Sesión en Firestore</span>
+            </>
+          )}
         </button>
       </div>
     </form>

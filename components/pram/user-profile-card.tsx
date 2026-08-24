@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { User, ChevronDown, LayoutDashboard, CheckCircle2 } from 'lucide-react'
+import Image from 'next/image'
+import { User, ChevronDown, LayoutDashboard, CheckCircle2, LogOut, Clock } from 'lucide-react'
+import { useFirebaseAuth } from '@/lib/firebase-auth'
 
 interface UserProfileCardProps {
   userRole?: 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT'
@@ -10,21 +12,33 @@ interface UserProfileCardProps {
   userArea?: string | null
 }
 
-export function UserProfileBadge({ userRole = 'DIRECTOR', userStatus = 'APPROVED', userArea }: UserProfileCardProps) {
+export function UserProfileBadge({
+  userRole: propRole,
+  userStatus: propStatus,
+  userArea: propArea,
+}: UserProfileCardProps) {
+  const { user, userProfile, signOut } = useFirebaseAuth()
   const [showCard, setShowCard] = useState(false)
 
-  const isDirector = userRole === 'DIRECTOR' || userRole === 'AREA_DIRECTOR'
+  const effectiveRole = userProfile?.rol || propRole || 'DIRECTOR'
+  const effectiveStatus = userProfile?.status || propStatus || 'APPROVED'
+  const effectiveArea = userProfile?.area || propArea
+
+  const isDirector =
+    effectiveRole === 'DIRECTOR' ||
+    effectiveRole === 'AREA_DIRECTOR' ||
+    user?.email?.toLowerCase() === 'carlos.lorzilien@gmail.com'
+
   const roleLabel = isDirector
     ? 'Director Académico'
-    : userArea
-    ? `Mentor · ${userArea}`
+    : effectiveArea
+    ? `Mentor · ${effectiveArea}`
     : 'Mentor de Matemáticas'
 
-  const statusLabel = userStatus || 'APPROVED'
-  const isApproved = statusLabel === 'APPROVED'
+  const isApproved = effectiveStatus === 'APPROVED'
   const dashboardUrl = isDirector ? '/dashboard/director' : '/dashboard/mentor'
-  const email = isDirector ? 'carlos.lorzilien@gmail.com' : 'carlosomarlorzilienservilien@gmail.com'
-  const fullName = isDirector ? 'Carlos Lorzilien (Director)' : 'Prof. Carlos Omar Lorzilien'
+  const email = user?.email || (isDirector ? 'carlos.lorzilien@gmail.com' : 'carlosomarlorzilienservilien@gmail.com')
+  const fullName = user?.displayName || userProfile?.nombre || (isDirector ? 'Carlos Lorzilien (Director)' : 'Prof. Carlos Omar Lorzilien')
 
   return (
     <div className="relative inline-flex items-center gap-2">
@@ -43,10 +57,22 @@ export function UserProfileBadge({ userRole = 'DIRECTOR', userStatus = 'APPROVED
         <ChevronDown className={`size-3.5 text-slate-500 transition-transform ${showCard ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Avatar Estático */}
-      <div className="flex size-8 items-center justify-center rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs">
-        {fullName.charAt(0)}
-      </div>
+      {/* Avatar */}
+      {user?.photoURL ? (
+        <div className="size-8 rounded-xl overflow-hidden border border-slate-300 shadow-xs relative">
+          <Image
+            src={user.photoURL}
+            alt={fullName}
+            width={32}
+            height={32}
+            className="size-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="flex size-8 items-center justify-center rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs">
+          {fullName.charAt(0)}
+        </div>
+      )}
 
       {/* Tarjeta Flotante Desplegable de Perfil */}
       {showCard && (
@@ -78,14 +104,29 @@ export function UserProfileBadge({ userRole = 'DIRECTOR', userStatus = 'APPROVED
 
               <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                 <span className="text-slate-500 font-medium">Estado de Cuenta:</span>
-                <span className="inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <CheckCircle2 className="size-3 text-emerald-600" />
-                  <span>APPROVED</span>
+                <span
+                  className={`inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-full ${
+                    isApproved
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}
+                >
+                  {isApproved ? (
+                    <>
+                      <CheckCircle2 className="size-3 text-emerald-600" />
+                      <span>APPROVED</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="size-3 text-amber-600" />
+                      <span>PENDING</span>
+                    </>
+                  )}
                 </span>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-100">
+            <div className="pt-2 border-t border-slate-100 space-y-1.5">
               <Link
                 href={dashboardUrl}
                 onClick={() => setShowCard(false)}
@@ -94,6 +135,20 @@ export function UserProfileBadge({ userRole = 'DIRECTOR', userStatus = 'APPROVED
                 <LayoutDashboard className="size-3.5" />
                 <span>Ir a Mi Panel de Control</span>
               </Link>
+
+              {user && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowCard(false)
+                    await signOut()
+                  }}
+                  className="flex w-full items-center justify-center gap-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 text-xs font-medium py-2 rounded-xl transition-colors cursor-pointer"
+                >
+                  <LogOut className="size-3.5" />
+                  <span>Cerrar Sesión</span>
+                </button>
+              )}
             </div>
           </div>
         </>

@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import { FirebaseAuthProvider } from '@/lib/firebase-auth'
 import { InstallPrompt } from '@/components/pram/install-prompt'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -57,8 +58,10 @@ export default function RootLayout({
       className={`${plusJakarta.variable} ${jetbrainsMono.variable} bg-slate-50`}
     >
       <body className="min-h-screen bg-slate-50 font-sans antialiased text-slate-900 selection:bg-slate-900 selection:text-white">
-        {children}
-        <InstallPrompt />
+        <FirebaseAuthProvider>
+          {children}
+          <InstallPrompt />
+        </FirebaseAuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

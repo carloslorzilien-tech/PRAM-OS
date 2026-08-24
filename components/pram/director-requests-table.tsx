@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { approveUserAction, rejectUserAction } from '@/app/actions'
+import { approveFirebaseUser, rejectFirebaseUser } from '@/lib/firebase-service'
 import { Usuario } from '@/lib/db'
-import { Check, X, Users, Clock, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Check, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react'
 
 export function DirectorRequestsTable({ initialUsers }: { initialUsers: Usuario[] }) {
   const [users, setUsers] = useState<Usuario[]>(initialUsers)
@@ -13,30 +13,30 @@ export function DirectorRequestsTable({ initialUsers }: { initialUsers: Usuario[
   const handleApprove = async (userId: string, userName: string) => {
     setProcessingId(userId)
     setMessage(null)
-    const res = await approveUserAction(userId)
+    const success = await approveFirebaseUser(userId)
     setProcessingId(null)
 
-    if (res.success) {
+    if (success) {
       setUsers((prev) => prev.filter((u) => u.id !== userId))
-      setMessage({ type: 'success', text: `Solicitud de ${userName} aprobada con éxito.` })
+      setMessage({ type: 'success', text: `Solicitud de ${userName} aprobada con éxito en Firestore.` })
       setTimeout(() => setMessage(null), 4000)
     } else {
-      setMessage({ type: 'error', text: res.error || 'Error al aprobar usuario.' })
+      setMessage({ type: 'error', text: 'Error al aprobar usuario en Firestore.' })
     }
   }
 
   const handleReject = async (userId: string, userName: string) => {
     setProcessingId(userId)
     setMessage(null)
-    const res = await rejectUserAction(userId)
+    const success = await rejectFirebaseUser(userId)
     setProcessingId(null)
 
-    if (res.success) {
+    if (success) {
       setUsers((prev) => prev.filter((u) => u.id !== userId))
       setMessage({ type: 'success', text: `Solicitud de ${userName} rechazada.` })
       setTimeout(() => setMessage(null), 4000)
     } else {
-      setMessage({ type: 'error', text: res.error || 'Error al rechazar usuario.' })
+      setMessage({ type: 'error', text: 'Error al rechazar usuario.' })
     }
   }
 
@@ -119,7 +119,11 @@ export function DirectorRequestsTable({ initialUsers }: { initialUsers: Usuario[
                           onClick={() => handleApprove(user.id, user.nombre)}
                           className="inline-flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
                         >
-                          <Check className="size-3.5" />
+                          {isProcessing ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Check className="size-3.5" />
+                          )}
                           <span>{isProcessing ? 'Procesando...' : 'Aprobar'}</span>
                         </button>
                         <button

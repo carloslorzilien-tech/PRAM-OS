@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { approveSessionAction, rejectSessionAction } from '@/app/actions'
+import { approveFirebaseSession, rejectFirebaseSession } from '@/lib/firebase-service'
 import { Sesion } from '@/lib/db'
-import { CheckCircle2, XCircle, Clock, Calendar, Users, FileCheck, Printer } from 'lucide-react'
+import { CheckCircle2, XCircle, Printer, Loader2 } from 'lucide-react'
 
 export function DirectorAuditTable({ initialSessions }: { initialSessions: Sesion[] }) {
   const [sessions, setSessions] = useState(initialSessions)
@@ -11,18 +11,18 @@ export function DirectorAuditTable({ initialSessions }: { initialSessions: Sesio
 
   const handleApprove = async (id: string) => {
     setProcessingId(id)
-    const res = await approveSessionAction(id)
+    const success = await approveFirebaseSession(id, 'Dra. Carmen Batlle')
     setProcessingId(null)
-    if (res.success) {
+    if (success) {
       setSessions((prev) => prev.filter((s) => s.id !== id))
     }
   }
 
   const handleReject = async (id: string) => {
     setProcessingId(id)
-    const res = await rejectSessionAction(id)
+    const success = await rejectFirebaseSession(id)
     setProcessingId(null)
-    if (res.success) {
+    if (success) {
       setSessions((prev) => prev.filter((s) => s.id !== id))
     }
   }
@@ -37,7 +37,7 @@ export function DirectorAuditTable({ initialSessions }: { initialSessions: Sesio
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-100">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Bandeja de Validación Institucional
+            Bandeja de Validación Institucional (Firestore)
           </span>
           <p className="text-xs text-slate-500 font-normal">
             {sessions.length} sesión(es) pendientes de firma y acreditación
@@ -106,7 +106,11 @@ export function DirectorAuditTable({ initialSessions }: { initialSessions: Sesio
                           onClick={() => handleApprove(sesion.id)}
                           className="bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
                         >
-                          <CheckCircle2 className="size-3.5" />
+                          {isProcessing ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="size-3.5" />
+                          )}
                           <span>{isProcessing ? 'Guardando...' : 'Aprobar y Bloquear'}</span>
                         </button>
                         <button
