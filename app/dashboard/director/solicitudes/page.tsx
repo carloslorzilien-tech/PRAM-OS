@@ -20,16 +20,11 @@ export default async function DirectorSolicitudesPage() {
   let isOfflineMode = false
 
   try {
-    // 1. Verificación de Autenticación y Redirección por Rol/Estado
+    // 1. Verificación de Autenticación
     currentUser = await getOrCreateCurrentUser()
 
-    if (currentUser) {
-      if (currentUser.status === 'PENDING') {
-        redirect('/solicitud-pendiente')
-      }
-      if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
-        redirect('/dashboard/mentor')
-      }
+    if (currentUser && currentUser.status === 'PENDING') {
+      redirect('/solicitud-pendiente')
     }
 
     // 2. Consulta blindada a Neon DB con retry

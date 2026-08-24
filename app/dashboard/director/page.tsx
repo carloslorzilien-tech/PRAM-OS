@@ -6,6 +6,8 @@ import {
   Users,
   CheckCircle2,
   AlertTriangle,
+  ShieldAlert,
+  ArrowRight,
 } from 'lucide-react'
 import {
   getPendingSessionsForAudit,
@@ -32,19 +34,13 @@ export default async function DirectorDashboardPage() {
   let isOfflineMode = false
 
   try {
-    // 1. Verificación de Autenticación y Redirección Inteligente según Rol y Estado
     currentUser = await getOrCreateCurrentUser()
 
-    if (currentUser) {
-      if (currentUser.status === 'PENDING') {
-        redirect('/solicitud-pendiente')
-      }
-      if (currentUser.rol === 'MENTOR' || currentUser.rol === 'STUDENT') {
-        redirect('/dashboard/mentor')
-      }
+    if (currentUser && currentUser.status === 'PENDING') {
+      redirect('/solicitud-pendiente')
     }
 
-    // 2. Carga protegida con retry ante Cold Starts de Neon DB
+    // Carga protegida con retry ante Cold Starts de Neon DB
     const results = await Promise.allSettled([
       withRetry(() => getPendingSessionsForAudit(), 3, 1500),
       withRetry(() => getPendingUsers(), 3, 1500),
@@ -62,6 +58,42 @@ export default async function DirectorDashboardPage() {
     }
     console.error('Error en Director Dashboard:', error)
     isOfflineMode = true
+  }
+
+  // Si el usuario autenticado es explícitamente un MENTOR (no director), mostrar aviso pasivo sin redirección en bucle
+  const isDirector =
+    currentUser?.rol === 'DIRECTOR' ||
+    currentUser?.rol === 'AREA_DIRECTOR' ||
+    currentUser?.email?.toLowerCase() === 'carlos.lorzilien@gmail.com'
+
+  if (currentUser && !isDirector && currentUser.rol === 'MENTOR') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 text-center">
+          <div className="flex size-12 mx-auto items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+            <ShieldAlert className="size-6" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">
+              Módulo de Dirección Académica
+            </h2>
+            <p className="text-xs text-slate-600 font-normal mt-1">
+              Tu cuenta ({currentUser.email}) está registrada con el rol de <strong>Tutor / Mentor</strong>.
+              El acceso a la auditoría está reservado para la Dirección.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/dashboard/mentor"
+              className="inline-flex w-full items-center justify-center gap-2 bg-[#152642] hover:bg-[#1e3a5f] text-white text-xs font-semibold py-2.5 rounded-xl transition-all shadow-xs"
+            >
+              <span>Ir a Mi Panel del Tutor</span>
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const directorName = currentUser?.nombre || 'Director Académico'

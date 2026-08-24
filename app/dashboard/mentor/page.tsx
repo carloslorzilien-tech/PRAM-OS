@@ -37,16 +37,11 @@ export default async function MentorDashboardPage({
   try {
     const params = await searchParams
 
-    // 1. Autenticación y Redirección Inteligente por Rol y Estado
+    // 1. Verificación de Autenticación
     currentUser = await getOrCreateCurrentUser()
 
-    if (currentUser) {
-      if (currentUser.status === 'PENDING') {
-        redirect('/solicitud-pendiente')
-      }
-      if (currentUser.rol === 'DIRECTOR' || currentUser.rol === 'AREA_DIRECTOR') {
-        redirect('/dashboard/director')
-      }
+    if (currentUser && currentUser.status === 'PENDING') {
+      redirect('/solicitud-pendiente')
     }
 
     // 2. Consulta a Neon DB con retry automático en Cold Start

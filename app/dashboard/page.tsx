@@ -1,43 +1,30 @@
 import React from 'react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { currentUser } from '@clerk/nextjs/server'
 import {
   Award,
   FileCheck,
   ArrowLeft,
   ArrowRight,
-  ShieldCheck,
   BookOpen,
 } from 'lucide-react'
-import { getPublicKPIs, checkUserAuthRedirect } from '@/lib/db'
+import { getPublicKPIs } from '@/lib/db'
+import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { UserProfileBadge } from '@/components/pram/user-profile-card'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardHubPage() {
-  // Auto-detección y redirección según estado en Neon DB y reglas pre-aprobadas
+  let currentUser = null
   try {
-    const clerkUser = await currentUser()
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress
-
-    if (email) {
-      const authResult = await checkUserAuthRedirect(email)
-      if (authResult.action === 'ONBOARDING') {
-        redirect('/onboarding')
-      }
-      if (authResult.action === 'PENDING') {
-        redirect('/solicitud-pendiente')
-      }
-      if (authResult.action === 'DASHBOARD' && authResult.targetUrl) {
-        redirect(authResult.targetUrl)
-      }
-    }
-  } catch (error: any) {
-    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
-      throw error
-    }
-    console.error('[PRAM Auth Error in DashboardHubPage]:', error)
+    currentUser = await getOrCreateCurrentUser()
+  } catch (error) {
+    console.warn('User resolution in DashboardHubPage:', error)
   }
+
+  const isDirector =
+    currentUser?.rol === 'DIRECTOR' ||
+    currentUser?.rol === 'AREA_DIRECTOR' ||
+    currentUser?.email?.toLowerCase() === 'carlos.lorzilien@gmail.com'
 
   const kpis = await getPublicKPIs()
 
@@ -58,35 +45,36 @@ export default async function DashboardHubPage() {
               PRAM OS · Centro de Gestión
             </span>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              Selección de Rol y Módulo Operativo
+              Selección de Módulo Operativo
             </h1>
           </div>
         </div>
 
-        <Link
-          href="/"
-          className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
-        >
-          Portal Público
-        </Link>
+        <div className="flex items-center gap-3">
+          <UserProfileBadge
+            userRole={currentUser?.rol}
+            userStatus={currentUser?.status}
+            userArea={currentUser?.area}
+          />
+        </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
         <div className="text-center space-y-2 max-w-lg mx-auto">
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Acceso al Sistema PRAM OS
+            Acceso a los Paneles de Control
           </h2>
           <p className="text-xs text-slate-600 font-normal">
-            Selecciona el espacio de trabajo correspondiente a tu función en el programa educativo.
+            Haz clic en el módulo al que deseas ingresar según tu función en el programa educativo.
           </p>
         </div>
 
-        {/* Tarjetas de Selección de Rol */}
+        {/* Tarjetas de Selección de Rol Pasivas (100% mediante <Link>) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Opción 1: Panel del Tutor / Mentor */}
           <Link
             href="/dashboard/mentor"
-            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
+            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-6 group cursor-pointer"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -108,8 +96,8 @@ export default async function DashboardHubPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-medium text-slate-900">
-              <span>Ingresar al Módulo</span>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-semibold text-[#152642]">
+              <span>Ingresar al Panel del Tutor</span>
               <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
@@ -117,7 +105,7 @@ export default async function DashboardHubPage() {
           {/* Opción 2: Panel de Dirección y Auditoría */}
           <Link
             href="/dashboard/director"
-            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
+            className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-6 group cursor-pointer"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -139,8 +127,8 @@ export default async function DashboardHubPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-medium text-slate-900">
-              <span>Ingresar al Módulo</span>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-semibold text-[#152642]">
+              <span>Ingresar al Panel de Dirección</span>
               <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
             </div>
           </Link>
