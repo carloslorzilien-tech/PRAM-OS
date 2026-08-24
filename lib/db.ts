@@ -1,40 +1,5 @@
-import { neon } from '@neondatabase/serverless'
-
-const rawConnectionString =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL ||
-  'postgresql://neondb_owner:npg_HeZYmnNo50Fy@ep-solitary-butterfly-avk45iz8-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require'
-
-// Limpieza de channel_binding para evitar caídas de conexión en cold start / idle de Neon
-const connectionString = rawConnectionString
-  .replace(/&channel_binding=[^&]*/gi, '')
-  .replace(/\?channel_binding=[^&]*&?/gi, '?')
-
-// Helper de reintento para consultas Serverless contra bases de datos en reposo (Neon Idle)
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  retries = 3,
-  delay = 1500
-): Promise<T> {
-  try {
-    return await fn()
-  } catch (error) {
-    if (retries <= 0) throw error
-    console.warn(`[PRAM DB Retry] Reintentando consulta DB en ${delay}ms (intentos restantes: ${retries})...`)
-    await new Promise((resolve) => setTimeout(resolve, delay))
-    return withRetry(fn, retries - 1, delay)
-  }
-}
-
-// Helper seguro para obtener conexión a Neon
-export function getDb() {
-  try {
-    return neon(connectionString)
-  } catch (err) {
-    console.error('[PRAM DB Error] Neon connection initialization warning:', err)
-    return null
-  }
-}
+// lib/db.ts
+// PRAM OS — Mock Data Layer (Fase 1: Preparación para Google Firebase)
 
 export type MateriaValida = 'Matemáticas' | 'Lengua Española'
 
@@ -70,23 +35,11 @@ export interface Sesion {
   duracion_minutos: number
   cantidad_alumnos: number
   fecha_sesion: string
+  notas?: string | null
   estado: 'pending' | 'approved' | 'rejected'
   aprobado_por?: string | null
   fecha_aprobacion?: string | null
-  notas?: string | null
-  created_at?: string
-}
-
-export interface CertificadoCUV {
-  id: string
-  cuv_codigo: string
-  mentor_id: string
-  mentor_nombre: string
-  horas_certificadas: number
-  fecha_emision: string
-  entidad_emisora: string
-  liceo: string
-  estado: 'valid' | 'revoked'
+  cuv?: string | null
   created_at?: string
 }
 
@@ -97,35 +50,19 @@ export interface PublicKPIs {
   tasaAsistencia: number
 }
 
-// ==============================================================================
-// CUENTAS PRE-APROBADAS Y REGLAS EXPLICITAS DE ROL Y SERVIDOR
-// ==============================================================================
-
-export const PRE_APPROVED_ACCOUNTS: Record<
-  string,
-  { nombre: string; rol: Usuario['rol']; area?: MateriaValida; grado?: string }
-> = {
-  'carlos.lorzilien@gmail.com': {
-    nombre: 'Carlos Lorzilien (Director)',
-    rol: 'DIRECTOR',
-  },
-  'carlosomarlorzilienservilien@gmail.com': {
-    nombre: 'Prof. Carlos Omar Lorzilien',
-    rol: 'MENTOR',
-    area: 'Matemáticas',
-  },
-  'carlosmarlorzilienservilien@gmail.com': {
-    nombre: 'Prof. Carlos Omar Lorzilien',
-    rol: 'MENTOR',
-    area: 'Matemáticas',
-  },
+export interface CertificadoCUV {
+  id: string
+  cuv_codigo: string
+  mentor_nombre: string
+  horas_certificadas: number
+  liceo: string
+  fecha_emision: string
+  entidad_emisora: string
+  estado: 'valid' | 'invalid'
 }
 
-// ==============================================================================
-// IN-MEMORY FALLBACK STORE (Mantiene la UI viva incluso en contingencias)
-// ==============================================================================
-
-const fallbackUsuarios: Usuario[] = [
+// In-Memory Store
+let mockUsuarios: Usuario[] = [
   {
     id: 'u-carlos-dir',
     email: 'carlos.lorzilien@gmail.com',
@@ -134,7 +71,7 @@ const fallbackUsuarios: Usuario[] = [
     status: 'APPROVED',
   },
   {
-    id: 'u-carlos-mentor-1',
+    id: 'u-carlos-mentor',
     email: 'carlosomarlorzilienservilien@gmail.com',
     nombre: 'Prof. Carlos Omar Lorzilien',
     rol: 'MENTOR',
@@ -142,68 +79,28 @@ const fallbackUsuarios: Usuario[] = [
     status: 'APPROVED',
   },
   {
-    id: 'u-carlos-mentor-2',
-    email: 'carlosmarlorzilienservilien@gmail.com',
-    nombre: 'Prof. Carlos Omar Lorzilien',
-    rol: 'MENTOR',
-    area: 'Matemáticas',
-    status: 'APPROVED',
-  },
-  {
-    id: 'u-1',
-    email: 'carmen.batlle@institucional.edu.do',
-    nombre: 'Dra. Carmen Batlle',
-    rol: 'DIRECTOR',
-    status: 'APPROVED',
-  },
-  {
-    id: 'u-2',
-    email: 'altagracia.pena@institucional.edu.do',
+    id: 'u-altagracia',
+    email: 'altagracia.pena@Institucional.edu.do',
     nombre: 'Prof. Altagracia Peña',
     rol: 'MENTOR',
     area: 'Matemáticas',
     status: 'APPROVED',
   },
   {
-    id: 'u-3',
-    email: 'marcos.santana@institucional.edu.do',
+    id: 'u-marcos',
+    email: 'marcos.santana@Institucional.edu.do',
     nombre: 'Lic. Marcos Santana',
     rol: 'MENTOR',
     area: 'Lengua Española',
     status: 'APPROVED',
   },
-  {
-    id: 'u-4',
-    email: 'sofia.castillo@institucional.edu.do',
-    nombre: 'Ing. Sofía Castillo',
-    rol: 'MENTOR',
-    area: 'Matemáticas',
-    status: 'APPROVED',
-  },
-  {
-    id: 'u-5',
-    email: 'carlos.reyes@estudiante.edu.do',
-    nombre: 'Carlos Reyes',
-    rol: 'STUDENT',
-    grado: '3ro',
-    status: 'APPROVED',
-  },
 ]
 
-const fallbackMentores: Mentor[] = [
-  {
-    id: 'm-carlos',
-    nombre: 'Prof. Carlos Omar Lorzilien',
-    email: 'carlosomarlorzilienservilien@gmail.com',
-    rango: 'Head',
-    horas_acumuladas: 24.5,
-    meta_horas: 60.0,
-    especialidad: 'Matemáticas',
-  },
+let mockMentores: Mentor[] = [
   {
     id: 'm-1',
-    nombre: 'Prof. Altagracia Peña',
-    email: 'altagracia.pena@institucional.edu.do',
+    nombre: 'Prof. Carlos Omar Lorzilien',
+    email: 'carlosomarlorzilienservilien@gmail.com',
     rango: 'Head',
     horas_acumuladas: 48.5,
     meta_horas: 60.0,
@@ -211,579 +108,105 @@ const fallbackMentores: Mentor[] = [
   },
   {
     id: 'm-2',
+    nombre: 'Prof. Altagracia Peña',
+    email: 'altagracia.pena@Institucional.edu.do',
+    rango: 'Head',
+    horas_acumuladas: 42.0,
+    meta_horas: 60.0,
+    especialidad: 'Matemáticas',
+  },
+  {
+    id: 'm-3',
     nombre: 'Lic. Marcos Santana',
-    email: 'marcos.santana@institucional.edu.do',
+    email: 'marcos.santana@Institucional.edu.do',
     rango: 'Senior',
     horas_acumuladas: 34.0,
     meta_horas: 60.0,
     especialidad: 'Lengua Española',
   },
-  {
-    id: 'm-3',
-    nombre: 'Ing. Sofía Castillo',
-    email: 'sofia.castillo@institucional.edu.do',
-    rango: 'Junior',
-    horas_acumuladas: 19.5,
-    meta_horas: 60.0,
-    especialidad: 'Matemáticas',
-  },
 ]
 
-const fallbackSesiones: Sesion[] = [
+let mockSesiones: Sesion[] = [
   {
-    id: 's-101',
+    id: 'ses-1',
     mentor_id: 'm-1',
-    mentor_nombre: 'Prof. Altagracia Peña',
+    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
     materia: 'Matemáticas',
-    tema: 'Ecuaciones Lineales y Despeje de Incógnitas',
-    duracion_minutos: 60,
-    cantidad_alumnos: 4,
-    fecha_sesion: '2026-08-10',
-    estado: 'approved',
-    aprobado_por: 'Dra. Carmen Batlle',
-    fecha_aprobacion: '2026-08-11 09:30:00Z',
-    notas: 'Excelente participación de los alumnos de 3ro B.',
-  },
-  {
-    id: 's-102',
-    mentor_id: 'm-1',
-    mentor_nombre: 'Prof. Altagracia Peña',
-    materia: 'Matemáticas',
-    tema: 'Fracciones Complejas y Operaciones Mixtas',
-    duracion_minutos: 45,
-    cantidad_alumnos: 3,
-    fecha_sesion: '2026-08-12',
-    estado: 'approved',
-    aprobado_por: 'Dra. Carmen Batlle',
-    fecha_aprobacion: '2026-08-13 10:15:00Z',
-    notas: 'Refuerzo de jerarquía de operaciones.',
-  },
-  {
-    id: 's-103',
-    mentor_id: 'm-2',
-    mentor_nombre: 'Lic. Marcos Santana',
-    materia: 'Lengua Española',
-    tema: 'Estructura del Ensayo Argumentativo',
-    duracion_minutos: 60,
-    cantidad_alumnos: 5,
-    fecha_sesion: '2026-08-11',
-    estado: 'approved',
-    aprobado_por: 'Dra. Carmen Batlle',
-    fecha_aprobacion: '2026-08-12 11:00:00Z',
-    notas: 'Redacción de tesis y conectores de causa.',
-  },
-  {
-    id: 's-104',
-    mentor_id: 'm-2',
-    mentor_nombre: 'Lic. Marcos Santana',
-    materia: 'Lengua Española',
-    tema: 'Comprensión Lectora y Figuras Literarias',
+    tema: 'Resolución de Ecuaciones Lineales con Una Incógnita',
     duracion_minutos: 45,
     cantidad_alumnos: 4,
     fecha_sesion: '2026-08-14',
     estado: 'approved',
     aprobado_por: 'Dra. Carmen Batlle',
-    fecha_aprobacion: '2026-08-15 14:20:00Z',
-    notas: 'Análisis de textos periodísticos dominicanos.',
+    cuv: 'PRAM-2026-M01-8841',
   },
   {
-    id: 's-105',
-    mentor_id: 'm-3',
-    mentor_nombre: 'Ing. Sofía Castillo',
-    materia: 'Matemáticas',
-    tema: 'Geometría Plana y Teorema de Pitágoras',
-    duracion_minutos: 45,
-    cantidad_alumnos: 6,
-    fecha_sesion: '2026-08-13',
-    estado: 'approved',
-    aprobado_por: 'Dra. Carmen Batlle',
-    fecha_aprobacion: '2026-08-14 16:00:00Z',
-    notas: 'Cálculo de áreas y perímetros.',
-  },
-]
-
-const fallbackCertificados: CertificadoCUV[] = [
-  {
-    id: 'cuv-1',
-    cuv_codigo: 'PRAM-2026-M01-8841',
+    id: 'ses-2',
     mentor_id: 'm-1',
-    mentor_nombre: 'Prof. Altagracia Peña',
-    horas_certificadas: 48.5,
-    fecha_emision: '15 de Agosto, 2026',
-    entidad_emisora: 'Liceo Minerva Mirabal · PRAM OS',
-    liceo: 'Liceo Minerva Mirabal',
-    estado: 'valid',
-  },
-  {
-    id: 'cuv-2',
-    cuv_codigo: 'PRAM-2026-M02-3319',
-    mentor_id: 'm-2',
-    mentor_nombre: 'Lic. Marcos Santana',
-    horas_certificadas: 34.0,
-    fecha_emision: '14 de Agosto, 2026',
-    entidad_emisora: 'Liceo Minerva Mirabal · PRAM OS',
-    liceo: 'Liceo Minerva Mirabal',
-    estado: 'valid',
+    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
+    materia: 'Matemáticas',
+    tema: 'Factorización de Polinomios y Trinomios Cuadrados',
+    duracion_minutos: 60,
+    cantidad_alumnos: 3,
+    fecha_sesion: '2026-08-15',
+    estado: 'pending',
   },
 ]
 
-// ==============================================================================
-// GESTIÓN DE USUARIOS, ONBOARDING Y BANDEJA DE AUDITORÍA
-// ==============================================================================
-
-/**
- * Consulta usuario en Neon por email (insensible a mayúsculas/minúsculas).
- * Garantiza auto-aprobación para cuentas configuradas.
- */
-export async function getUserByEmail(email: string): Promise<Usuario | null> {
-  if (!email) return null
-  const cleanEmail = email.trim().toLowerCase()
-  const preApproved = PRE_APPROVED_ACCOUNTS[cleanEmail]
-
-  try {
-    const sql = getDb()
-    if (sql) {
-      // Asegurar que la tabla exista
-      await sql`
-        CREATE TABLE IF NOT EXISTS usuarios (
-          id TEXT PRIMARY KEY,
-          email TEXT UNIQUE NOT NULL,
-          nombre TEXT,
-          rol TEXT NOT NULL,
-          grado TEXT,
-          area TEXT,
-          status TEXT NOT NULL DEFAULT 'PENDING',
-          created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-      `
-
-      if (preApproved) {
-        const id = `usr-${cleanEmail.replace(/[^a-z0-9]/g, '')}`
-        await sql`
-          INSERT INTO usuarios (id, email, nombre, rol, grado, area, status)
-          VALUES (${id}, ${cleanEmail}, ${preApproved.nombre}, ${preApproved.rol}, ${preApproved.grado || null}, ${preApproved.area || null}, 'APPROVED')
-          ON CONFLICT (email) DO UPDATE SET
-            rol = ${preApproved.rol},
-            nombre = ${preApproved.nombre},
-            status = 'APPROVED'
-        `
-        return {
-          id,
-          email: cleanEmail,
-          nombre: preApproved.nombre,
-          rol: preApproved.rol,
-          grado: preApproved.grado || null,
-          area: preApproved.area || null,
-          status: 'APPROVED',
-        }
-      }
-
-      const rows = (await sql`
-        SELECT * FROM usuarios WHERE LOWER(email) = ${cleanEmail} LIMIT 1
-      `) as Usuario[]
-
-      if (rows && rows.length > 0) {
-        return rows[0]
-      }
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getUserByEmail]:', error)
-  }
-
-  if (preApproved) {
-    return {
-      id: `usr-${cleanEmail.replace(/[^a-z0-9]/g, '')}`,
-      email: cleanEmail,
-      nombre: preApproved.nombre,
-      rol: preApproved.rol,
-      grado: preApproved.grado || null,
-      area: preApproved.area || null,
-      status: 'APPROVED',
-    }
-  }
-
-  const found = fallbackUsuarios.find((u) => u.email.toLowerCase() === cleanEmail)
-  return found || null
+export async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1500): Promise<T> {
+  return fn()
 }
-
-/**
- * Registra un nuevo usuario con status PENDING tras onboarding.
- */
-export async function registerPendingUser(data: {
-  email: string
-  nombre?: string
-  rol: 'MENTOR' | 'STUDENT'
-  grado?: string
-  area?: MateriaValida
-}): Promise<Usuario> {
-  const cleanEmail = data.email.trim().toLowerCase()
-  const preApproved = PRE_APPROVED_ACCOUNTS[cleanEmail]
-
-  const id = `usr-${Date.now()}`
-  const nombre = preApproved ? preApproved.nombre : (data.nombre || (data.rol === 'MENTOR' ? 'Tutor Académico' : 'Estudiante PRAM'))
-  const status = preApproved ? 'APPROVED' : 'PENDING'
-  const rol = preApproved ? preApproved.rol : data.rol
-
-  const newUser: Usuario = {
-    id,
-    email: cleanEmail,
-    nombre,
-    rol,
-    grado: data.grado || null,
-    area: data.area || null,
-    status,
-    created_at: new Date().toISOString(),
-  }
-
-  try {
-    const sql = getDb()
-    if (sql) {
-      await sql`
-        CREATE TABLE IF NOT EXISTS usuarios (
-          id TEXT PRIMARY KEY,
-          email TEXT UNIQUE NOT NULL,
-          nombre TEXT,
-          rol TEXT NOT NULL,
-          grado TEXT,
-          area TEXT,
-          status TEXT NOT NULL DEFAULT 'PENDING',
-          created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-      `
-      await sql`
-        INSERT INTO usuarios (id, email, nombre, rol, grado, area, status)
-        VALUES (${id}, ${cleanEmail}, ${nombre}, ${rol}, ${data.grado || null}, ${data.area || null}, ${status})
-        ON CONFLICT (email) DO UPDATE SET
-          nombre = EXCLUDED.nombre,
-          rol = EXCLUDED.rol,
-          grado = EXCLUDED.grado,
-          area = EXCLUDED.area,
-          status = ${status}
-      `
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in registerPendingUser]:', error)
-  }
-
-  // Actualizar store in-memory
-  const existingIdx = fallbackUsuarios.findIndex((u) => u.email.toLowerCase() === cleanEmail)
-  if (existingIdx !== -1) {
-    fallbackUsuarios[existingIdx] = newUser
-  } else {
-    fallbackUsuarios.push(newUser)
-  }
-
-  return newUser
-}
-
-/**
- * Obtiene todas las solicitudes pendientes de usuarios para el panel del Director.
- */
-export async function getPendingUsers(): Promise<Usuario[]> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      await sql`
-        CREATE TABLE IF NOT EXISTS usuarios (
-          id TEXT PRIMARY KEY,
-          email TEXT UNIQUE NOT NULL,
-          nombre TEXT,
-          rol TEXT NOT NULL,
-          grado TEXT,
-          area TEXT,
-          status TEXT NOT NULL DEFAULT 'PENDING',
-          created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-      `
-      const rows = (await sql`
-        SELECT * FROM usuarios 
-        WHERE status = 'PENDING' 
-        ORDER BY created_at DESC
-      `) as Usuario[]
-      if (rows) return rows
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getPendingUsers]:', error)
-  }
-
-  return fallbackUsuarios.filter((u) => u.status === 'PENDING')
-}
-
-/**
- * Aprueba un usuario en Neon y en memoria.
- */
-export async function approveUserInDb(userId: string): Promise<boolean> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      await sql`
-        UPDATE usuarios 
-        SET status = 'APPROVED' 
-        WHERE id = ${userId}
-      `
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in approveUserInDb]:', error)
-  }
-
-  const idx = fallbackUsuarios.findIndex((u) => u.id === userId)
-  if (idx !== -1) {
-    fallbackUsuarios[idx].status = 'APPROVED'
-  }
-  return true
-}
-
-/**
- * Rechaza un usuario en Neon y en memoria.
- */
-export async function rejectUserInDb(userId: string): Promise<boolean> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      await sql`
-        UPDATE usuarios 
-        SET status = 'REJECTED' 
-        WHERE id = ${userId}
-      `
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in rejectUserInDb]:', error)
-  }
-
-  const idx = fallbackUsuarios.findIndex((u) => u.id === userId)
-  if (idx !== -1) {
-    fallbackUsuarios[idx].status = 'REJECTED'
-  }
-  return true
-}
-
-/**
- * Determina el flujo de redirección post-login:
- * - Si usuario es Director (carlos.lorzilien@gmail.com) -> /dashboard/director
- * - Si usuario es Mentor (carlosomarlorzilienservilien@gmail.com, etc.) -> /dashboard/mentor
- * - Si usuario existe y está 'APPROVED' -> Permite acceso a dashboard
- * - Si usuario existe y está 'PENDING' -> Redirige a /solicitud-pendiente
- * - Si usuario no existe en BD -> Redirige a /onboarding
- */
-export async function checkUserAuthRedirect(email?: string | null): Promise<{
-  action: 'DASHBOARD' | 'PENDING' | 'ONBOARDING'
-  targetUrl: string
-  user: Usuario | null
-}> {
-  if (!email) {
-    return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
-  }
-
-  const clean = email.trim().toLowerCase()
-
-  // 1. Regla explícita e inmutable para Director Académico
-  if (clean === 'carlos.lorzilien@gmail.com') {
-    return {
-      action: 'DASHBOARD',
-      targetUrl: '/dashboard/director',
-      user: {
-        id: 'u-carlos-dir',
-        email: clean,
-        nombre: 'Carlos Lorzilien (Director)',
-        rol: 'DIRECTOR',
-        status: 'APPROVED',
-      },
-    }
-  }
-
-  // 2. Regla explícita e inmutable para Mentores de Matemáticas
-  if (
-    clean === 'carlosomarlorzilienservilien@gmail.com' ||
-    clean === 'carlosmarlorzilienservilien@gmail.com'
-  ) {
-    return {
-      action: 'DASHBOARD',
-      targetUrl: '/dashboard/mentor',
-      user: {
-        id: 'u-carlos-mentor',
-        email: clean,
-        nombre: 'Prof. Carlos Omar Lorzilien',
-        rol: 'MENTOR',
-        area: 'Matemáticas',
-        status: 'APPROVED',
-      },
-    }
-  }
-
-  try {
-    const user = await getUserByEmail(clean)
-
-    if (!user) {
-      return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
-    }
-
-    if (user.status === 'PENDING') {
-      return { action: 'PENDING', targetUrl: '/solicitud-pendiente', user }
-    }
-
-    if (user.status === 'APPROVED') {
-      const targetUrl = user.rol === 'DIRECTOR' || user.rol === 'AREA_DIRECTOR'
-        ? '/dashboard/director'
-        : '/dashboard/mentor'
-      return { action: 'DASHBOARD', targetUrl, user }
-    }
-
-    return { action: 'PENDING', targetUrl: '/solicitud-pendiente', user }
-  } catch (error) {
-    console.error('[PRAM DB Error in checkUserAuthRedirect]:', error)
-    return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
-  }
-}
-
-// ==============================================================================
-// FUNCIONES PÚBLICAS Y CONSULTAS DE IMPACTO (CONECTADAS DINÁMICAMENTE A NEON)
-// ==============================================================================
 
 export async function getPublicKPIs(): Promise<PublicKPIs> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      const totalHoras = await sql`
-        SELECT COALESCE(SUM(horas_acumuladas), 0) as total 
-        FROM mentores
-      `
-      const totalEstudiantes = await sql`
-        SELECT COUNT(*) as total 
-        FROM estudiantes
-      `
-      const totalSesiones = await sql`
-        SELECT COUNT(*) as total 
-        FROM sesiones 
-        WHERE estado = 'approved' OR estado = 'Completada'
-      `
-
-      const horas = Number(totalHoras[0]?.total || 0)
-      const estudiantes = Number(totalEstudiantes[0]?.total || 0)
-      const sesiones = Number(totalSesiones[0]?.total || 0)
-
-      return {
-        horasCertificadas: horas,
-        estudiantesAtendidos: estudiantes,
-        sesionesValidadas: sesiones,
-        tasaAsistencia: sesiones > 0 ? 94.2 : 100,
-      }
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getPublicKPIs]:', error)
-  }
-
-  const horasCertificadas = fallbackMentores.reduce((acc, m) => acc + m.horas_acumuladas, 0)
-  const sesionesValidadas = fallbackSesiones.filter((s) => s.estado === 'approved').length
-
   return {
-    horasCertificadas: horasCertificadas > 0 ? horasCertificadas : 0,
-    estudiantesAtendidos: 0,
-    sesionesValidadas: sesionesValidadas > 0 ? sesionesValidadas : 0,
-    tasaAsistencia: 100,
+    horasCertificadas: 124.5,
+    estudiantesAtendidos: 28,
+    sesionesValidadas: 42,
+    tasaAsistencia: 96,
   }
 }
 
 export async function getTopMentores(limit = 10): Promise<Mentor[]> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      const rows = (await sql`
-        SELECT * FROM mentores 
-        ORDER BY horas_acumuladas DESC 
-        LIMIT ${limit}
-      `) as Mentor[]
-      if (rows && rows.length > 0) {
-        return rows.map((r) => ({
-          ...r,
-          horas_acumuladas: Number(r.horas_acumuladas),
-          meta_horas: Number(r.meta_horas || 60.0),
-          especialidad: r.especialidad === 'Lengua Española' ? 'Lengua Española' : 'Matemáticas',
-        }))
-      }
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getTopMentores]:', error)
-  }
-
-  return [...fallbackMentores]
-    .sort((a, b) => b.horas_acumuladas - a.horas_acumuladas)
-    .slice(0, limit)
-}
-
-export async function getCUVDetails(cuvCodigo: string): Promise<CertificadoCUV | null> {
-  const cleanCode = cuvCodigo.trim().toUpperCase()
-
-  try {
-    const sql = getDb()
-    if (sql) {
-      const rows = (await sql`
-        SELECT * FROM certificados_cuv 
-        WHERE UPPER(cuv_codigo) = ${cleanCode} 
-        LIMIT 1
-      `) as CertificadoCUV[]
-      if (rows && rows.length > 0) {
-        return {
-          ...rows[0],
-          horas_certificadas: Number(rows[0].horas_certificadas),
-        }
-      }
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getCUVDetails]:', error)
-  }
-
-  const found = fallbackCertificados.find((c) => c.cuv_codigo.toUpperCase() === cleanCode)
-  return found || null
+  return mockMentores.slice(0, limit)
 }
 
 export async function getMentorSessions(mentorId: string): Promise<{ mentor: Mentor | null; sesiones: Sesion[] }> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      const mentores = (await sql`SELECT * FROM mentores WHERE id = ${mentorId} LIMIT 1`) as Mentor[]
-      const sesiones = (await sql`
-        SELECT * FROM sesiones 
-        WHERE mentor_id = ${mentorId} 
-        ORDER BY fecha_sesion DESC, created_at DESC
-      `) as Sesion[]
-
-      if (mentores && mentores.length > 0) {
-        const mentor = {
-          ...mentores[0],
-          horas_acumuladas: Number(mentores[0].horas_acumuladas),
-          meta_horas: Number(mentores[0].meta_horas),
-          especialidad: mentores[0].especialidad === 'Lengua Española' ? ('Lengua Española' as const) : ('Matemáticas' as const),
-        }
-        return { mentor, sesiones: sesiones || [] }
-      }
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getMentorSessions]:', error)
-  }
-
-  const mentor = fallbackMentores.find((m) => m.id === mentorId) || fallbackMentores[0]
-  const sesiones = fallbackSesiones.filter((s) => s.mentor_id === mentor.id)
+  const mentor = mockMentores.find((m) => m.id === mentorId) || mockMentores[0] || null
+  const sesiones = mockSesiones.filter((s) => s.mentor_id === mentorId)
   return { mentor, sesiones }
 }
 
 export async function getPendingSessionsForAudit(): Promise<Sesion[]> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      const rows = (await sql`
-        SELECT s.*, m.nombre as mentor_nombre 
-        FROM sesiones s
-        LEFT JOIN mentores m ON s.mentor_id = m.id
-        WHERE s.estado = 'pending'
-        ORDER BY s.fecha_sesion DESC, s.created_at DESC
-      `) as Sesion[]
-      if (rows) return rows
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in getPendingSessionsForAudit]:', error)
-  }
+  return mockSesiones.filter((s) => s.estado === 'pending')
+}
 
-  return fallbackSesiones.filter((s) => s.estado === 'pending')
+export async function getPendingUsers(): Promise<Usuario[]> {
+  return mockUsuarios.filter((u) => u.status === 'PENDING')
+}
+
+export async function getUserByEmail(email: string): Promise<Usuario | null> {
+  const clean = email.toLowerCase().trim()
+  return mockUsuarios.find((u) => u.email.toLowerCase() === clean) || null
+}
+
+export async function registerPendingUser(data: {
+  email: string
+  nombre: string
+  rol: 'MENTOR' | 'STUDENT'
+  grado?: string
+  area?: MateriaValida
+}): Promise<Usuario> {
+  const newUser: Usuario = {
+    id: `usr-${Date.now()}`,
+    email: data.email,
+    nombre: data.nombre,
+    rol: data.rol,
+    grado: data.grado,
+    area: data.area,
+    status: 'PENDING',
+  }
+  mockUsuarios.push(newUser)
+  return newUser
 }
 
 export async function createSessionInDb(data: {
@@ -795,99 +218,79 @@ export async function createSessionInDb(data: {
   fecha_sesion: string
   notas?: string
 }): Promise<Sesion> {
-  const id = `s-${Date.now()}`
-  const mentor = fallbackMentores.find((m) => m.id === data.mentor_id)
-
-  const newSesion: Sesion = {
-    id,
+  const newSession: Sesion = {
+    id: `ses-${Date.now()}`,
     mentor_id: data.mentor_id,
-    mentor_nombre: mentor?.nombre || 'Mentor Asignado',
+    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
     materia: data.materia,
     tema: data.tema,
     duracion_minutos: data.duracion_minutos,
     cantidad_alumnos: data.cantidad_alumnos,
     fecha_sesion: data.fecha_sesion,
-    estado: 'pending',
     notas: data.notas,
+    estado: 'pending',
   }
-
-  try {
-    const sql = getDb()
-    if (sql) {
-      await sql`
-        INSERT INTO sesiones (id, mentor_id, materia, tema, duracion_minutos, cantidad_alumnos, fecha_sesion, estado, notas)
-        VALUES (${id}, ${data.mentor_id}, ${data.materia}, ${data.tema}, ${data.duracion_minutos}, ${data.cantidad_alumnos}, ${data.fecha_sesion}, 'pending', ${data.notas || null})
-      `
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in createSessionInDb]:', error)
-  }
-
-  fallbackSesiones.unshift(newSesion)
-  return newSesion
+  mockSesiones.unshift(newSession)
+  return newSession
 }
 
-export async function approveSessionInDb(sessionId: string, directorName = 'Dra. Carmen Batlle'): Promise<boolean> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      const rows = (await sql`SELECT * FROM sesiones WHERE id = ${sessionId} LIMIT 1`) as Sesion[]
-      if (rows && rows.length > 0) {
-        const sesion = rows[0]
-        const horasToAdd = Number(sesion.duracion_minutos) / 60
-
-        await sql`
-          UPDATE sesiones 
-          SET estado = 'approved',
-              aprobado_por = ${directorName},
-              fecha_aprobacion = NOW()
-          WHERE id = ${sessionId}
-        `
-
-        await sql`
-          UPDATE mentores 
-          SET horas_acumuladas = horas_acumuladas + ${horasToAdd}
-          WHERE id = ${sesion.mentor_id}
-        `
-      }
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in approveSessionInDb]:', error)
+export async function approveSessionInDb(sessionId: string, supervisorName = 'Dra. Carmen Batlle'): Promise<Sesion | null> {
+  const session = mockSesiones.find((s) => s.id === sessionId)
+  if (session) {
+    session.estado = 'approved'
+    session.aprobado_por = supervisorName
+    session.fecha_aprobacion = new Date().toISOString()
+    session.cuv = `PRAM-2026-M${Math.floor(10 + Math.random() * 90)}-${Math.floor(1000 + Math.random() * 9000)}`
   }
-
-  const sesionIdx = fallbackSesiones.findIndex((s) => s.id === sessionId)
-  if (sesionIdx !== -1) {
-    fallbackSesiones[sesionIdx].estado = 'approved'
-    fallbackSesiones[sesionIdx].aprobado_por = directorName
-    fallbackSesiones[sesionIdx].fecha_aprobacion = new Date().toISOString()
-
-    const mentorIdx = fallbackMentores.findIndex((m) => m.id === fallbackSesiones[sesionIdx].mentor_id)
-    if (mentorIdx !== -1) {
-      fallbackMentores[mentorIdx].horas_acumuladas += fallbackSesiones[sesionIdx].duracion_minutos / 60
-    }
-  }
-
-  return true
+  return session || null
 }
 
-export async function rejectSessionInDb(sessionId: string): Promise<boolean> {
-  try {
-    const sql = getDb()
-    if (sql) {
-      await sql`
-        UPDATE sesiones 
-        SET estado = 'rejected'
-        WHERE id = ${sessionId}
-      `
-    }
-  } catch (error) {
-    console.error('[PRAM DB Error in rejectSessionInDb]:', error)
+export async function rejectSessionInDb(sessionId: string): Promise<Sesion | null> {
+  const session = mockSesiones.find((s) => s.id === sessionId)
+  if (session) {
+    session.estado = 'rejected'
   }
+  return session || null
+}
 
-  const sesionIdx = fallbackSesiones.findIndex((s) => s.id === sessionId)
-  if (sesionIdx !== -1) {
-    fallbackSesiones[sesionIdx].estado = 'rejected'
+export async function approveUserInDb(userId: string): Promise<Usuario | null> {
+  const user = mockUsuarios.find((u) => u.id === userId)
+  if (user) {
+    user.status = 'APPROVED'
   }
+  return user || null
+}
 
-  return true
+export async function rejectUserInDb(userId: string): Promise<Usuario | null> {
+  const user = mockUsuarios.find((u) => u.id === userId)
+  if (user) {
+    user.status = 'REJECTED'
+  }
+  return user || null
+}
+
+export async function getCUVDetails(cuvCode: string): Promise<CertificadoCUV | null> {
+  return {
+    id: 'cert-1',
+    cuv_codigo: cuvCode,
+    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
+    horas_certificadas: 60.0,
+    liceo: 'Liceo Minerva Mirabal · PRAM OS',
+    fecha_emision: '15 de Agosto de 2026',
+    entidad_emisora: 'Ministerio de Educación (MINERD) · Liceo Minerva Mirabal',
+    estado: 'valid',
+  }
+}
+
+export async function checkUserAuthRedirect(email?: string | null): Promise<{
+  action: 'DASHBOARD' | 'PENDING' | 'ONBOARDING'
+  targetUrl: string
+  user: Usuario | null
+}> {
+  if (!email) return { action: 'ONBOARDING', targetUrl: '/onboarding', user: null }
+  const clean = email.toLowerCase().trim()
+  if (clean === 'carlos.lorzilien@gmail.com') {
+    return { action: 'DASHBOARD', targetUrl: '/dashboard/director', user: mockUsuarios[0] }
+  }
+  return { action: 'DASHBOARD', targetUrl: '/dashboard/mentor', user: mockUsuarios[1] }
 }

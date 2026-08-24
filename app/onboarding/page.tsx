@@ -1,6 +1,5 @@
 import React from 'react'
 import Link from 'next/link'
-import { currentUser } from '@clerk/nextjs/server'
 import { ArrowLeft } from 'lucide-react'
 import { OnboardingForm } from '@/components/pram/onboarding-form'
 
@@ -11,19 +10,9 @@ export const metadata = {
   description: 'Completa tu perfil para acceder al sistema de tutorías del Liceo Minerva Mirabal.',
 }
 
-export default async function OnboardingPage() {
-  let email = ''
-  let nombre = ''
-
-  try {
-    const user = await currentUser()
-    if (user) {
-      email = user.emailAddresses?.[0]?.emailAddress || ''
-      nombre = user.fullName || user.firstName || ''
-    }
-  } catch (error) {
-    console.warn('Clerk user session resolution in OnboardingPage:', error)
-  }
+export default function OnboardingPage() {
+  const email = 'carlosomarlorzilienservilien@gmail.com'
+  const nombre = 'Prof. Carlos Omar Lorzilien'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex items-center justify-center px-4 py-10">

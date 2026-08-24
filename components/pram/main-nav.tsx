@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useUser } from '@clerk/nextjs'
 import {
   BookOpen,
   ShieldCheck,
@@ -11,14 +10,11 @@ import {
   X,
   LogIn,
   UserPlus,
-  LayoutDashboard,
 } from 'lucide-react'
-import { Google1ClickButton } from '@/components/pram/google-1click-auth'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
 
 export function MainNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { isSignedIn, isLoaded } = useUser()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8">
@@ -62,23 +58,7 @@ export function MainNav() {
           <span>Verificar CUV</span>
         </Link>
 
-        {isLoaded && isSignedIn ? (
-          /* Si está autenticado: Insignia de Rol + Avatar + Tarjeta de Perfil */
-          <UserProfileBadge />
-        ) : (
-          /* Si no está autenticado: Botones 1-Click */
-          <>
-            <Google1ClickButton mode="sign-in">
-              <LogIn className="size-3.5 text-slate-600" />
-              <span>Iniciar Sesión</span>
-            </Google1ClickButton>
-
-            <Google1ClickButton mode="sign-up">
-              <UserPlus className="size-3.5 text-slate-200" />
-              <span>Registrarse</span>
-            </Google1ClickButton>
-          </>
-        )}
+        <UserProfileBadge userRole="DIRECTOR" userStatus="APPROVED" />
       </nav>
 
       {/* Botón Menú Móvil */}
@@ -113,27 +93,7 @@ export function MainNav() {
           </Link>
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-center">
-            {isLoaded && isSignedIn ? (
-              <UserProfileBadge />
-            ) : (
-              <div className="grid grid-cols-2 gap-2 w-full">
-                <Google1ClickButton
-                  mode="sign-in"
-                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-lg bg-slate-100 text-slate-800 text-xs font-medium border border-slate-200 cursor-pointer"
-                >
-                  <LogIn className="size-4" />
-                  <span>Iniciar Sesión</span>
-                </Google1ClickButton>
-
-                <Google1ClickButton
-                  mode="sign-up"
-                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-lg bg-[#152642] text-white text-xs font-semibold shadow-sm cursor-pointer"
-                >
-                  <UserPlus className="size-4" />
-                  <span>Registrarse</span>
-                </Google1ClickButton>
-              </div>
-            )}
+            <UserProfileBadge userRole="DIRECTOR" userStatus="APPROVED" />
           </div>
         </div>
       )}

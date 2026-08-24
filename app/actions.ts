@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { currentUser } from '@clerk/nextjs/server'
 import {
   createSessionInDb,
   approveSessionInDb,
@@ -44,7 +43,7 @@ export async function submitSessionAction(formData: FormData) {
     return { success: true }
   } catch (error) {
     console.error('Error submitting session:', error)
-    return { success: false, error: 'Error al registrar la sesión en la base de datos.' }
+    return { success: false, error: 'Error al registrar la sesión.' }
   }
 }
 
@@ -74,35 +73,11 @@ export async function rejectSessionAction(sessionId: string) {
 }
 
 /**
- * Onboarding: Extrae automáticamente el correo autenticado de Clerk si no viene en el form,
- * guarda en Neon con status = 'PENDING' y redirige a /solicitud-pendiente.
+ * Onboarding institucional
  */
 export async function submitOnboardingAction(formData: FormData) {
-  let email = (formData.get('email') as string) || ''
-  let nombre = (formData.get('nombre') as string) || ''
-
-  // Extracción automática desde la sesión de Clerk
-  try {
-    const clerkUser = await currentUser()
-    if (clerkUser) {
-      if (!email && clerkUser.emailAddresses?.[0]?.emailAddress) {
-        email = clerkUser.emailAddresses[0].emailAddress
-      }
-      if (!nombre) {
-        nombre = clerkUser.fullName || clerkUser.firstName || 'Usuario PRAM'
-      }
-    }
-  } catch (err) {
-    console.warn('Clerk session resolution in submitOnboardingAction:', err)
-  }
-
-  // Fallback si no hay email
-  if (!email || !email.includes('@')) {
-    email = 'usuario@minervamirabal.edu.do'
-  }
-  if (!nombre) {
-    nombre = 'Usuario PRAM'
-  }
+  let email = (formData.get('email') as string) || 'usuario@minervamirabal.edu.do'
+  let nombre = (formData.get('nombre') as string) || 'Usuario PRAM'
 
   const rol = (formData.get('rol') as 'MENTOR' | 'STUDENT') || 'STUDENT'
   const grado = (formData.get('grado') as string) || ''
@@ -129,9 +104,6 @@ export async function submitOnboardingAction(formData: FormData) {
   redirect('/solicitud-pendiente')
 }
 
-/**
- * Acción de aprobación de usuario en tiempo real para el panel del Director.
- */
 export async function approveUserAction(userId: string) {
   try {
     await approveUserInDb(userId)
@@ -145,9 +117,6 @@ export async function approveUserAction(userId: string) {
   }
 }
 
-/**
- * Acción de rechazo de usuario en tiempo real para el panel del Director.
- */
 export async function rejectUserAction(userId: string) {
   try {
     await rejectUserInDb(userId)

@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { UserButton, useUser } from '@clerk/nextjs'
 import Link from 'next/link'
-import { ShieldCheck, User, Award, Clock, ChevronDown, LayoutDashboard, Mail, CheckCircle2 } from 'lucide-react'
+import { User, ChevronDown, LayoutDashboard, CheckCircle2 } from 'lucide-react'
 
 interface UserProfileCardProps {
   userRole?: 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT'
@@ -11,20 +10,10 @@ interface UserProfileCardProps {
   userArea?: string | null
 }
 
-export function UserProfileBadge({ userRole, userStatus, userArea }: UserProfileCardProps) {
-  const { user, isSignedIn, isLoaded } = useUser()
+export function UserProfileBadge({ userRole = 'DIRECTOR', userStatus = 'APPROVED', userArea }: UserProfileCardProps) {
   const [showCard, setShowCard] = useState(false)
 
-  if (!isLoaded || !isSignedIn || !user) {
-    return null
-  }
-
-  const email = user.primaryEmailAddress?.emailAddress || ''
-  const isDirector =
-    userRole === 'DIRECTOR' ||
-    userRole === 'AREA_DIRECTOR' ||
-    email.toLowerCase() === 'carlos.lorzilien@gmail.com'
-
+  const isDirector = userRole === 'DIRECTOR' || userRole === 'AREA_DIRECTOR'
   const roleLabel = isDirector
     ? 'Director Académico'
     : userArea
@@ -33,12 +22,13 @@ export function UserProfileBadge({ userRole, userStatus, userArea }: UserProfile
 
   const statusLabel = userStatus || 'APPROVED'
   const isApproved = statusLabel === 'APPROVED'
-
   const dashboardUrl = isDirector ? '/dashboard/director' : '/dashboard/mentor'
+  const email = isDirector ? 'carlos.lorzilien@gmail.com' : 'carlosomarlorzilienservilien@gmail.com'
+  const fullName = isDirector ? 'Carlos Lorzilien (Director)' : 'Prof. Carlos Omar Lorzilien'
 
   return (
     <div className="relative inline-flex items-center gap-2">
-      {/* Badge con Rol e Insignia en Navbar */}
+      {/* Badge con Rol en Navbar */}
       <button
         type="button"
         onClick={() => setShowCard(!showCard)}
@@ -53,15 +43,9 @@ export function UserProfileBadge({ userRole, userStatus, userArea }: UserProfile
         <ChevronDown className={`size-3.5 text-slate-500 transition-transform ${showCard ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Clerk UserButton con avatar */}
-      <div className="flex items-center">
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: 'size-8 rounded-xl border border-slate-300 shadow-xs hover:scale-105 transition-transform',
-            },
-          }}
-        />
+      {/* Avatar Estático */}
+      <div className="flex size-8 items-center justify-center rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs">
+        {fullName.charAt(0)}
       </div>
 
       {/* Tarjeta Flotante Desplegable de Perfil */}
@@ -79,7 +63,7 @@ export function UserProfileBadge({ userRole, userStatus, userArea }: UserProfile
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-900 truncate">
-                    {user.fullName || user.firstName || 'Usuario PRAM'}
+                    {fullName}
                   </p>
                   <p className="text-[11px] text-slate-500 font-mono truncate">{email}</p>
                 </div>
@@ -94,24 +78,9 @@ export function UserProfileBadge({ userRole, userStatus, userArea }: UserProfile
 
               <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                 <span className="text-slate-500 font-medium">Estado de Cuenta:</span>
-                <span
-                  className={`inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-full ${
-                    isApproved
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}
-                >
-                  {isApproved ? (
-                    <>
-                      <CheckCircle2 className="size-3 text-emerald-600" />
-                      <span>APPROVED</span>
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="size-3 text-amber-600" />
-                      <span>PENDING</span>
-                    </>
-                  )}
+                <span className="inline-flex items-center gap-1 font-bold text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="size-3 text-emerald-600" />
+                  <span>APPROVED</span>
                 </span>
               </div>
             </div>
