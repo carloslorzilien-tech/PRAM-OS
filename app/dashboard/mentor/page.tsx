@@ -24,7 +24,7 @@ export default async function MentorDashboardPage({
   let currentUser: Usuario | null = null
   let currentMentor: Mentor = {
     id: 'm-1',
-    nombre: 'Prof. Carlos Omar Lorzilien',
+    nombre: 'Usuario PRAM',
     email: 'carlosomarlorzilienservilien@gmail.com',
     rango: 'Head',
     horas_acumuladas: 0,
@@ -38,42 +38,67 @@ export default async function MentorDashboardPage({
     const params = await searchParams
 
     // 1. Verificación de Autenticación
-    currentUser = await getOrCreateCurrentUser()
+    try {
+      currentUser = await getOrCreateCurrentUser()
+    } catch (authErr) {
+      console.warn('[PRAM Auth Warn in MentorDashboard]:', authErr)
+    }
 
     if (currentUser && currentUser.status === 'PENDING') {
       redirect('/solicitud-pendiente')
     }
 
-    // 2. Consulta a Neon DB con retry automático en Cold Start
+    const emailDelUser = currentUser?.email || 'carlosomarlorzilienservilien@gmail.com'
+    const nameDelUser = currentUser?.nombre || 'Usuario PRAM'
+
+    // Asignar datos base inmediatos
+    currentMentor.nombre = nameDelUser
+    currentMentor.email = emailDelUser
+
+    // 2. Consulta a Neon DB con retry y fallback
     let mentorId = params.mentor || 'm-1'
     if (currentUser?.email && !params.mentor) {
-      const allMentores = await withRetry(() => getTopMentores(50), 3, 1500)
-      const found = (allMentores || []).find(
-        (m) => m.email.toLowerCase() === currentUser?.email.toLowerCase()
-      )
-      if (found) mentorId = found.id
-    }
-
-    const sessionData = await withRetry(() => getMentorSessions(mentorId), 3, 1500)
-    if (sessionData?.mentor) {
-      currentMentor = sessionData.mentor
-    } else if (currentUser) {
-      currentMentor = {
-        id: mentorId,
-        nombre: currentUser.nombre || 'Prof. Carlos Omar Lorzilien',
-        email: currentUser.email,
-        rango: 'Head',
-        horas_acumuladas: 0,
-        meta_horas: 60.0,
-        especialidad: 'Matemáticas',
+      try {
+        const allMentores = await withRetry(() => getTopMentores(50), 3, 1500)
+        const found = (allMentores || []).find(
+          (m) => m.email.toLowerCase() === currentUser?.email.toLowerCase()
+        )
+        if (found) mentorId = found.id
+      } catch (e) {
+        console.warn('Fallback al mentorId por defecto:', e)
       }
     }
-    sesiones = sessionData?.sesiones || []
+
+    try {
+      const sessionData = await withRetry(() => getMentorSessions(mentorId), 3, 1500)
+      if (sessionData?.mentor) {
+        currentMentor = sessionData.mentor
+      }
+      sesiones = sessionData?.sesiones || []
+    } catch (dbErr) {
+      console.error('[PRAM DB Error/Timeout in MentorDashboard]:', dbErr)
+      // Asignar fallback inmediatamente:
+      // stats = { totalHours: 0, sessionsCount: 0, studentsCount: 0 }, sessions = []
+      currentMentor.horas_acumuladas = 0
+      sesiones = []
+      isOfflineMode = true
+    }
   } catch (error: any) {
     if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
       throw error
     }
-    console.error('Error en Mentor Dashboard:', error)
+    console.error('Error no fatal capturado en Mentor Dashboard:', error)
+    // Fallback asegurado:
+    currentMentor = {
+      id: 'm-fallback',
+      nombre: currentUser?.nombre || 'Usuario PRAM',
+      email: currentUser?.email || 'carlosomarlorzilienservilien@gmail.com',
+      rango: 'Head',
+      horas_acumuladas: 0,
+      meta_horas: 60.0,
+      especialidad: 'Matemáticas',
+    }
+    sesiones = []
     isOfflineMode = true
   }
 
@@ -85,7 +110,7 @@ export default async function MentorDashboardPage({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Alerta de Modo Desconectado si aplica */}
+      {/* Alerta sutil de Modo Seguro / Desconectado si la DB no respondió */}
       {isOfflineMode && (
         <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 py-2 flex items-center justify-center gap-2 font-medium">
           <AlertTriangle className="size-4 text-amber-600 shrink-0" />
@@ -113,7 +138,7 @@ export default async function MentorDashboardPage({
               </span>
             </div>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              {currentMentor?.nombre || 'Tutor Académico'}
+              {currentMentor?.nombre || 'Usuario PRAM'}
             </h1>
           </div>
         </div>

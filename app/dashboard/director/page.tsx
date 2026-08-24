@@ -34,33 +34,53 @@ export default async function DirectorDashboardPage() {
   let isOfflineMode = false
 
   try {
-    currentUser = await getOrCreateCurrentUser()
+    try {
+      currentUser = await getOrCreateCurrentUser()
+    } catch (authErr) {
+      console.warn('[PRAM Auth Warn in DirectorDashboard]:', authErr)
+    }
 
     if (currentUser && currentUser.status === 'PENDING') {
       redirect('/solicitud-pendiente')
     }
 
-    // Carga protegida con retry ante Cold Starts de Neon DB
-    const results = await Promise.allSettled([
-      withRetry(() => getPendingSessionsForAudit(), 3, 1500),
-      withRetry(() => getPendingUsers(), 3, 1500),
-      withRetry(() => getPublicKPIs(), 3, 1500),
-      withRetry(() => getTopMentores(5), 3, 1500),
-    ])
+    // Carga protegida contra fallos o Timeouts de Neon DB
+    try {
+      const results = await Promise.allSettled([
+        withRetry(() => getPendingSessionsForAudit(), 3, 1500),
+        withRetry(() => getPendingUsers(), 3, 1500),
+        withRetry(() => getPublicKPIs(), 3, 1500),
+        withRetry(() => getTopMentores(5), 3, 1500),
+      ])
 
-    if (results[0].status === 'fulfilled' && results[0].value) pendingSessions = results[0].value
-    if (results[1].status === 'fulfilled' && results[1].value) pendingUsers = results[1].value
-    if (results[2].status === 'fulfilled' && results[2].value) kpis = results[2].value
-    if (results[3].status === 'fulfilled' && results[3].value) topMentores = results[3].value
+      if (results[0].status === 'fulfilled' && results[0].value) pendingSessions = results[0].value
+      if (results[1].status === 'fulfilled' && results[1].value) pendingUsers = results[1].value
+      if (results[2].status === 'fulfilled' && results[2].value) kpis = results[2].value
+      if (results[3].status === 'fulfilled' && results[3].value) topMentores = results[3].value
+    } catch (dbErr) {
+      console.error('[PRAM DB Error/Timeout in DirectorDashboard]:', dbErr)
+      // Asignar fallback inmediatamente:
+      // stats = { totalHours: 0, sessionsCount: 0, studentsCount: 0 }, sessions = []
+      kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
+      pendingSessions = []
+      pendingUsers = []
+      topMentores = []
+      isOfflineMode = true
+    }
   } catch (error: any) {
     if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
       throw error
     }
-    console.error('Error en Director Dashboard:', error)
+    console.error('Error no fatal capturado en Director Dashboard:', error)
+    // Fallback garantizado sin lanzar excepción:
+    kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
+    pendingSessions = []
+    pendingUsers = []
+    topMentores = []
     isOfflineMode = true
   }
 
-  // Si el usuario autenticado es explícitamente un MENTOR (no director), mostrar aviso pasivo sin redirección en bucle
+  // Si el usuario autenticado es explícitamente un MENTOR (no director), mostrar aviso pasivo
   const isDirector =
     currentUser?.rol === 'DIRECTOR' ||
     currentUser?.rol === 'AREA_DIRECTOR' ||
@@ -96,7 +116,7 @@ export default async function DirectorDashboardPage() {
     )
   }
 
-  const directorName = currentUser?.nombre || 'Director Académico'
+  const directorName = currentUser?.nombre || 'Carlos Lorzilien (Director)'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
