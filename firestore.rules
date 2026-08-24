@@ -1,0 +1,112 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==============================================================
+    // FUNCIONES AUXILIARES DE SEGURIDAD & AUTENTICACIÓN
+    // ==============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isPreApprovedEmail() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'carlos.lorzilien@gmail.com' ||
+        request.auth.token.email == 'carlosomarlorzilienservilien@gmail.com' ||
+        request.auth.token.email == 'carlosmarlorzilienservilien@gmail.com'
+      );
+    }
+
+    function isDirector() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'carlos.lorzilien@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rol in ['DIRECTOR', 'AREA_DIRECTOR'])
+      );
+    }
+
+    function isApprovedUser() {
+      return isAuthenticated() && (
+        isPreApprovedEmail() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'APPROVED')
+      );
+    }
+
+    // ==============================================================
+    // 1. COLECCIÓN 'users' (Perfiles de Directores, Mentores y Alumnos)
+    // ==============================================================
+    match /users/{userId} {
+      // Cada usuario lee su perfil; directores leen todos para auditoría
+      allow read: if isOwner(userId) || isDirector();
+
+      // Registro inicial del perfil al iniciar sesión
+      allow create: if isOwner(userId);
+
+      // El usuario puede actualizar su información básica sin cambiar rol ni status.
+      // El director puede actualizar rol y status para aprobar solicitudes.
+      allow update: if isDirector() || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'role', 'status'])
+      );
+
+      allow delete: if isDirector();
+    }
+
+    // ==============================================================
+    // 2. COLECCIÓN 'sessions' (Tutorías y Horas Pedagógicas)
+    // ==============================================================
+    match /sessions/{sessionId} {
+      // Mentores leen sus propias sesiones; directores leen toda la base
+      allow read: if isDirector() || (
+        isAuthenticated() && (
+          resource.data.mentor_id == request.auth.uid ||
+          resource.data.mentorId == request.auth.uid
+        )
+      );
+
+      // Solo mentores aprobados pueden crear sesiones en estado 'pending'
+      allow create: if isApprovedUser() && (
+        request.resource.data.mentor_id == request.auth.uid ||
+        request.resource.data.mentorId == request.auth.uid
+      ) && (
+        request.resource.data.estado == 'pending' ||
+        request.resource.data.status == 'pending'
+      );
+
+      // Solo la dirección académica puede auditar, aprobar (emitir CUV) o rechazar sesiones.
+      // Modificación restringida estrictamente a los campos de validación institucional.
+      allow update: if isDirector() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'status',
+          'aprobado_por', 'approvedBy',
+          'directorUid',
+          'fecha_aprobacion', 'approvedAt',
+          'cuv'
+        ])
+      );
+
+      allow delete: if isDirector();
+    }
+
+    // ==============================================================
+    // 3. COLECCIÓN 'cuvs' (Certificados Públicos Inmutables)
+    // ==============================================================
+    match /cuvs/{cuvCode} {
+      // Lectura 100% pública y abierta para validación O(1) de certificados
+      allow read: if true;
+
+      // Creación atómica exclusiva de la dirección académica durante el writeBatch
+      allow create, update: if isDirector();
+
+      // Los certificados emitidos son inmutables
+      allow delete: if false;
+    }
+  }
+}

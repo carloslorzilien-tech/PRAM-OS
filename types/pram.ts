@@ -29,6 +29,70 @@ export type TipoExamen = 'Pre-Test' | 'Checkpoint' | 'Post-Test';
 
 export type VariantePrueba = 'A' | 'B' | 'C';
 
+// ==========================================
+// PRAM OS V2: FIREBASE & ATOMIC CUV TYPES
+// ==========================================
+
+export type PramUserRole = 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT';
+export type PramUserStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface PramUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: PramUserRole;
+  status: PramUserStatus;
+  area?: AreaSupervision;
+  grado?: GradoSecundaria;
+  createdAt?: string | any;
+}
+
+export type PramSessionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PramSession {
+  id: string;
+  mentorId: string;
+  mentorName: string;
+  mentorEmail?: string;
+  materia: Materia;
+  tema: string;
+  duracionMinutos: number;
+  cantidadAlumnos: number;
+  fechaSesion: string;
+  notas?: string;
+  status: PramSessionStatus;
+  approvedBy?: string;
+  directorUid?: string;
+  approvedAt?: string | any;
+  cuv?: string;
+  createdAt?: string | any;
+}
+
+export interface CuvCertificate {
+  cuv: string;
+  sessionId: string;
+  mentorId: string;
+  mentorName: string;
+  materia: Materia;
+  tema: string;
+  duracionMinutos: number;
+  horas: number;
+  fechaSesion: string;
+  directorUid: string;
+  directorName: string;
+  approvedAt: string | any;
+  liceo: string;
+  entidadEmisora: string;
+  valido: boolean;
+}
+
+// Input type for session creation without server-assigned fields
+export type CreatePramSessionInput = Omit<PramSession, 'id' | 'createdAt' | 'status' | 'mentorId'>;
+
+// ==========================================
+// LEGACY & INTERFACE COMPATIBILITY
+// ==========================================
+
 export interface Supervisor {
   id: string;
   nombre: string;

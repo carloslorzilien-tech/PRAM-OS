@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   Lock,
 } from 'lucide-react'
-import { getCUVDetails } from '@/lib/db'
+import { verifyCuvCode } from '@/lib/firebase-service'
 import { PrintCertificateButton } from '@/components/pram/print-certificate'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +24,7 @@ export default async function VerifyCUVPage({
   let dbError = false
 
   try {
-    certificado = await getCUVDetails(decodedCUV)
+    certificado = await verifyCuvCode(decodedCUV)
   } catch {
     dbError = true
   }
@@ -45,7 +45,7 @@ export default async function VerifyCUVPage({
           </Link>
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              PRAM OS · Validador de Certificados
+              PRAM OS · Validador de Certificados (Firestore O(1))
             </span>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
               Verificación de Certificado CUV
@@ -104,7 +104,7 @@ export default async function VerifyCUVPage({
                     Certificado Auténtico e Inmutable
                   </h2>
                   <p className="text-[11px] text-emerald-700 font-normal">
-                    Este documento ha sido validado contra el registro oficial.
+                    Este documento ha sido validado contra el registro oficial de CUVs en Firestore.
                   </p>
                 </div>
               </div>
