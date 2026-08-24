@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import {
   User,
   signInWithPopup,
@@ -27,62 +27,138 @@ const FirebaseAuthContext = createContext<FirebaseAuthContextType>({
   signOut: async () => {},
 })
 
+// ────────────────────────────────────────────────────────
+// Helper: Emails pre-aprobados y su rol
+// ────────────────────────────────────────────────────────
+const DIRECTOR_EMAILS = ['carlos.lorzilien@gmail.com']
+const MENTOR_EMAILS = [
+  'carlosomarlorzilienservilien@gmail.com',
+  'carlosmarlorzilienservilien@gmail.com',
+]
+
+function classifyEmail(email: string): { isDirector: boolean; isMentor: boolean } {
+  const clean = email.toLowerCase().trim()
+  return {
+    isDirector: DIRECTOR_EMAILS.includes(clean),
+    isMentor: MENTOR_EMAILS.includes(clean),
+  }
+}
+
+/**
+ * Construye un perfil `Usuario` garantizado a partir de datos de Firestore
+ * y del `User` de Firebase Auth, normalizando campos faltantes.
+ */
+function buildUsuarioFromDoc(
+  firebaseUser: User,
+  firestoreData: Record<string, unknown> | null,
+  classification: { isDirector: boolean; isMentor: boolean }
+): Usuario {
+  const email = (firebaseUser.email || '').toLowerCase().trim()
+  const displayName =
+    (firestoreData?.nombre as string) ||
+    (firestoreData?.displayName as string) ||
+    firebaseUser.displayName ||
+    email.split('@')[0] ||
+    'Usuario PRAM'
+
+  // Determinar rol: prioridad a clasificación por email, luego al doc de Firestore
+  let rol: Usuario['rol'] = 'MENTOR'
+  if (classification.isDirector) {
+    rol = 'DIRECTOR'
+  } else if (firestoreData) {
+    const docRol = (firestoreData.rol as string) || (firestoreData.role as string) || ''
+    if (docRol === 'DIRECTOR' || docRol === 'AREA_DIRECTOR') {
+      rol = docRol as Usuario['rol']
+    }
+  }
+
+  let status: Usuario['status'] = 'PENDING'
+  if (classification.isDirector || classification.isMentor) {
+    status = 'APPROVED'
+  } else if (firestoreData) {
+    const docStatus = (firestoreData.status as string) || ''
+    if (docStatus === 'APPROVED' || docStatus === 'REJECTED') {
+      status = docStatus as Usuario['status']
+    }
+  }
+
+  return {
+    id: firebaseUser.uid,
+    email,
+    nombre: displayName,
+    rol,
+    area: classification.isMentor ? 'Matemáticas' : (firestoreData?.area as Usuario['area']) || null,
+    status,
+    created_at: (firestoreData?.created_at as string) || new Date().toISOString(),
+  }
+}
+
+/**
+ * Escribe/sincroniza el perfil del usuario en Firestore `users/{uid}`.
+ * Usa `setDoc` con `merge: true` para no destruir campos existentes.
+ */
+async function syncProfileToFirestore(uid: string, profile: Usuario): Promise<void> {
+  const userDocRef = doc(db, 'users', uid)
+  await setDoc(
+    userDocRef,
+    {
+      id: uid,
+      uid,
+      email: profile.email,
+      nombre: profile.nombre,
+      displayName: profile.nombre,
+      role: profile.rol,
+      rol: profile.rol,
+      area: profile.area || null,
+      status: profile.status,
+      created_at: profile.created_at || new Date().toISOString(),
+      createdAt: profile.created_at || new Date().toISOString(),
+    },
+    { merge: true }
+  )
+}
+
 export function FirebaseAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // ────────────────────────────────────────────────────────
+  // onAuthStateChanged — listener global
+  // ────────────────────────────────────────────────────────
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser)
       if (currentUser) {
+        setUser(currentUser)
+        const classification = classifyEmail(currentUser.email || '')
+
         try {
           const userDocRef = doc(db, 'users', currentUser.uid)
           const userDocSnap = await getDoc(userDocRef)
+          const firestoreData = userDocSnap.exists() ? (userDocSnap.data() as Record<string, unknown>) : null
 
-          const email = (currentUser.email || '').toLowerCase().trim()
-          const isDirector = email === 'carlos.lorzilien@gmail.com'
-          const isMentor =
-            email === 'carlosomarlorzilienservilien@gmail.com' ||
-            email === 'carlosmarlorzilienservilien@gmail.com'
+          const profile = buildUsuarioFromDoc(currentUser, firestoreData, classification)
 
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data() as Usuario
-            // Asegurar sincronización de rol para directores y mentores preaprobados
-            if (isDirector && (data.rol !== 'DIRECTOR' || data.status !== 'APPROVED')) {
-              data.rol = 'DIRECTOR'
-              data.status = 'APPROVED'
-              await setDoc(userDocRef, { role: 'DIRECTOR', rol: 'DIRECTOR', status: 'APPROVED' }, { merge: true })
-            } else if (isMentor && data.status !== 'APPROVED') {
-              data.rol = 'MENTOR'
-              data.status = 'APPROVED'
-              data.area = 'Matemáticas'
-              await setDoc(userDocRef, { role: 'MENTOR', rol: 'MENTOR', status: 'APPROVED', area: 'Matemáticas' }, { merge: true })
-            }
-            setUserProfile(data)
-          } else {
-            // Auto-creación de perfil al registrarse
-            const newProfile = {
-              id: currentUser.uid,
-              uid: currentUser.uid,
-              email,
-              nombre: currentUser.displayName || currentUser.email?.split('@')[0] || 'Usuario PRAM',
-              displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Usuario PRAM',
-              role: isDirector ? 'DIRECTOR' : 'MENTOR',
-              rol: isDirector ? 'DIRECTOR' : 'MENTOR',
-              area: isMentor ? 'Matemáticas' : undefined,
-              status: isDirector || isMentor ? 'APPROVED' : 'PENDING',
-              created_at: new Date().toISOString(),
-              createdAt: new Date().toISOString(),
-            }
+          // Sincronizar con Firestore si es usuario nuevo o pre-aprobado que necesita fix
+          const needsSync =
+            !firestoreData ||
+            (classification.isDirector && (firestoreData.rol !== 'DIRECTOR' || firestoreData.status !== 'APPROVED')) ||
+            (classification.isMentor && firestoreData.status !== 'APPROVED') ||
+            !firestoreData.nombre
 
-            await setDoc(userDocRef, newProfile, { merge: true })
-            setUserProfile(newProfile as unknown as Usuario)
+          if (needsSync) {
+            await syncProfileToFirestore(currentUser.uid, profile)
           }
+
+          setUserProfile(profile)
         } catch (error) {
           console.error('[Firebase Auth Profile Error]:', error)
+          // Fallback: construir perfil mínimo sin Firestore
+          const fallbackProfile = buildUsuarioFromDoc(currentUser, null, classification)
+          setUserProfile(fallbackProfile)
         }
       } else {
+        setUser(null)
         setUserProfile(null)
       }
       setLoading(false)
@@ -91,64 +167,42 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
     return () => unsubscribe()
   }, [])
 
-  const signInWithGoogle = async (): Promise<Usuario | null> => {
+  // ────────────────────────────────────────────────────────
+  // signInWithGoogle — popup + sync inmediato
+  // ────────────────────────────────────────────────────────
+  const signInWithGoogle = useCallback(async (): Promise<Usuario | null> => {
     try {
       setLoading(true)
       const result = await signInWithPopup(auth, googleProvider)
       const firebaseUser = result.user
-      const email = (firebaseUser.email || '').toLowerCase().trim()
+      const classification = classifyEmail(firebaseUser.email || '')
 
       const userDocRef = doc(db, 'users', firebaseUser.uid)
       const userDocSnap = await getDoc(userDocRef)
+      const firestoreData = userDocSnap.exists() ? (userDocSnap.data() as Record<string, unknown>) : null
 
-      const isDirector = email === 'carlos.lorzilien@gmail.com'
-      const isMentor =
-        email === 'carlosomarlorzilienservilien@gmail.com' ||
-        email === 'carlosmarlorzilienservilien@gmail.com'
+      const profile = buildUsuarioFromDoc(firebaseUser, firestoreData, classification)
 
-      let profile: Usuario
-      if (userDocSnap.exists()) {
-        profile = userDocSnap.data() as Usuario
-        if (isDirector && (profile.rol !== 'DIRECTOR' || profile.status !== 'APPROVED')) {
-          profile.rol = 'DIRECTOR'
-          profile.status = 'APPROVED'
-          await setDoc(userDocRef, { role: 'DIRECTOR', rol: 'DIRECTOR', status: 'APPROVED' }, { merge: true })
-        } else if (isMentor && profile.status !== 'APPROVED') {
-          profile.rol = 'MENTOR'
-          profile.status = 'APPROVED'
-          profile.area = 'Matemáticas'
-          await setDoc(userDocRef, { role: 'MENTOR', rol: 'MENTOR', status: 'APPROVED', area: 'Matemáticas' }, { merge: true })
-        }
-      } else {
-        const newProfile = {
-          id: firebaseUser.uid,
-          uid: firebaseUser.uid,
-          email,
-          nombre: firebaseUser.displayName || email.split('@')[0] || 'Usuario PRAM',
-          displayName: firebaseUser.displayName || email.split('@')[0] || 'Usuario PRAM',
-          role: isDirector ? 'DIRECTOR' : 'MENTOR',
-          rol: isDirector ? 'DIRECTOR' : 'MENTOR',
-          area: isMentor ? 'Matemáticas' : undefined,
-          status: isDirector || isMentor ? 'APPROVED' : 'PENDING',
-          created_at: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        }
-        await setDoc(userDocRef, newProfile, { merge: true })
-        profile = newProfile as unknown as Usuario
-      }
+      // Siempre sincronizar tras login explícito para garantizar coherencia
+      await syncProfileToFirestore(firebaseUser.uid, profile)
 
+      // Actualizar estado React INMEDIATAMENTE
       setUser(firebaseUser)
       setUserProfile(profile)
       setLoading(false)
+
       return profile
     } catch (error) {
       console.error('[Firebase signInWithGoogle Error]:', error)
       setLoading(false)
       return null
     }
-  }
+  }, [])
 
-  const signOut = async () => {
+  // ────────────────────────────────────────────────────────
+  // signOut
+  // ────────────────────────────────────────────────────────
+  const signOut = useCallback(async () => {
     try {
       await firebaseSignOut(auth)
       setUser(null)
@@ -156,7 +210,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('[Firebase signOut Error]:', error)
     }
-  }
+  }, [])
 
   return (
     <FirebaseAuthContext.Provider

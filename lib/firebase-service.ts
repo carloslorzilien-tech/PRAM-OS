@@ -10,6 +10,7 @@ import {
   orderBy,
   onSnapshot,
   writeBatch,
+  serverTimestamp,
 } from 'firebase/firestore'
 import { db, auth } from '@/lib/firebase'
 import { Sesion, Usuario, MateriaValida, CertificadoCUV } from '@/lib/db'
@@ -17,7 +18,13 @@ import { PramSession, CreatePramSessionInput, CuvCertificate } from '@/types/pra
 
 /**
  * 1. CREACIÓN DE SESIÓN (Firestore: colección 'sessions')
- * Extrae automáticamente el mentorId de auth.currentUser si está disponible.
+ *
+ * El payload DEBE contener:
+ *   - mentor_id / mentorId  ==  auth.currentUser.uid  (requerido por firestore.rules)
+ *   - status / estado       ==  'pending'
+ *   - createdAt             ==  serverTimestamp()
+ *
+ * Si auth.currentUser es null lanza error en lugar de escribir con uid falso.
  */
 export async function createFirebaseSession(
   data: CreatePramSessionInput | {
@@ -31,12 +38,17 @@ export async function createFirebaseSession(
     notas?: string
   }
 ): Promise<Sesion> {
-  const currentUid = auth.currentUser?.uid || ('mentor_id' in data ? data.mentor_id : undefined) || 'm-1'
+  const currentUser = auth.currentUser
+  if (!currentUser) {
+    throw new Error('Debes iniciar sesión con Google antes de registrar una sesión.')
+  }
+
+  const currentUid = currentUser.uid
   const currentMentorName =
-    auth.currentUser?.displayName ||
+    currentUser.displayName ||
     ('mentor_nombre' in data ? data.mentor_nombre : undefined) ||
     ('mentorName' in data ? data.mentorName : undefined) ||
-    'Prof. Carlos Omar Lorzilien'
+    'Tutor PRAM'
 
   const materia = ('materia' in data ? data.materia : 'Matemáticas') as MateriaValida
   const tema = ('tema' in data ? data.tema : '')
@@ -45,9 +57,12 @@ export async function createFirebaseSession(
   const fechaSesion = 'fechaSesion' in data ? data.fechaSesion : ('fecha_sesion' in data ? data.fecha_sesion : new Date().toISOString().split('T')[0])
   const notas = ('notas' in data ? data.notas : '') || ''
 
+  // Payload estricto: los campos mentor_id y mentorId DEBEN ser auth.currentUser.uid
+  // para satisfacer la regla:  request.resource.data.get('mentor_id', '') == request.auth.uid
   const sessionPayload = {
     mentor_id: currentUid,
     mentorId: currentUid,
+    tutorUid: currentUid,
     mentor_nombre: currentMentorName,
     mentorName: currentMentorName,
     materia,
@@ -61,8 +76,8 @@ export async function createFirebaseSession(
     notas,
     estado: 'pending' as const,
     status: 'pending' as const,
+    createdAt: serverTimestamp(),
     created_at: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
   }
 
   const docRef = await addDoc(collection(db, 'sessions'), sessionPayload)
@@ -123,14 +138,22 @@ export async function getFirebasePendingSessions(): Promise<Sesion[]> {
 
 /**
  * 3. APROBACIÓN ATÓMICA DE SESIÓN Y GENERACIÓN DE CUV (writeBatch)
+ *
+ * Requiere que auth.currentUser sea un Director con doc en users/{uid}
+ * que tenga role='DIRECTOR' y status='APPROVED'.
  */
 export async function approveFirebaseSession(
   sessionId: string,
   supervisorName = 'Dra. Carmen Batlle'
 ): Promise<boolean> {
   try {
-    const directorUid = auth.currentUser?.uid || 'director-admin'
-    const directorName = auth.currentUser?.displayName || supervisorName
+    const currentUser = auth.currentUser
+    if (!currentUser) {
+      throw new Error('Debes iniciar sesión como Director para aprobar sesiones.')
+    }
+
+    const directorUid = currentUser.uid
+    const directorName = currentUser.displayName || supervisorName
     const randomHex = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID().slice(0, 8).toUpperCase()
       : Math.random().toString(36).substring(2, 10).toUpperCase()
@@ -143,7 +166,7 @@ export async function approveFirebaseSession(
     const sessionData = sessionSnap.exists() ? sessionSnap.data() : null
 
     const mentorId = sessionData?.mentor_id || sessionData?.mentorId || 'mentor-uid'
-    const mentorName = sessionData?.mentor_nombre || sessionData?.mentorName || 'Prof. Carlos Omar Lorzilien'
+    const mentorName = sessionData?.mentor_nombre || sessionData?.mentorName || 'Tutor PRAM'
     const materia = sessionData?.materia || 'Matemáticas'
     const tema = sessionData?.tema || 'Refuerzo Académico'
     const duracionMinutos = sessionData?.duracion_minutos || sessionData?.duracionMinutos || 45
@@ -233,7 +256,7 @@ export async function verifyCuvCode(cuvCode: string): Promise<CertificadoCUV | n
       return {
         id: cuvSnap.id,
         cuv_codigo: data.cuv_codigo || cleanCode,
-        mentor_nombre: data.mentor_nombre || data.mentorName || 'Prof. Carlos Omar Lorzilien',
+        mentor_nombre: data.mentor_nombre || data.mentorName || 'Tutor PRAM',
         horas_certificadas: data.horas_certificadas || data.horas || 60.0,
         liceo: data.liceo || 'Liceo Minerva Mirabal · PRAM OS',
         fecha_emision: data.fecha_emision || new Date().toLocaleDateString('es-DO'),

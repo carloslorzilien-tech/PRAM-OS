@@ -1,6 +1,8 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   Users,
@@ -8,85 +10,88 @@ import {
   AlertTriangle,
   ShieldAlert,
   ArrowRight,
+  Loader2,
 } from 'lucide-react'
-import {
-  getPendingSessionsForAudit,
-  getPublicKPIs,
-  getTopMentores,
-  getPendingUsers,
-  Sesion,
-  Usuario,
-  Mentor,
-  withRetry,
-} from '@/lib/db'
 import { DirectorAuditTable } from '@/components/pram/director-table'
-import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { useFirebaseAuth } from '@/lib/firebase-auth'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
+import { getFirebasePendingSessions, getFirebasePendingUsers } from '@/lib/firebase-service'
+import { Sesion, Usuario, Mentor, getPublicKPIs, getTopMentores } from '@/lib/db'
 
-export const dynamic = 'force-dynamic'
+export default function DirectorDashboardPage() {
+  const { user, userProfile, loading: authLoading } = useFirebaseAuth()
+  const router = useRouter()
 
-export default async function DirectorDashboardPage() {
-  let currentUser: Usuario | null = null
-  let pendingSessions: Sesion[] = []
-  let pendingUsers: Usuario[] = []
-  let kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
-  let topMentores: Mentor[] = []
-  let isOfflineMode = false
+  const [pendingSessions, setPendingSessions] = useState<Sesion[]>([])
+  const [pendingUsers, setPendingUsers] = useState<Usuario[]>([])
+  const [kpis, setKpis] = useState({ horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 })
+  const [topMentores, setTopMentores] = useState<Mentor[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [isOfflineMode, setIsOfflineMode] = useState(false)
 
-  try {
-    try {
-      currentUser = await getOrCreateCurrentUser()
-    } catch (authErr) {
-      console.warn('[PRAM Auth Warn in DirectorDashboard]:', authErr)
+  // 1. Redirecciones y Seguridad
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/')
+      } else if (userProfile?.status === 'PENDING') {
+        router.push('/solicitud-pendiente')
+      }
+    }
+  }, [user, userProfile, authLoading, router])
+
+  // 2. Carga de Datos desde Firestore y Mock KPIs
+  useEffect(() => {
+    async function loadData() {
+      if (user && userProfile?.rol === 'DIRECTOR') {
+        try {
+          const [sessionsData, usersData, kpisData, topMentoresData] = await Promise.all([
+            getFirebasePendingSessions(),
+            getFirebasePendingUsers(),
+            getPublicKPIs(),
+            getTopMentores(5),
+          ])
+          
+          setPendingSessions(sessionsData)
+          setPendingUsers(usersData)
+          setKpis(kpisData)
+          setTopMentores(topMentoresData)
+        } catch (error) {
+          console.error('[Director Dashboard Fetch Error]:', error)
+          setIsOfflineMode(true)
+        } finally {
+          setIsLoadingData(false)
+        }
+      } else {
+        setIsLoadingData(false)
+      }
     }
 
-    if (currentUser && currentUser.status === 'PENDING') {
-      redirect('/solicitud-pendiente')
+    if (!authLoading && user && userProfile?.rol === 'DIRECTOR') {
+      loadData()
+    } else if (!authLoading) {
+      setIsLoadingData(false)
     }
+  }, [user, userProfile, authLoading])
 
-    // Carga protegida contra fallos o Timeouts de Neon DB
-    try {
-      const results = await Promise.allSettled([
-        withRetry(() => getPendingSessionsForAudit(), 3, 1500),
-        withRetry(() => getPendingUsers(), 3, 1500),
-        withRetry(() => getPublicKPIs(), 3, 1500),
-        withRetry(() => getTopMentores(5), 3, 1500),
-      ])
-
-      if (results[0].status === 'fulfilled' && results[0].value) pendingSessions = results[0].value
-      if (results[1].status === 'fulfilled' && results[1].value) pendingUsers = results[1].value
-      if (results[2].status === 'fulfilled' && results[2].value) kpis = results[2].value
-      if (results[3].status === 'fulfilled' && results[3].value) topMentores = results[3].value
-    } catch (dbErr) {
-      console.error('[PRAM DB Error/Timeout in DirectorDashboard]:', dbErr)
-      // Asignar fallback inmediatamente:
-      // stats = { totalHours: 0, sessionsCount: 0, studentsCount: 0 }, sessions = []
-      kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
-      pendingSessions = []
-      pendingUsers = []
-      topMentores = []
-      isOfflineMode = true
-    }
-  } catch (error: any) {
-    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
-      throw error
-    }
-    console.error('Error no fatal capturado en Director Dashboard:', error)
-    // Fallback garantizado sin lanzar excepción:
-    kpis = { horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 }
-    pendingSessions = []
-    pendingUsers = []
-    topMentores = []
-    isOfflineMode = true
+  if (authLoading || (isLoadingData && userProfile?.rol === 'DIRECTOR')) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-slate-400 mb-4" />
+        <p className="text-sm font-medium text-slate-500">Cargando Panel de Dirección...</p>
+      </div>
+    )
   }
 
-  // Si el usuario autenticado es explícitamente un MENTOR (no director), mostrar aviso pasivo
-  const isDirector =
-    currentUser?.rol === 'DIRECTOR' ||
-    currentUser?.rol === 'AREA_DIRECTOR' ||
-    currentUser?.email?.toLowerCase() === 'carlos.lorzilien@gmail.com'
+  // Si no hay usuario (aún no redirigido) o está en PENDING
+  if (!user || userProfile?.status === 'PENDING') {
+    return null
+  }
 
-  if (currentUser && !isDirector && currentUser.rol === 'MENTOR') {
+  // Si el usuario no es Director, mostrar warning
+  const isDirector = userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR'
+
+  if (!isDirector) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 text-center">
@@ -98,7 +103,7 @@ export default async function DirectorDashboardPage() {
               Módulo de Dirección Académica
             </h2>
             <p className="text-xs text-slate-600 font-normal mt-1">
-              Tu cuenta ({currentUser.email}) está registrada con el rol de <strong>Tutor / Mentor</strong>.
+              Tu cuenta ({user.email}) está registrada con el rol de <strong>Tutor / Mentor</strong>.
               El acceso a la auditoría está reservado para la Dirección.
             </p>
           </div>
@@ -116,15 +121,14 @@ export default async function DirectorDashboardPage() {
     )
   }
 
-  const directorName = currentUser?.nombre || 'Carlos Lorzilien (Director)'
+  const directorName = userProfile?.nombre || 'Director'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Alerta de Modo Desconectado si aplica */}
       {isOfflineMode && (
         <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 py-2 flex items-center justify-center gap-2 font-medium">
           <AlertTriangle className="size-4 text-amber-600 shrink-0" />
-          <span>Modo desconectado: mostrando vista base. Se reestablecerá automáticamente al reconectar.</span>
+          <span>Modo desconectado o error de lectura. Algunas funciones pueden estar limitadas.</span>
         </div>
       )}
 
@@ -157,17 +161,13 @@ export default async function DirectorDashboardPage() {
           >
             <Users className="size-3.5 text-amber-700" />
             <span>Solicitudes</span>
-            {(pendingUsers || []).length > 0 && (
+            {pendingUsers.length > 0 && (
               <span className="rounded-full bg-amber-600 text-white px-1.5 py-0.2 text-[10px] font-bold">
-                {(pendingUsers || []).length}
+                {pendingUsers.length}
               </span>
             )}
           </Link>
-          <UserProfileBadge
-            userRole={currentUser?.rol}
-            userStatus={currentUser?.status}
-            userArea={currentUser?.area}
-          />
+          <UserProfileBadge />
         </div>
       </header>
 
@@ -192,7 +192,7 @@ export default async function DirectorDashboardPage() {
               Horas Validadas
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis?.horasCertificadas || 0} <span className="text-lg font-normal text-slate-500">h</span>
+              {kpis.horasCertificadas} <span className="text-lg font-normal text-slate-500">h</span>
             </p>
             <p className="text-[11px] font-medium text-emerald-700 mt-1">
               Bloqueadas e Inmutables
@@ -204,7 +204,7 @@ export default async function DirectorDashboardPage() {
               Pendientes Firma
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {(pendingSessions || []).length}
+              {pendingSessions.length}
             </p>
             <p className="text-[11px] font-medium text-amber-700 mt-1">
               En bandeja de espera
@@ -216,7 +216,7 @@ export default async function DirectorDashboardPage() {
               Alumnos Atendidos
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis?.estudiantesAtendidos || 0}
+              {kpis.estudiantesAtendidos}
             </p>
             <p className="text-[11px] font-normal text-slate-500 mt-1">
               En cohortes activas
@@ -228,7 +228,7 @@ export default async function DirectorDashboardPage() {
               Sesiones Aprobadas
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis?.sesionesValidadas || 0}
+              {kpis.sesionesValidadas}
             </p>
             <p className="text-[11px] font-normal text-slate-500 mt-1">
               Acreditadas
@@ -238,7 +238,7 @@ export default async function DirectorDashboardPage() {
 
         {/* 2. Tabla de Auditoría con Aprobación */}
         <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-          <DirectorAuditTable initialSessions={pendingSessions || []} />
+          <DirectorAuditTable initialSessions={pendingSessions} />
         </section>
 
         {/* 3. Expediente Resumido de Mentores (Apto para Impresión) */}
@@ -269,24 +269,24 @@ export default async function DirectorDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {(topMentores || []).length === 0 ? (
+                {topMentores.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-4 text-center text-slate-400">
                       No hay mentores registrados aún
                     </td>
                   </tr>
                 ) : (
-                  (topMentores || []).map((m) => {
-                    const isComplete = (m?.horas_acumuladas || 0) >= (m?.meta_horas || 60)
+                  topMentores.map((m) => {
+                    const isComplete = m.horas_acumuladas >= m.meta_horas
                     return (
-                      <tr key={m?.id || Math.random().toString()}>
-                        <td className="px-4 py-2.5 font-medium text-slate-900">{m?.nombre || 'Mentor'}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{m?.especialidad || 'Matemáticas'}</td>
-                        <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{(m?.horas_acumuladas || 0).toFixed(1)} h</td>
-                        <td className="px-4 py-2.5 font-mono text-slate-500">{(m?.meta_horas || 60).toFixed(0)} h</td>
+                      <tr key={m.id}>
+                        <td className="px-4 py-2.5 font-medium text-slate-900">{m.nombre}</td>
+                        <td className="px-4 py-2.5 text-slate-600">{m.especialidad}</td>
+                        <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{m.horas_acumuladas.toFixed(1)} h</td>
+                        <td className="px-4 py-2.5 font-mono text-slate-500">{m.meta_horas.toFixed(0)} h</td>
                         <td className="px-4 py-2.5 text-right">
                           {isComplete ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium">
+                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium">
                               <CheckCircle2 className="size-3 text-emerald-600" />
                               <span>Listo para Certificar</span>
                             </span>
