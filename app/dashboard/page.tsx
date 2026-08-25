@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import Link from 'next/link'
 import {
@@ -6,27 +8,62 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Loader2,
+  LogIn,
 } from 'lucide-react'
-import { getPublicKPIs } from '@/lib/db'
-import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { useFirebaseAuth } from '@/lib/firebase-auth'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
+import { Google1ClickButton } from '@/components/pram/google-1click-auth'
 
-export const dynamic = 'force-dynamic'
+export default function DashboardHubPage() {
+  const { user, userProfile, loading } = useFirebaseAuth()
 
-export default async function DashboardHubPage() {
-  let currentUser = null
-  try {
-    currentUser = await getOrCreateCurrentUser()
-  } catch (error) {
-    console.warn('User resolution in DashboardHubPage:', error)
+  // 1. Loading Guard: Wait for initial Firebase Auth token resolution
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm max-w-sm w-full text-center">
+          <Loader2 className="size-8 animate-spin text-[#152642]" />
+          <p className="text-sm font-medium text-slate-600">Verificando sesión...</p>
+        </div>
+      </div>
+    )
   }
 
-  const isDirector =
-    currentUser?.rol === 'DIRECTOR' ||
-    currentUser?.rol === 'AREA_DIRECTOR' ||
-    currentUser?.email?.toLowerCase() === 'carlos.lorzilien@gmail.com'
+  // 2. Unauthenticated Guard: Render login UI if user token resolves to null
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-slate-900 font-sans">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6 text-center">
+          <div className="flex size-12 mx-auto items-center justify-center rounded-2xl bg-slate-100 text-slate-800">
+            <LogIn className="size-6 text-[#152642]" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+              Acceso a PRAM OS
+            </h2>
+            <p className="text-xs text-slate-600 font-normal leading-relaxed">
+              Debes iniciar sesión con tu cuenta institucional para ingresar a los módulos de tutoría y auditoría.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Google1ClickButton mode="sign-in" className="w-full justify-center h-11 text-xs font-bold bg-[#152642] text-white hover:bg-[#1e3a5f] rounded-xl shadow-xs" />
+          </div>
+          <div className="pt-4 border-t border-slate-100">
+            <Link href="/" className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">
+              ← Volver al Inicio
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  const kpis = await getPublicKPIs()
+  // 3. Authenticated State: User resolution complete
+  const isDirector =
+    userProfile?.rol === 'DIRECTOR' ||
+    userProfile?.rol === 'AREA_DIRECTOR' ||
+    user.email?.toLowerCase() === 'carlos.lorzilien@gmail.com'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -52,9 +89,9 @@ export default async function DashboardHubPage() {
 
         <div className="flex items-center gap-3">
           <UserProfileBadge
-            userRole={currentUser?.rol}
-            userStatus={currentUser?.status}
-            userArea={currentUser?.area}
+            userRole={userProfile?.rol}
+            userStatus={userProfile?.status}
+            userArea={userProfile?.area}
           />
         </div>
       </header>
@@ -69,7 +106,7 @@ export default async function DashboardHubPage() {
           </p>
         </div>
 
-        {/* Tarjetas de Selección de Rol Pasivas (100% mediante <Link>) */}
+        {/* Tarjetas de Selección de Rol Pasivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Opción 1: Panel del Tutor / Mentor */}
           <Link
