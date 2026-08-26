@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, googleProvider, db } from '@/lib/firebase'
 import { Usuario } from '@/lib/db'
 
@@ -94,8 +94,32 @@ function buildUsuarioFromDoc(
 }
 
 /**
- * Escribe/sincroniza el perfil del usuario en Firestore `users/{uid}`.
- * Usa `setDoc` con `merge: true` para no destruir campos existentes.
+ * Crea el documento inicial de un usuario NUEVO en Firestore `users/{uid}`.
+ * Estado: 'PENDING' hasta que la Dirección lo apruebe.
+ * Solo se llama cuando el doc NO existe aún.
+ */
+async function createNewUserDocument(uid: string, profile: Usuario): Promise<void> {
+  const userDocRef = doc(db, 'users', uid)
+  await setDoc(userDocRef, {
+    id: uid,
+    uid,
+    email: profile.email,
+    nombre: profile.nombre,
+    displayName: profile.nombre,
+    role: profile.rol,
+    rol: profile.rol,
+    area: profile.area || null,
+    status: profile.status,
+    horasAcumuladas: 0,
+    horas_acumuladas: 0,
+    created_at: new Date().toISOString(),
+    createdAt: serverTimestamp(),
+  })
+}
+
+/**
+ * Sincroniza (merge) los campos críticos de un usuario YA EXISTENTE en Firestore.
+ * No destruye campos como horasAcumuladas, cuv, etc.
  */
 async function syncProfileToFirestore(uid: string, profile: Usuario): Promise<void> {
   const userDocRef = doc(db, 'users', uid)
@@ -135,19 +159,23 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
         try {
           const userDocRef = doc(db, 'users', currentUser.uid)
           const userDocSnap = await getDoc(userDocRef)
-          const firestoreData = userDocSnap.exists() ? (userDocSnap.data() as Record<string, unknown>) : null
+          const isNewUser = !userDocSnap.exists()
+          const firestoreData = isNewUser ? null : (userDocSnap.data() as Record<string, unknown>)
 
           const profile = buildUsuarioFromDoc(currentUser, firestoreData, classification)
 
-          // Sincronizar con Firestore si es usuario nuevo o pre-aprobado que necesita fix
-          const needsSync =
-            !firestoreData ||
-            (classification.isDirector && (firestoreData.rol !== 'DIRECTOR' || firestoreData.status !== 'APPROVED')) ||
-            (classification.isMentor && firestoreData.status !== 'APPROVED') ||
-            !firestoreData.nombre
-
-          if (needsSync) {
-            await syncProfileToFirestore(currentUser.uid, profile)
+          if (isNewUser) {
+            // Primera vez: crear documento completo con PENDING y horasAcumuladas: 0
+            await createNewUserDocument(currentUser.uid, profile)
+          } else {
+            // Usuario existente: solo sincronizar si hay campos críticos desactualizados
+            const needsSync =
+              (classification.isDirector && (firestoreData!.rol !== 'DIRECTOR' || firestoreData!.status !== 'APPROVED')) ||
+              (classification.isMentor && firestoreData!.status !== 'APPROVED') ||
+              !firestoreData!.nombre
+            if (needsSync) {
+              await syncProfileToFirestore(currentUser.uid, profile)
+            }
           }
 
           setUserProfile(profile)
@@ -179,12 +207,18 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
 
       const userDocRef = doc(db, 'users', firebaseUser.uid)
       const userDocSnap = await getDoc(userDocRef)
-      const firestoreData = userDocSnap.exists() ? (userDocSnap.data() as Record<string, unknown>) : null
+      const isNewUser = !userDocSnap.exists()
+      const firestoreData = isNewUser ? null : (userDocSnap.data() as Record<string, unknown>)
 
       const profile = buildUsuarioFromDoc(firebaseUser, firestoreData, classification)
 
-      // Siempre sincronizar tras login explícito para garantizar coherencia
-      await syncProfileToFirestore(firebaseUser.uid, profile)
+      if (isNewUser) {
+        // Primera vez: crear doc completo con PENDING y horasAcumuladas: 0
+        await createNewUserDocument(firebaseUser.uid, profile)
+      } else {
+        // Usuario existente: merge solo campos necesarios
+        await syncProfileToFirestore(firebaseUser.uid, profile)
+      }
 
       // Actualizar estado React INMEDIATAMENTE
       setUser(firebaseUser)
