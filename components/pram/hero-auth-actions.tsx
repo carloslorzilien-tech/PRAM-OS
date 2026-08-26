@@ -2,11 +2,11 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { ArrowRight, LayoutDashboard, LogOut, BookOpen, LogIn, Loader2 } from 'lucide-react'
+import { ArrowRight, LayoutDashboard, BookOpen, LogIn, Loader2 } from 'lucide-react'
 import { useFirebaseAuth } from '@/lib/firebase-auth'
 
 export function HeroAuthActions() {
-  const { user, userProfile, loading, signInWithGoogle, signOut } = useFirebaseAuth()
+  const { user, userProfile, loading, signInWithGoogle } = useFirebaseAuth()
 
   if (loading) {
     return (
@@ -39,15 +39,6 @@ export function HeroAuthActions() {
           <span>Ir a Mi {roleLabel}</span>
           <ArrowRight className="size-3.5" />
         </Link>
-
-        <button
-          type="button"
-          onClick={() => signOut()}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
-        >
-          <LogOut className="size-4 text-slate-500 group-hover:text-rose-600" />
-          <span>Cerrar Sesión</span>
-        </button>
 
         <Link
           href="/recursos"

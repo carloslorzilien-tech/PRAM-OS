@@ -166,8 +166,9 @@ export async function getPublicKPIs(): Promise<PublicKPIs> {
   }
 }
 
-export async function getTopMentores(limit = 10): Promise<Mentor[]> {
-  return mockMentores.slice(0, limit)
+export async function getTopMentores(limit?: number): Promise<Mentor[]> {
+  const sorted = [...mockMentores].sort((a, b) => b.horas_acumuladas - a.horas_acumuladas)
+  return limit !== undefined ? sorted.slice(0, limit) : sorted
 }
 
 export async function getMentorSessions(mentorId: string): Promise<{ mentor: Mentor | null; sesiones: Sesion[] }> {
