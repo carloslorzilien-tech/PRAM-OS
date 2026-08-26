@@ -11,23 +11,35 @@ import {
   ShieldAlert,
   ArrowRight,
   Loader2,
+  Award,
+  FileCheck,
+  UserCheck,
+  ExternalLink,
 } from 'lucide-react'
 import { DirectorAuditTable } from '@/components/pram/director-table'
+import { DirectorRequestsTable } from '@/components/pram/director-requests-table'
 import { useFirebaseAuth } from '@/lib/firebase-auth'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
-import { getFirebasePendingSessions, getFirebasePendingUsers } from '@/lib/firebase-service'
+import {
+  getFirebasePendingSessions,
+  getFirebasePendingUsers,
+  createFlexibleCuvForMentor,
+} from '@/lib/firebase-service'
 import { Sesion, Usuario, Mentor, getPublicKPIs, getTopMentores } from '@/lib/db'
 
 export default function DirectorDashboardPage() {
   const { user, userProfile, loading: authLoading } = useFirebaseAuth()
   const router = useRouter()
 
+  const [activeTab, setActiveTab] = useState<'audit' | 'users'>('audit')
   const [pendingSessions, setPendingSessions] = useState<Sesion[]>([])
   const [pendingUsers, setPendingUsers] = useState<Usuario[]>([])
   const [kpis, setKpis] = useState({ horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 })
   const [topMentores, setTopMentores] = useState<Mentor[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [isOfflineMode, setIsOfflineMode] = useState(false)
+  const [generatingCuvId, setGeneratingCuvId] = useState<string | null>(null)
+  const [cuvNotification, setCuvNotification] = useState<string | null>(null)
 
   // 1. Redirecciones y Seguridad
   useEffect(() => {
@@ -40,16 +52,16 @@ export default function DirectorDashboardPage() {
     }
   }, [user, userProfile, authLoading, router])
 
-  // 2. Carga de Datos desde Firestore y Mock KPIs
+  // 2. Carga de Datos desde Firestore y KPIs
   useEffect(() => {
     async function loadData() {
-      if (user && userProfile?.rol === 'DIRECTOR') {
+      if (user && (userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR')) {
         try {
           const [sessionsData, usersData, kpisData, topMentoresData] = await Promise.all([
             getFirebasePendingSessions(),
             getFirebasePendingUsers(),
             getPublicKPIs(),
-            getTopMentores(5),
+            getTopMentores(),
           ])
           
           setPendingSessions(sessionsData)
@@ -67,14 +79,34 @@ export default function DirectorDashboardPage() {
       }
     }
 
-    if (!authLoading && user && userProfile?.rol === 'DIRECTOR') {
+    if (!authLoading && user && (userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR')) {
       loadData()
     } else if (!authLoading) {
       setIsLoadingData(false)
     }
   }, [user, userProfile, authLoading])
 
-  if (authLoading || (isLoadingData && userProfile?.rol === 'DIRECTOR')) {
+  // Emisión Flexible de CUV (Desacoplada de la restricción >= 60h)
+  const handleGenerateFlexibleCuv = async (mentor: Mentor) => {
+    setGeneratingCuvId(mentor.id)
+    setCuvNotification(null)
+    const code = await createFlexibleCuvForMentor(
+      mentor.nombre,
+      mentor.id,
+      mentor.horas_acumuladas,
+      mentor.especialidad
+    )
+    setGeneratingCuvId(null)
+
+    if (code) {
+      setCuvNotification(`CUV emitido exitosamente: ${code}`)
+      window.open(`/verify/${encodeURIComponent(code)}`, '_blank')
+    } else {
+      setCuvNotification('Error al emitir el certificado CUV en Firestore.')
+    }
+  }
+
+  if (authLoading || (isLoadingData && (userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR'))) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
         <Loader2 className="size-8 animate-spin text-slate-400 mb-4" />
@@ -83,12 +115,10 @@ export default function DirectorDashboardPage() {
     )
   }
 
-  // Si no hay usuario (aún no redirigido) o está en PENDING
   if (!user || userProfile?.status === 'PENDING') {
     return null
   }
 
-  // Si el usuario no es Director, mostrar warning
   const isDirector = userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR'
 
   if (!isDirector) {
@@ -155,23 +185,11 @@ export default function DirectorDashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/director/solicitudes"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900 bg-amber-50 border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors shadow-xs"
-          >
-            <Users className="size-3.5 text-amber-700" />
-            <span>Solicitudes</span>
-            {pendingUsers.length > 0 && (
-              <span className="rounded-full bg-amber-600 text-white px-1.5 py-0.2 text-[10px] font-bold">
-                {pendingUsers.length}
-              </span>
-            )}
-          </Link>
           <UserProfileBadge />
         </div>
       </header>
 
-      {/* Cabecera Imprimible (Solo visible en Print) */}
+      {/* Cabecera Imprimible */}
       <div className="hidden print:block p-8 border-b border-slate-300 text-center space-y-2">
         <h1 className="text-xl font-bold text-slate-900 uppercase">
           Liceo Minerva Mirabal · Sistema de Refuerzo Académico
@@ -185,6 +203,20 @@ export default function DirectorDashboardPage() {
       </div>
 
       <main className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+        {/* Notificación de Emisión CUV */}
+        {cuvNotification && (
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between">
+            <span>{cuvNotification}</span>
+            <button
+              type="button"
+              onClick={() => setCuvNotification(null)}
+              className="text-emerald-700 hover:text-emerald-900 font-bold ml-4"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* 1. KPIs del Director */}
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 print:grid-cols-4">
           <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm">
@@ -213,6 +245,18 @@ export default function DirectorDashboardPage() {
 
           <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Usuarios Pendientes
+            </span>
+            <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+              {pendingUsers.length}
+            </p>
+            <p className="text-[11px] font-medium text-indigo-700 mt-1">
+              Asignación de rol
+            </p>
+          </div>
+
+          <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Alumnos Atendidos
             </span>
             <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
@@ -222,50 +266,82 @@ export default function DirectorDashboardPage() {
               En cohortes activas
             </p>
           </div>
+        </section>
 
-          <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Sesiones Aprobadas
-            </span>
-            <p className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              {kpis.sesionesValidadas}
-            </p>
-            <p className="text-[11px] font-normal text-slate-500 mt-1">
-              Acreditadas
-            </p>
+        {/* 2. Pestañas de Gestión (Auditoría de Sesiones vs Solicitudes de Usuarios & Roles) */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab('audit')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'audit'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <FileCheck className="size-4" />
+              <span>Auditoría de Sesiones ({pendingSessions.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('users')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'users'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <UserCheck className="size-4" />
+              <span>Usuarios y Selección de Rol ({pendingUsers.length})</span>
+            </button>
           </div>
+
+          {activeTab === 'audit' ? (
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <DirectorAuditTable initialSessions={pendingSessions} />
+            </div>
+          ) : (
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Gestión de Roles y Aprobación de Usuarios (users/{'{uid}'})
+                </h3>
+                <p className="text-xs text-slate-500 font-normal">
+                  Asigna el rol correspondiente (Tutor / Director / Estudiante) y aprueba su acceso en Firestore.
+                </p>
+              </div>
+              <DirectorRequestsTable initialUsers={pendingUsers} />
+            </div>
+          )}
         </section>
 
-        {/* 2. Tabla de Auditoría con Aprobación */}
-        <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-          <DirectorAuditTable initialSessions={pendingSessions} />
-        </section>
-
-        {/* 3. Expediente Resumido de Mentores (Apto para Impresión) */}
-        <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3">
+        {/* 3. Expediente de Mentores & Emisión Flexible de CUV (Desacoplado de 60h) */}
+        <section className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                Resumen de Cumplimiento de Mentores
+              <h2 className="text-sm font-bold tracking-tight text-slate-900">
+                Directorio Oficial de Mentores & Emisión Flexible de CUV
               </h2>
               <p className="text-xs text-slate-500 font-normal">
-                Registro oficial para la emisión de certificados de 60 horas
+                Genera el certificado CUV en cualquier momento con las horas acumuladas exactas del tutor.
               </p>
             </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">
               Distrito 08-03
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold text-[10px] tracking-wider">
                 <tr>
-                  <th className="px-4 py-2.5">Mentor</th>
-                  <th className="px-4 py-2.5">Especialidad</th>
-                  <th className="px-4 py-2.5">Horas Acumuladas</th>
-                  <th className="px-4 py-2.5">Meta (60h)</th>
-                  <th className="px-4 py-2.5 text-right">Estatus</th>
+                  <th className="px-4 py-3">Mentor / Tutor</th>
+                  <th className="px-4 py-3">Especialidad</th>
+                  <th className="px-4 py-3">Horas Acumuladas</th>
+                  <th className="px-4 py-3">Meta (60h)</th>
+                  <th className="px-4 py-3 text-right">Emisión de Certificado CUV</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -277,24 +353,28 @@ export default function DirectorDashboardPage() {
                   </tr>
                 ) : (
                   topMentores.map((m) => {
-                    const isComplete = m.horas_acumuladas >= m.meta_horas
+                    const isProcessingCuv = generatingCuvId === m.id
                     return (
-                      <tr key={m.id}>
-                        <td className="px-4 py-2.5 font-medium text-slate-900">{m.nombre}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{m.especialidad}</td>
-                        <td className="px-4 py-2.5 font-mono font-bold text-slate-900">{m.horas_acumuladas.toFixed(1)} h</td>
-                        <td className="px-4 py-2.5 font-mono text-slate-500">{m.meta_horas.toFixed(0)} h</td>
-                        <td className="px-4 py-2.5 text-right">
-                          {isComplete ? (
-                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium">
-                              <CheckCircle2 className="size-3 text-emerald-600" />
-                              <span>Listo para Certificar</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
-                              <span>En Progreso</span>
-                            </span>
-                          )}
+                      <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-4 py-3 font-semibold text-slate-900">{m.nombre}</td>
+                        <td className="px-4 py-3 text-slate-600">{m.especialidad}</td>
+                        <td className="px-4 py-3 font-mono font-bold text-slate-900">{m.horas_acumuladas.toFixed(1)} h</td>
+                        <td className="px-4 py-3 font-mono text-slate-500">{m.meta_horas.toFixed(0)} h</td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            disabled={isProcessingCuv}
+                            onClick={() => handleGenerateFlexibleCuv(m)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {isProcessingCuv ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Award className="size-3.5 text-amber-400" />
+                            )}
+                            <span>{isProcessingCuv ? 'Generando...' : `Emitir / Ver CUV (${m.horas_acumuladas.toFixed(1)}h)`}</span>
+                            <ExternalLink className="size-3 text-slate-400" />
+                          </button>
                         </td>
                       </tr>
                     )

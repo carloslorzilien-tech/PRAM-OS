@@ -1,27 +1,34 @@
 'use client'
 
 import React, { useState } from 'react'
-import { approveFirebaseUser, rejectFirebaseUser } from '@/lib/firebase-service'
+import { approveFirebaseUser, rejectFirebaseUser, updateUserRoleInFirestore } from '@/lib/firebase-service'
 import { Usuario } from '@/lib/db'
-import { Check, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react'
+import { Check, X, ShieldCheck, AlertCircle, Loader2, UserCheck } from 'lucide-react'
 
 export function DirectorRequestsTable({ initialUsers }: { initialUsers: Usuario[] }) {
   const [users, setUsers] = useState<Usuario[]>(initialUsers)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT'>>({})
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const handleApprove = async (userId: string, userName: string) => {
-    setProcessingId(userId)
+  const handleRoleChange = (userId: string, newRole: 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT') => {
+    setSelectedRoles((prev) => ({ ...prev, [userId]: newRole }))
+  }
+
+  const handleApproveWithRole = async (userItem: Usuario) => {
+    setProcessingId(userItem.id)
     setMessage(null)
-    const success = await approveFirebaseUser(userId)
+    const targetRole = selectedRoles[userItem.id] || userItem.rol || 'MENTOR'
+
+    const success = await updateUserRoleInFirestore(userItem.id, targetRole, 'APPROVED')
     setProcessingId(null)
 
     if (success) {
-      setUsers((prev) => prev.filter((u) => u.id !== userId))
-      setMessage({ type: 'success', text: `Solicitud de ${userName} aprobada con éxito en Firestore.` })
+      setUsers((prev) => prev.filter((u) => u.id !== userItem.id))
+      setMessage({ type: 'success', text: `Usuario ${userItem.nombre} aprobado exitosamente con el rol de ${targetRole} en Firestore.` })
       setTimeout(() => setMessage(null), 4000)
     } else {
-      setMessage({ type: 'error', text: 'Error al aprobar usuario en Firestore.' })
+      setMessage({ type: 'error', text: 'Error al actualizar el rol y aprobar el usuario en Firestore.' })
     }
   }
 
@@ -79,35 +86,36 @@ export function DirectorRequestsTable({ initialUsers }: { initialUsers: Usuario[
                 <tr>
                   <th className="px-5 py-3.5">Usuario / Solicitante</th>
                   <th className="px-5 py-3.5">Correo Electrónico</th>
-                  <th className="px-5 py-3.5">Rol Solicitado</th>
+                  <th className="px-5 py-3.5">Asignación de Rol (users/{'{uid}'})</th>
                   <th className="px-5 py-3.5">Detalle (Área / Grado)</th>
                   <th className="px-5 py-3.5 text-right">Acciones de Auditoría</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {users.map((user) => {
-                  const isProcessing = processingId === user.id
-                  const rolLabel = user.rol === 'MENTOR' ? 'Tutor / Mentor' : 'Estudiante'
-                  const detalle = user.rol === 'MENTOR' ? `Área: ${user.area || 'Matemáticas'}` : `Grado: ${user.grado || '3ro de Secundaria'}`
+                {users.map((userItem) => {
+                  const isProcessing = processingId === userItem.id
+                  const currentSelectedRole = selectedRoles[userItem.id] || userItem.rol || 'MENTOR'
+                  const detalle = userItem.rol === 'MENTOR' ? `Área: ${userItem.area || 'Matemáticas'}` : `Grado: ${userItem.grado || '3ro de Secundaria'}`
 
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={userItem.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
-                        {user.nombre}
+                        {userItem.nombre}
                       </td>
                       <td className="px-5 py-4 font-mono text-slate-600 text-[11px] whitespace-nowrap">
-                        {user.email}
+                        {userItem.email}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
-                            user.rol === 'MENTOR'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                          }`}
+                        <select
+                          value={currentSelectedRole}
+                          onChange={(e) => handleRoleChange(userItem.id, e.target.value as any)}
+                          className="h-8 text-xs font-semibold px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 cursor-pointer"
                         >
-                          {rolLabel}
-                        </span>
+                          <option value="MENTOR">MENTOR (Tutor Académico)</option>
+                          <option value="DIRECTOR">DIRECTOR (Dirección Académica)</option>
+                          <option value="AREA_DIRECTOR">AREA_DIRECTOR (Director de Área)</option>
+                          <option value="STUDENT">STUDENT (Estudiante)</option>
+                        </select>
                       </td>
                       <td className="px-5 py-4 text-xs font-medium text-slate-800 whitespace-nowrap">
                         {detalle}
@@ -116,20 +124,20 @@ export function DirectorRequestsTable({ initialUsers }: { initialUsers: Usuario[
                         <button
                           type="button"
                           disabled={isProcessing}
-                          onClick={() => handleApprove(user.id, user.nombre)}
+                          onClick={() => handleApproveWithRole(userItem)}
                           className="inline-flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
                         >
                           {isProcessing ? (
                             <Loader2 className="size-3.5 animate-spin" />
                           ) : (
-                            <Check className="size-3.5" />
+                            <UserCheck className="size-3.5" />
                           )}
-                          <span>{isProcessing ? 'Procesando...' : 'Aprobar'}</span>
+                          <span>{isProcessing ? 'Guardando...' : 'Asignar Rol y Aprobar'}</span>
                         </button>
                         <button
                           type="button"
                           disabled={isProcessing}
-                          onClick={() => handleReject(user.id, user.nombre)}
+                          onClick={() => handleReject(userItem.id, userItem.nombre)}
                           className="inline-flex items-center gap-1.5 bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 disabled:opacity-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                         >
                           <X className="size-3.5" />

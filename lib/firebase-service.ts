@@ -4,6 +4,7 @@ import {
   addDoc,
   getDocs,
   getDoc,
+  setDoc,
   updateDoc,
   query,
   where,
@@ -327,6 +328,77 @@ export async function rejectFirebaseUser(userId: string): Promise<boolean> {
   } catch (error) {
     console.error('[Firebase rejectUser Error]:', error)
     return false
+  }
+}
+
+export async function updateUserRoleInFirestore(
+  userId: string,
+  role: 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT',
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' = 'APPROVED'
+): Promise<boolean> {
+  try {
+    const userDocRef = doc(db, 'users', userId)
+    await updateDoc(userDocRef, {
+      role,
+      rol: role,
+      status,
+    })
+    return true
+  } catch (error) {
+    console.error('[Firebase updateUserRole Error]:', error)
+    return false
+  }
+}
+
+export async function createFlexibleCuvForMentor(
+  mentorName: string,
+  mentorId: string,
+  horasAcumuladas: number,
+  materia = 'Matemáticas'
+): Promise<string | null> {
+  try {
+    const directorUid = auth.currentUser?.uid || 'director-admin'
+    const directorName = auth.currentUser?.displayName || 'Dra. Carmen Batlle'
+    const randomHex = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().slice(0, 8).toUpperCase()
+      : Math.random().toString(36).substring(2, 10).toUpperCase()
+    
+    const cleanCuvCode = `PRAM-2026-${randomHex}`
+    const approvedAt = new Date().toISOString()
+
+    const cuvDocRef = doc(db, 'cuvs', cleanCuvCode)
+    await setDoc(cuvDocRef, {
+      cuv: cleanCuvCode,
+      cuv_codigo: cleanCuvCode,
+      mentorId,
+      mentor_nombre: mentorName,
+      mentorName,
+      materia,
+      tema: `Acreditación de Refuerzo Académico (${horasAcumuladas.toFixed(1)}h)`,
+      duracionMinutos: Math.round(horasAcumuladas * 60),
+      horas: horasAcumuladas,
+      horas_certificadas: horasAcumuladas,
+      fecha_sesion: new Date().toISOString().split('T')[0],
+      fecha_emision: new Date().toLocaleDateString('es-DO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      directorUid,
+      directorName,
+      aprobado_por: directorName,
+      approvedAt,
+      liceo: 'Liceo Minerva Mirabal · PRAM OS',
+      entidad_emisora: 'Ministerio de Educación (MINERD) · Liceo Minerva Mirabal',
+      valido: true,
+      estado: 'valid',
+      created_at: approvedAt,
+    })
+
+    return cleanCuvCode
+  } catch (error) {
+    console.error('[Firebase createFlexibleCuv Error]:', error)
+    return null
   }
 }
 
