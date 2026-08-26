@@ -109,5 +109,31 @@ service cloud.firestore {
       // Los certificados emitidos son inmutables
       allow update, delete: if false;
     }
+
+    // ==============================================================
+    // 4. COLECCIÓN 'students' (Alumnos registrados por cada Mentor)
+    // ==============================================================
+    match /students/{studentId} {
+      // Cada mentor lee y crea únicamente sus propios alumnos
+      // Los directores pueden leer todos para auditoría
+      allow read: if isDirector() || (
+        isAuthenticated() &&
+        resource.data.get('mentorUid', '') == request.auth.uid
+      );
+
+      // Solo mentores aprobados pueden registrar alumnos, y sólo como suyos
+      allow create: if isApprovedUser() &&
+        request.resource.data.get('mentorUid', '') == request.auth.uid;
+
+      // El mentor dueño puede actualizar datos del alumno (notas, progreso)
+      // pero no puede cambiar el mentorUid ni el uid del alumno
+      allow update: if isDirector() || (
+        isApprovedUser() &&
+        resource.data.get('mentorUid', '') == request.auth.uid &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['mentorUid'])
+      );
+
+      allow delete: if isDirector();
+    }
   }
 }

@@ -334,7 +334,7 @@ export async function rejectFirebaseUser(userId: string): Promise<boolean> {
 export async function updateUserRoleInFirestore(
   userId: string,
   role: 'DIRECTOR' | 'AREA_DIRECTOR' | 'MENTOR' | 'STUDENT',
-  status: 'APPROVED' | 'PENDING' | 'REJECTED' = 'APPROVED'
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'INACTIVE' = 'APPROVED'
 ): Promise<boolean> {
   try {
     const userDocRef = doc(db, 'users', userId)
@@ -429,3 +429,215 @@ export function subscribeToFirebaseSessions(
     }
   )
 }
+
+/**
+ * 6. GESTIÓN GLOBAL DE USUARIOS (Solo Director)
+ * Retorna todos los documentos de la colección 'users'.
+ */
+export async function getAllFirebaseUsers(): Promise<Usuario[]> {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'users'))
+    const users: Usuario[] = []
+    querySnapshot.forEach((docSnap) => {
+      users.push({ id: docSnap.id, ...(docSnap.data() as Omit<Usuario, 'id'>) })
+    })
+    return users
+  } catch (error) {
+    console.error('[Firebase getAllUsers Error]:', error)
+    return []
+  }
+}
+
+/**
+ * Suscripción en tiempo real a todos los usuarios (para Director).
+ */
+export function subscribeToAllUsers(callback: (users: Usuario[]) => void) {
+  return onSnapshot(
+    collection(db, 'users'),
+    (snapshot) => {
+      const users: Usuario[] = []
+      snapshot.forEach((docSnap) => {
+        users.push({ id: docSnap.id, ...(docSnap.data() as Omit<Usuario, 'id'>) })
+      })
+      callback(users)
+    },
+    (err) => {
+      console.warn('[Firebase subscribeToAllUsers warn]:', err)
+    }
+  )
+}
+
+/**
+ * Actualiza el status de un usuario en Firestore.
+ * Valores válidos: 'APPROVED' | 'PENDING' | 'REJECTED' | 'INACTIVE'
+ */
+export async function updateUserStatus(
+  userId: string,
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'INACTIVE'
+): Promise<boolean> {
+  try {
+    const userDocRef = doc(db, 'users', userId)
+    await updateDoc(userDocRef, { status })
+    return true
+  } catch (error) {
+    console.error('[Firebase updateUserStatus Error]:', error)
+    return false
+  }
+}
+
+/**
+ * 7. GESTIÓN DE ALUMNOS (colección 'students')
+ */
+export interface StudentData {
+  id: string
+  mentorUid: string
+  mentorName: string
+  fullName: string
+  grade: '3ero A' | '3ero B' | '4to A' | '4to B'
+  subject: 'Matemáticas' | 'Lengua Española'
+  notaInicial: number
+  notaSeguimiento?: number | null
+  notaPeriodo?: number | null
+  createdAt?: string
+}
+
+export async function addStudent(
+  data: Omit<StudentData, 'id' | 'createdAt'>
+): Promise<StudentData | null> {
+  try {
+    const payload = {
+      ...data,
+      notaSeguimiento: data.notaSeguimiento ?? null,
+      notaPeriodo: data.notaPeriodo ?? null,
+      createdAt: new Date().toISOString(),
+    }
+    const docRef = await addDoc(collection(db, 'students'), payload)
+    return { id: docRef.id, ...payload }
+  } catch (error) {
+    console.error('[Firebase addStudent Error]:', error)
+    return null
+  }
+}
+
+export async function getMentorStudents(mentorUid: string): Promise<StudentData[]> {
+  try {
+    const q = query(collection(db, 'students'), where('mentorUid', '==', mentorUid))
+    const querySnapshot = await getDocs(q)
+    const students: StudentData[] = []
+    querySnapshot.forEach((docSnap) => {
+      students.push({ id: docSnap.id, ...(docSnap.data() as Omit<StudentData, 'id'>) })
+    })
+    return students
+  } catch (error) {
+    console.error('[Firebase getMentorStudents Error]:', error)
+    return []
+  }
+}
+
+export function subscribeToMentorStudents(
+  mentorUid: string,
+  callback: (students: StudentData[]) => void
+) {
+  const q = query(collection(db, 'students'), where('mentorUid', '==', mentorUid))
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const students: StudentData[] = []
+      snapshot.forEach((docSnap) => {
+        students.push({ id: docSnap.id, ...(docSnap.data() as Omit<StudentData, 'id'>) })
+      })
+      callback(students)
+    },
+    (err) => {
+      console.warn('[Firebase subscribeToMentorStudents warn]:', err)
+    }
+  )
+}
+
+export async function updateStudentGrade(
+  studentId: string,
+  fields: { notaSeguimiento?: number | null; notaPeriodo?: number | null }
+): Promise<boolean> {
+  try {
+    const studentDocRef = doc(db, 'students', studentId)
+    await updateDoc(studentDocRef, fields)
+    return true
+  } catch (error) {
+    console.error('[Firebase updateStudentGrade Error]:', error)
+    return false
+  }
+}
+
+/**
+ * 8. REGISTRO DE SESIÓN + INCREMENTO ATÓMICO DE HORAS (writeBatch)
+ *
+ * Guarda la sesión en 'sessions' e incrementa horasAcumuladas / horas_acumuladas
+ * en el documento del mentor en 'users/{uid}' en una sola transacción atómica.
+ */
+export async function submitSessionWithHours(data: {
+  tema: string
+  materia: MateriaValida
+  horasInvertidas: number
+  fechaSesion: string
+  studentIds: string[]
+  notas?: string
+}): Promise<string | null> {
+  try {
+    const currentUser = auth.currentUser
+    if (!currentUser) {
+      throw new Error('Debes iniciar sesión antes de registrar una sesión.')
+    }
+
+    const mentorUid = currentUser.uid
+    const mentorName = currentUser.displayName || 'Tutor PRAM'
+    const duracionMinutos = Math.round(data.horasInvertidas * 60)
+
+    const batch = writeBatch(db)
+
+    // A) Crear documento de sesión
+    const sessionRef = doc(collection(db, 'sessions'))
+    batch.set(sessionRef, {
+      mentor_id: mentorUid,
+      mentorId: mentorUid,
+      tutorUid: mentorUid,
+      mentor_nombre: mentorName,
+      mentorName,
+      materia: data.materia,
+      tema: data.tema,
+      duracion_minutos: duracionMinutos,
+      duracionMinutos,
+      horas_invertidas: data.horasInvertidas,
+      horasInvertidas: data.horasInvertidas,
+      cantidad_alumnos: data.studentIds.length || 1,
+      cantidadAlumnos: data.studentIds.length || 1,
+      studentIds: data.studentIds,
+      fecha_sesion: data.fechaSesion,
+      fechaSesion: data.fechaSesion,
+      notas: data.notas || '',
+      estado: 'pending' as const,
+      status: 'pending' as const,
+      createdAt: serverTimestamp(),
+      created_at: new Date().toISOString(),
+    })
+
+    // B) Incrementar horasAcumuladas del mentor en su doc de usuario
+    const mentorUserRef = doc(db, 'users', mentorUid)
+    const mentorSnap = await getDoc(mentorUserRef)
+    const currentHoras = mentorSnap.exists()
+      ? (mentorSnap.data().horasAcumuladas as number) || 0
+      : 0
+    const newHoras = Number((currentHoras + data.horasInvertidas).toFixed(2))
+
+    batch.update(mentorUserRef, {
+      horasAcumuladas: newHoras,
+      horas_acumuladas: newHoras,
+    })
+
+    await batch.commit()
+    return sessionRef.id
+  } catch (error) {
+    console.error('[Firebase submitSessionWithHours Error]:', error)
+    return null
+  }
+}
+

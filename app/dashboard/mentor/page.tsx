@@ -1,124 +1,75 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
-  Clock,
-  CheckCircle2,
-  Calendar,
   ArrowLeft,
-  Users,
+  Clock,
+  GraduationCap,
+  BookOpen,
+  Loader2,
   AlertTriangle,
 } from 'lucide-react'
-import { getMentorSessions, getTopMentores, Sesion, Mentor, Usuario, withRetry } from '@/lib/db'
-import { MentorSessionForm } from '@/components/pram/mentor-form'
-import { getOrCreateCurrentUser } from '@/lib/auth-user'
+import { useFirebaseAuth } from '@/lib/firebase-auth'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
+import { MentorSessionTab } from '@/components/pram/mentor-session-tab'
+import { MentorStudentsTab } from '@/components/pram/mentor-students-tab'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
-export const dynamic = 'force-dynamic'
+export default function MentorDashboardPage() {
+  const { user, userProfile, loading: authLoading } = useFirebaseAuth()
+  const router = useRouter()
 
-export default async function MentorDashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ mentor?: string }>
-}) {
-  let currentUser: Usuario | null = null
-  let currentMentor: Mentor = {
-    id: 'm-1',
-    nombre: 'Usuario PRAM',
-    email: 'carlosomarlorzilienservilien@gmail.com',
-    rango: 'Head',
-    horas_acumuladas: 0,
-    meta_horas: 60.0,
-    especialidad: 'Matemáticas',
-  }
-  let sesiones: Sesion[] = []
-  let isOfflineMode = false
+  const [activeTab, setActiveTab] = useState<'sessions' | 'students'>('sessions')
+  const [horasAcumuladas, setHorasAcumuladas] = useState<number>(0)
+  const [metaHoras] = useState<number>(60)
+  const [loadingHoras, setLoadingHoras] = useState(true)
 
-  try {
-    const params = await searchParams
-
-    // 1. Verificación de Autenticación
-    try {
-      currentUser = await getOrCreateCurrentUser()
-    } catch (authErr) {
-      console.warn('[PRAM Auth Warn in MentorDashboard]:', authErr)
+  // Auth guard
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) router.push('/')
+      else if (userProfile?.status === 'PENDING') router.push('/solicitud-pendiente')
     }
+  }, [user, userProfile, authLoading, router])
 
-    if (currentUser && currentUser.status === 'PENDING') {
-      redirect('/solicitud-pendiente')
-    }
-
-    const emailDelUser = currentUser?.email || 'carlosomarlorzilienservilien@gmail.com'
-    const nameDelUser = currentUser?.nombre || 'Usuario PRAM'
-
-    // Asignar datos base inmediatos
-    currentMentor.nombre = nameDelUser
-    currentMentor.email = emailDelUser
-
-    // 2. Consulta a Neon DB con retry y fallback
-    let mentorId = params.mentor || 'm-1'
-    if (currentUser?.email && !params.mentor) {
-      try {
-        const allMentores = await withRetry(() => getTopMentores(50), 3, 1500)
-        const found = (allMentores || []).find(
-          (m) => m.email.toLowerCase() === currentUser?.email.toLowerCase()
-        )
-        if (found) mentorId = found.id
-      } catch (e) {
-        console.warn('Fallback al mentorId por defecto:', e)
+  // Live-sync horasAcumuladas from Firestore users/{uid}
+  useEffect(() => {
+    if (!user?.uid) return
+    const userRef = doc(db, 'users', user.uid)
+    const unsub = onSnapshot(userRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data()
+        const horas = data.horasAcumuladas ?? data.horas_acumuladas ?? 0
+        setHorasAcumuladas(Number(horas))
       }
-    }
+      setLoadingHoras(false)
+    }, () => setLoadingHoras(false))
+    return () => unsub()
+  }, [user?.uid])
 
-    try {
-      const sessionData = await withRetry(() => getMentorSessions(mentorId), 3, 1500)
-      if (sessionData?.mentor) {
-        currentMentor = sessionData.mentor
-      }
-      sesiones = sessionData?.sesiones || []
-    } catch (dbErr) {
-      console.error('[PRAM DB Error/Timeout in MentorDashboard]:', dbErr)
-      // Asignar fallback inmediatamente:
-      // stats = { totalHours: 0, sessionsCount: 0, studentsCount: 0 }, sessions = []
-      currentMentor.horas_acumuladas = 0
-      sesiones = []
-      isOfflineMode = true
-    }
-  } catch (error: any) {
-    if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message?.includes('NEXT_REDIRECT')) {
-      throw error
-    }
-    console.error('Error no fatal capturado en Mentor Dashboard:', error)
-    // Fallback asegurado:
-    currentMentor = {
-      id: 'm-fallback',
-      nombre: currentUser?.nombre || 'Usuario PRAM',
-      email: currentUser?.email || 'carlosomarlorzilienservilien@gmail.com',
-      rango: 'Head',
-      horas_acumuladas: 0,
-      meta_horas: 60.0,
-      especialidad: 'Matemáticas',
-    }
-    sesiones = []
-    isOfflineMode = true
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-slate-400">
+          <Loader2 className="size-7 animate-spin" />
+          <p className="text-xs font-medium">Cargando panel del tutor...</p>
+        </div>
+      </div>
+    )
   }
 
-  const porcentaje = Math.min(
-    100,
-    Math.round(((currentMentor?.horas_acumuladas || 0) / (currentMentor?.meta_horas || 60.0)) * 100)
-  )
-  const horasFaltantes = Math.max(0, (currentMentor?.meta_horas || 60.0) - (currentMentor?.horas_acumuladas || 0))
+  if (!user || userProfile?.status === 'PENDING') return null
+
+  const mentorName = user.displayName || userProfile?.nombre || 'Tutor PRAM'
+  const porcentaje = Math.min(100, Math.round((horasAcumuladas / metaHoras) * 100))
+  const horasFaltantes = Math.max(0, metaHoras - horasAcumuladas)
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Alerta sutil de Modo Seguro / Desconectado si la DB no respondió */}
-      {isOfflineMode && (
-        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 py-2 flex items-center justify-center gap-2 font-medium">
-          <AlertTriangle className="size-4 text-amber-600 shrink-0" />
-          <span>Modo desconectado: mostrando vista base. Se reestablecerá automáticamente al reconectar.</span>
-        </div>
-      )}
-
-      {/* Top Header */}
+      {/* Sticky Header */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8">
         <div className="flex items-center gap-3">
           <Link
@@ -133,27 +84,18 @@ export default async function MentorDashboardPage({
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 PRAM OS · Panel del Tutor
               </span>
-              <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.2 text-[10px] font-medium">
-                {currentMentor?.rango || 'Head'}
-              </span>
             </div>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              {currentMentor?.nombre || 'Usuario PRAM'}
+              {mentorName}
             </h1>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <UserProfileBadge
-            userRole={currentUser?.rol}
-            userStatus={currentUser?.status}
-            userArea={currentUser?.area}
-          />
-        </div>
+        <UserProfileBadge />
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 space-y-6">
-        {/* 1. Header con Progreso hacia 60 Horas del Servicio Social */}
+
+        {/* KPI: Progreso de Horas — siempre visible */}
         <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
@@ -161,28 +103,30 @@ export default async function MentorDashboardPage({
                 Acreditación Servicio Social
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
-                  {(currentMentor?.horas_acumuladas || 0).toFixed(1)}
-                </span>
-                <span className="text-sm text-slate-500 font-normal">
-                  / {(currentMentor?.meta_horas || 60.0).toFixed(0)} horas requeridas ({porcentaje}%)
-                </span>
+                {loadingHoras ? (
+                  <Loader2 className="size-6 animate-spin text-slate-400 mt-1" />
+                ) : (
+                  <>
+                    <span className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
+                      {horasAcumuladas.toFixed(1)}
+                    </span>
+                    <span className="text-sm text-slate-500 font-normal">
+                      / {metaHoras} horas requeridas ({porcentaje}%)
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-
-            <div className="text-left sm:text-right">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
-                <Clock className="size-3.5 text-slate-500" />
-                <span>Faltan {horasFaltantes.toFixed(1)} horas</span>
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
+              <Clock className="size-3.5 text-slate-500" />
+              <span>Faltan {horasFaltantes.toFixed(1)} horas</span>
+            </span>
           </div>
 
-          {/* Barra de Progreso Limpia */}
           <div className="space-y-1.5">
             <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
               <div
-                className="h-full bg-slate-800 rounded-full transition-all duration-500"
+                className="h-full bg-slate-800 rounded-full transition-all duration-700"
                 style={{ width: `${porcentaje}%` }}
               />
             </div>
@@ -194,103 +138,64 @@ export default async function MentorDashboardPage({
           </div>
         </section>
 
-        {/* 2. Formulario de Registro Rápido (< 30 segundos) */}
-        <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-              Registro Rápido de Sesión Pedagógica
-            </h2>
-            <p className="text-xs text-slate-500 font-normal">
-              Completa el formulario en menos de 30 segundos para enviar tus horas a auditoría.
-            </p>
+        {/* Two-Tab Interface */}
+        <section className="space-y-4">
+          {/* Tab Switcher */}
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab('sessions')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'sessions'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <BookOpen className="size-4" />
+              <span>Registro de Sesiones</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('students')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'students'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <GraduationCap className="size-4" />
+              <span>Gestión de Alumnos</span>
+            </button>
           </div>
 
-          <MentorSessionForm mentorId={currentMentor?.id || 'm-1'} />
-        </section>
-
-        {/* 3. Historial de Sesiones con Badges de Estado */}
-        <section className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                Historial de Sesiones Impartidas
-              </h2>
-              <p className="text-xs text-slate-500 font-normal">
-                Estado de validación ministerial de tus tutorías
-              </p>
+          {/* Tab A: Registro de Sesiones */}
+          {activeTab === 'sessions' && (
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+                  Registro de Sesión Pedagógica
+                </h2>
+                <p className="text-xs text-slate-500 font-normal">
+                  Registra tus horas, asistencia y tema. Las horas se acumulan automáticamente en tu perfil.
+                </p>
+              </div>
+              <MentorSessionTab />
             </div>
-            <span className="text-xs font-medium text-slate-500">
-              {(sesiones || []).length} sesiones
-            </span>
-          </div>
+          )}
 
-          {(sesiones || []).length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500">
-              No tienes sesiones registradas aún. Registra tu primera sesión arriba.
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {(sesiones || []).map((sesion) => {
-                const isApproved = sesion?.estado === 'approved'
-                const isPending = sesion?.estado === 'pending'
-
-                return (
-                  <div
-                    key={sesion?.id || Math.random().toString()}
-                    className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
-                          {sesion?.tema || 'Sesión de Refuerzo'}
-                        </h3>
-                        <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.2 text-[10px] font-medium">
-                          {sesion?.materia || 'Matemáticas'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-slate-500 font-normal">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="size-3 text-slate-400" />
-                          {sesion?.fecha_sesion || '2026-08-15'}
-                        </span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="size-3 text-slate-400" />
-                          {sesion?.duracion_minutos || 45} min ({((sesion?.duracion_minutos || 45) / 60).toFixed(2)} h)
-                        </span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1">
-                          <Users className="size-3 text-slate-400" />
-                          {sesion?.cantidad_alumnos || 1} alumno(s)
-                        </span>
-                      </div>
-                      {sesion?.notas && (
-                        <p className="text-[11px] text-slate-500 italic">
-                          "{sesion.notas}"
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="shrink-0">
-                      {isApproved ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 text-xs font-medium">
-                          <CheckCircle2 className="size-3 text-emerald-600" />
-                          <span>Aprobado / Inmutable</span>
-                        </span>
-                      ) : isPending ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 text-xs font-medium">
-                          <Clock className="size-3 text-amber-600" />
-                          <span>Pendiente de Auditoría</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-medium">
-                          <span>Rechazado</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+          {/* Tab B: Gestión de Alumnos */}
+          {activeTab === 'students' && (
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+                  Gestión de Alumnos y Seguimiento Académico
+                </h2>
+                <p className="text-xs text-slate-500 font-normal">
+                  Registra alumnos, diagnósticos iniciales y actualiza sus notas de seguimiento.
+                </p>
+              </div>
+              <MentorStudentsTab />
             </div>
           )}
         </section>
@@ -298,3 +203,4 @@ export default async function MentorDashboardPage({
     </div>
   )
 }
+
