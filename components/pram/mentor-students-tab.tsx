@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import {
   UserPlus,
-  Pencil,
+  PlusCircle,
+  ChevronDown,
+  ChevronUp,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -12,14 +14,20 @@ import {
   TrendingDown,
   Minus,
   GraduationCap,
+  Sparkles,
+  Clock,
+  BookOpen,
 } from 'lucide-react'
 import {
   addStudent,
   subscribeToMentorStudents,
-  updateStudentGrade,
+  getStudentEvaluations,
   StudentData,
+  Evaluacion,
 } from '@/lib/firebase-service'
 import { useFirebaseAuth } from '@/lib/firebase-auth'
+import { StudentEvalModal } from '@/components/pram/student-eval-modal'
+import { StudentEvalTimeline } from '@/components/pram/student-eval-timeline'
 
 type Grade = '3ero A' | '3ero B' | '4to A' | '4to B'
 type Subject = 'Matemáticas' | 'Lengua Española'
@@ -27,18 +35,13 @@ type Subject = 'Matemáticas' | 'Lengua Española'
 const GRADES: Grade[] = ['3ero A', '3ero B', '4to A', '4to B']
 const SUBJECTS: Subject[] = ['Matemáticas', 'Lengua Española']
 
-interface InlineEdit {
-  studentId: string
-  field: 'notaSeguimiento' | 'notaPeriodo'
-  currentValue: number | null
-}
-
 export function MentorStudentsTab() {
   const { user } = useFirebaseAuth()
   const uid = user?.uid || ''
   const mentorName = user?.displayName || 'Tutor PRAM'
 
   const [students, setStudents] = useState<StudentData[]>([])
+  const [evaluationsMap, setEvaluationsMap] = useState<Map<string, Evaluacion[]>>(new Map())
   const [loading, setLoading] = useState(true)
 
   // Modal: Nuevo Alumno
@@ -49,10 +52,11 @@ export function MentorStudentsTab() {
   const [notaInicial, setNotaInicial] = useState<number>(0)
   const [saving, setSaving] = useState(false)
 
-  // Inline edit
-  const [inlineEdit, setInlineEdit] = useState<InlineEdit | null>(null)
-  const [inlineValue, setInlineValue] = useState('')
-  const [savingInline, setSavingInline] = useState(false)
+  // Modal: Nueva Evaluación
+  const [evalModalStudent, setEvalModalStudent] = useState<StudentData | null>(null)
+
+  // Expanded student for timeline view
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
 
   // Notification
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -62,11 +66,41 @@ export function MentorStudentsTab() {
     setTimeout(() => setNotification(null), 4000)
   }
 
+  // Fetch evaluations for a given student
+  const fetchStudentEvals = async (studentId: string) => {
+    try {
+      const evals = await getStudentEvaluations(studentId)
+      setEvaluationsMap((prev) => {
+        const next = new Map(prev)
+        next.set(studentId, evals)
+        return next
+      })
+    } catch (err) {
+      console.error(`Error fetching evals for ${studentId}:`, err)
+    }
+  }
+
+  // Subscribe to students and load their evaluations
   useEffect(() => {
     if (!uid) return
-    const unsub = subscribeToMentorStudents(uid, (data) => {
-      setStudents(data.sort((a, b) => a.fullName.localeCompare(b.fullName)))
+    const unsub = subscribeToMentorStudents(uid, async (data) => {
+      const sorted = data.sort((a, b) => a.fullName.localeCompare(b.fullName))
+      setStudents(sorted)
       setLoading(false)
+
+      // Fetch evals for all mentor students
+      const map = new Map<string, Evaluacion[]>()
+      await Promise.all(
+        sorted.map(async (st) => {
+          try {
+            const ev = await getStudentEvaluations(st.id)
+            map.set(st.id, ev)
+          } catch {
+            map.set(st.id, [])
+          }
+        })
+      )
+      setEvaluationsMap(map)
     })
     return () => unsub()
   }, [uid])
@@ -100,65 +134,57 @@ export function MentorStudentsTab() {
     }
   }
 
-  const openInlineEdit = (studentId: string, field: 'notaSeguimiento' | 'notaPeriodo', current: number | null | undefined) => {
-    setInlineEdit({ studentId, field, currentValue: current ?? null })
-    setInlineValue(current != null ? String(current) : '')
-  }
+  // Helper to extract student evaluation summary
+  const getStudentMetrics = (student: StudentData) => {
+    const evals = evaluationsMap.get(student.id) || []
+    const quizEvals = evals.filter((e) => e.tipo === 'QUIZ')
+    const examenFinal = evals.find((e) => e.tipo === 'EXAMEN_FINAL')
 
-  const submitInlineEdit = async () => {
-    if (!inlineEdit) return
-    const parsed = parseFloat(inlineValue)
-    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
-      notify('error', 'La nota debe ser un número entre 0 y 100.')
-      return
-    }
-    setSavingInline(true)
-    const success = await updateStudentGrade(inlineEdit.studentId, {
-      [inlineEdit.field]: parsed,
-    })
-    setSavingInline(false)
+    const lastQuiz = quizEvals.length > 0 ? quizEvals[quizEvals.length - 1] : null
+    const latestGrade = lastQuiz ? lastQuiz.calificacion : student.notaInicial
+    const base = Number.isFinite(student.notaInicial) ? student.notaInicial : 0
 
-    if (success) {
-      const label = inlineEdit.field === 'notaSeguimiento' ? 'Último Quiz' : 'Nota de Período'
-      notify('success', `${label} actualizado a ${parsed}.`)
-    } else {
-      notify('error', 'Error al actualizar la nota.')
+    const delta = lastQuiz ? lastQuiz.calificacion - base : 0
+    const hasFinal = !!examenFinal
+
+    return {
+      evalCount: evals.length,
+      quizCount: quizEvals.length,
+      lastQuizScore: lastQuiz ? lastQuiz.calificacion : null,
+      delta: lastQuiz ? delta : null,
+      hasFinal,
+      finalScore: examenFinal?.calificacion ?? null,
     }
-    setInlineEdit(null)
-    setInlineValue('')
   }
 
   // Progress delta badge
-  const deltaBadge = (s: StudentData) => {
-    const base = Number.isFinite(s.notaInicial) ? s.notaInicial : 0
-    const current = Number.isFinite(s.notaSeguimiento ?? undefined) ? (s.notaSeguimiento as number) : null
-    if (current === null) {
+  const renderDeltaBadge = (delta: number | null) => {
+    if (delta === null) {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 text-[10px] font-semibold">
           <Minus className="size-3" /> —
         </span>
       )
     }
-    const delta = current - base
     if (delta > 0) return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold">
-        <TrendingUp className="size-3" />+{delta.toFixed(1)}
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold">
+        <TrendingUp className="size-3" />+{delta.toFixed(1)} pts
       </span>
     )
     if (delta < 0) return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 text-[10px] font-semibold">
-        <TrendingDown className="size-3" />{delta.toFixed(1)}
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 text-[10px] font-bold">
+        <TrendingDown className="size-3" />{delta.toFixed(1)} pts
       </span>
     )
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 text-[10px] font-semibold">
-        <Minus className="size-3" /> 0
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-0.5 text-[10px] font-semibold">
+        <Minus className="size-3" /> 0.0 pts
       </span>
     )
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Notification */}
       {notification && (
         <div className={`flex items-center gap-2 rounded-xl p-3 text-xs font-medium border ${
@@ -173,16 +199,23 @@ export function MentorStudentsTab() {
         </div>
       )}
 
-      {/* Header + Add Button */}
-      <div className="flex items-center justify-between">
+      {/* Header + Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
         <div>
-          <h3 className="text-sm font-bold text-slate-900">Directorio de Alumnos</h3>
-          <p className="text-xs text-slate-500">{students.length} alumno{students.length !== 1 ? 's' : ''} registrado{students.length !== 1 ? 's' : ''}</p>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900">Seguimiento Temporal y Quizzes</h3>
+            <span className="rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5">
+              {students.length} alumno{students.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Aplica evaluaciones periódicas para registrar la curva real de aprendizaje.
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-4 py-2.5 text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
         >
           <UserPlus className="size-4" />
           <span>Nuevo Alumno</span>
@@ -192,116 +225,136 @@ export function MentorStudentsTab() {
       {/* Students Table */}
       {loading ? (
         <div className="flex justify-center py-12 text-slate-400">
-          <Loader2 className="size-5 animate-spin" />
+          <Loader2 className="size-6 animate-spin" />
         </div>
       ) : students.length === 0 ? (
         <div className="py-16 text-center bg-slate-50 rounded-xl border border-slate-200 space-y-2">
           <GraduationCap className="size-10 text-slate-300 mx-auto" />
-          <p className="text-sm font-semibold text-slate-900">Sin alumnos aún</p>
-          <p className="text-xs text-slate-500">Registra tu primer alumno para comenzar el seguimiento académico.</p>
+          <p className="text-sm font-semibold text-slate-900">Sin alumnos registrados</p>
+          <p className="text-xs text-slate-500">Registra tus primeros alumnos para iniciar las evaluaciones periódicas.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold text-[10px] tracking-wider">
               <tr>
-                <th className="px-4 py-3">Nombre</th>
+                <th className="px-4 py-3">Alumno</th>
                 <th className="px-4 py-3">Curso</th>
-                <th className="px-4 py-3 hidden sm:table-cell">Materia</th>
+                <th className="px-4 py-3 hidden md:table-cell">Materia</th>
                 <th className="px-4 py-3 text-right">Diagnóstico</th>
                 <th className="px-4 py-3 text-right">Último Quiz</th>
-                <th className="px-4 py-3 text-right">Período</th>
-                <th className="px-4 py-3 text-right">Progreso Δ</th>
+                <th className="px-4 py-3 text-center">Quizzes</th>
+                <th className="px-4 py-3 text-right">Progreso $\Delta$</th>
+                <th className="px-4 py-3 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {students.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-slate-900">{s.fullName}</td>
-                  <td className="px-4 py-3 text-slate-600">{s.grade}</td>
-                  <td className="px-4 py-3 text-slate-500 hidden sm:table-cell">{s.subject}</td>
-                  <td className="px-4 py-3 text-right font-mono text-slate-900 font-bold">
-                    {Number.isFinite(s.notaInicial) ? s.notaInicial : '—'}
-                  </td>
+              {students.map((s) => {
+                const metrics = getStudentMetrics(s)
+                const isExpanded = expandedStudentId === s.id
+                const evals = evaluationsMap.get(s.id) || []
 
-                  {/* Último Quiz — inline edit */}
-                  <td className="px-4 py-3 text-right">
-                    {inlineEdit?.studentId === s.id && inlineEdit.field === 'notaSeguimiento' ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <input
-                          type="number" min={0} max={100} step={0.1}
-                          value={inlineValue}
-                          onChange={(e) => setInlineValue(e.target.value)}
-                          className="w-16 h-7 px-1.5 text-xs border border-slate-300 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-slate-900/10"
-                          autoFocus
-                        />
-                        <button onClick={submitInlineEdit} disabled={savingInline}
-                          className="h-7 px-2 bg-slate-900 text-white rounded-lg text-[10px] font-semibold disabled:opacity-50 cursor-pointer">
-                          {savingInline ? <Loader2 className="size-3 animate-spin" /> : '✓'}
-                        </button>
-                        <button onClick={() => setInlineEdit(null)}
-                          className="h-7 px-1.5 text-slate-400 hover:text-slate-700 cursor-pointer">
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center justify-end gap-1 group">
-                        <span className="font-mono text-slate-700">
-                          {s.notaSeguimiento != null ? s.notaSeguimiento : '—'}
+                return (
+                  <React.Fragment key={s.id}>
+                    <tr className={`hover:bg-slate-50/80 transition-colors ${isExpanded ? 'bg-slate-50/60' : ''}`}>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-900">{s.fullName}</div>
+                        <div className="text-[10px] text-slate-400 md:hidden">{s.subject}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-md bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 text-[10px] font-medium">
+                          {s.grade}
                         </span>
-                        <button
-                          onClick={() => openInlineEdit(s.id, 'notaSeguimiento', s.notaSeguimiento ?? null)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-700 cursor-pointer"
-                          title="Editar nota"
-                        >
-                          <Pencil className="size-3" />
-                        </button>
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Nota Período — inline edit */}
-                  <td className="px-4 py-3 text-right">
-                    {inlineEdit?.studentId === s.id && inlineEdit.field === 'notaPeriodo' ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <input
-                          type="number" min={0} max={100} step={0.1}
-                          value={inlineValue}
-                          onChange={(e) => setInlineValue(e.target.value)}
-                          className="w-16 h-7 px-1.5 text-xs border border-slate-300 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-slate-900/10"
-                          autoFocus
-                        />
-                        <button onClick={submitInlineEdit} disabled={savingInline}
-                          className="h-7 px-2 bg-slate-900 text-white rounded-lg text-[10px] font-semibold disabled:opacity-50 cursor-pointer">
-                          {savingInline ? <Loader2 className="size-3 animate-spin" /> : '✓'}
-                        </button>
-                        <button onClick={() => setInlineEdit(null)}
-                          className="h-7 px-1.5 text-slate-400 hover:text-slate-700 cursor-pointer">
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center justify-end gap-1 group">
-                        <span className="font-mono text-slate-700">
-                          {s.notaPeriodo != null ? s.notaPeriodo : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{s.subject}</td>
+                      <td className="px-4 py-3 text-right font-mono font-bold text-slate-900">
+                        {s.notaInicial}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        {metrics.lastQuizScore !== null ? (
+                          <span className="font-bold text-slate-900">{metrics.lastQuizScore}</span>
+                        ) : (
+                          <span className="text-slate-400 italic">Pendiente</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                          <BookOpen className="size-3 text-slate-400" />
+                          {metrics.quizCount}
                         </span>
-                        <button
-                          onClick={() => openInlineEdit(s.id, 'notaPeriodo', s.notaPeriodo ?? null)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-700 cursor-pointer"
-                          title="Editar nota"
-                        >
-                          <Pencil className="size-3" />
-                        </button>
-                      </span>
-                    )}
-                  </td>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {renderDeltaBadge(metrics.delta)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEvalModalStudent(s)}
+                            className="inline-flex items-center gap-1 bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+                            title="Registrar nuevo quiz o examen final"
+                          >
+                            <PlusCircle className="size-3" />
+                            <span>Evaluar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedStudentId(isExpanded ? null : s.id)}
+                            className="inline-flex items-center gap-1 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg px-2 py-1 text-[11px] font-medium transition-all cursor-pointer"
+                            title="Ver curva de progreso"
+                          >
+                            <span>Curva</span>
+                            {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
 
-                  <td className="px-4 py-3 text-right">{deltaBadge(s)}</td>
-                </tr>
-              ))}
+                    {/* Timeline Expansion */}
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={8} className="p-0">
+                          <div className="bg-slate-50/90 border-y border-slate-200 p-6 space-y-4">
+                            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                              <div className="flex items-center gap-2">
+                                <Sparkles className="size-4 text-indigo-600" />
+                                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                  Historial Temporal de Evaluaciones · {s.fullName}
+                                </h4>
+                              </div>
+                              <span className="text-[11px] text-slate-500 font-medium">
+                                {evals.length} registro(s) inmutables
+                              </span>
+                            </div>
+
+                            <StudentEvalTimeline
+                              notaInicial={s.notaInicial}
+                              evaluaciones={evals}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* ── Modal: Registrar Evaluación (Quiz / Examen Final) ── */}
+      {evalModalStudent && (
+        <StudentEvalModal
+          studentId={evalModalStudent.id}
+          studentName={evalModalStudent.fullName}
+          existingEvals={evaluationsMap.get(evalModalStudent.id) || []}
+          onClose={() => setEvalModalStudent(null)}
+          onSuccess={() => {
+            fetchStudentEvals(evalModalStudent.id)
+            notify('success', `Evaluación registrada para ${evalModalStudent.fullName}. Curva de aprendizaje actualizada.`)
+          }}
+        />
       )}
 
       {/* ── Modal: Nuevo Alumno ── */}
@@ -311,7 +364,7 @@ export function MentorStudentsTab() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">Registrar Nuevo Alumno</h2>
-                <p className="text-xs text-slate-500">Completa los datos para iniciar el seguimiento académico.</p>
+                <p className="text-xs text-slate-500">El diagnóstico inicial será la base fija para medir su progreso.</p>
               </div>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer transition-colors">
                 <X className="size-5" />
@@ -365,7 +418,7 @@ export function MentorStudentsTab() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                  Nota de Diagnóstico (0–100)
+                  Nota de Diagnóstico Inicial (0–100)
                 </label>
                 <input
                   type="number"
@@ -375,6 +428,9 @@ export function MentorStudentsTab() {
                   required
                   className="w-full h-10 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
                 />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Esta nota se mantendrá inmutable como punto de partida comparativo.
+                </p>
               </div>
 
               <div className="flex items-center gap-3 pt-1">
@@ -400,3 +456,4 @@ export function MentorStudentsTab() {
     </div>
   )
 }
+

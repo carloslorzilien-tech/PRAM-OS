@@ -114,12 +114,8 @@ service cloud.firestore {
     // 4. COLECCIÓN 'students' (Alumnos registrados por cada Mentor)
     // ==============================================================
     match /students/{studentId} {
-      // Cada mentor lee y crea únicamente sus propios alumnos
-      // Los directores pueden leer todos para auditoría
-      allow read: if isDirector() || (
-        isAuthenticated() &&
-        resource.data.get('mentorUid', '') == request.auth.uid
-      );
+      // Cualquier usuario autenticado puede leer los alumnos (directorio institucional)
+      allow read: if isAuthenticated();
 
       // Solo mentores aprobados pueden registrar alumnos, y sólo como suyos
       allow create: if isApprovedUser() &&
@@ -134,6 +130,20 @@ service cloud.firestore {
       );
 
       allow delete: if isDirector();
+
+      // ── Subcolección 'evaluaciones' (Quizzes y Exámenes Finales) ──
+      // Cada evaluación es un registro inmutable que preserva el historial temporal.
+      match /evaluaciones/{evalId} {
+        // Cualquier usuario autenticado puede leer las evaluaciones
+        allow read: if isAuthenticated();
+
+        // Solo el mentor dueño (aprobado) puede registrar evaluaciones
+        allow create: if isApprovedUser() &&
+          get(/databases/$(database)/documents/students/$(studentId)).data.get('mentorUid', '') == request.auth.uid;
+
+        // Las evaluaciones son inmutables: no se pueden editar ni borrar
+        allow update, delete: if false;
+      }
     }
   }
 }

@@ -16,10 +16,13 @@ import {
   UserCheck,
   ExternalLink,
   UserCog,
+  GraduationCap,
+  Trophy,
 } from 'lucide-react'
 import { DirectorAuditTable } from '@/components/pram/director-table'
 import { DirectorRequestsTable } from '@/components/pram/director-requests-table'
 import { DirectorUsersTable } from '@/components/pram/director-users-table'
+import { DirectorStudentsOverview } from '@/components/pram/director-students-overview'
 import { useFirebaseAuth } from '@/lib/firebase-auth'
 import { UserProfileBadge } from '@/components/pram/user-profile-card'
 import {
@@ -33,7 +36,7 @@ export default function DirectorDashboardPage() {
   const { user, userProfile, loading: authLoading } = useFirebaseAuth()
   const router = useRouter()
 
-  const [activeTab, setActiveTab] = useState<'audit' | 'users' | 'allUsers'>('audit')
+  const [activeTab, setActiveTab] = useState<'audit' | 'users' | 'allUsers' | 'students'>('audit')
   const [pendingSessions, setPendingSessions] = useState<Sesion[]>([])
   const [pendingUsers, setPendingUsers] = useState<Usuario[]>([])
   const [kpis, setKpis] = useState({ horasCertificadas: 0, estudiantesAtendidos: 0, sesionesValidadas: 0, tasaAsistencia: 100 })
@@ -311,6 +314,19 @@ export default function DirectorDashboardPage() {
               <UserCog className="size-4" />
               <span>Gestión de Usuarios</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('students')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'students'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <Trophy className="size-4" />
+              <span>Ranking & Directorio de Alumnos</span>
+            </button>
           </div>
 
           {activeTab === 'audit' && (
@@ -344,6 +360,20 @@ export default function DirectorDashboardPage() {
                 </p>
               </div>
               <DirectorUsersTable />
+            </div>
+          )}
+
+          {activeTab === 'students' && (
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Directorio & Ranking Institucional de Alumnos
+                </h3>
+                <p className="text-xs text-slate-500 font-normal">
+                  Supervisión general de todos los estudiantes del liceo, métricas de progreso y ranking de mejora ($\Delta$).
+                </p>
+              </div>
+              <DirectorStudentsOverview />
             </div>
           )}
         </section>

@@ -569,6 +569,106 @@ export async function updateStudentGrade(
 }
 
 /**
+ * 7b. SISTEMA DE EVALUACIONES TEMPORALES (Subcolección students/{id}/evaluaciones)
+ *
+ * Cada evaluación es un documento inmutable que preserva el historial temporal
+ * completo del alumno: quizzes diarios, exámenes finales, etc.
+ */
+export interface Evaluacion {
+  id: string
+  fecha: string
+  tipo: 'QUIZ' | 'EXAMEN_FINAL'
+  calificacion: number
+  tema: string
+  observacion: string
+  createdAt?: any
+}
+
+/**
+ * Registra una nueva evaluación en la subcolección del alumno.
+ * Las evaluaciones son inmutables una vez creadas.
+ */
+export async function addEvaluation(
+  studentId: string,
+  data: Omit<Evaluacion, 'id' | 'createdAt'>
+): Promise<Evaluacion | null> {
+  try {
+    const evalCollRef = collection(db, 'students', studentId, 'evaluaciones')
+    const payload = {
+      ...data,
+      createdAt: serverTimestamp(),
+    }
+    const docRef = await addDoc(evalCollRef, payload)
+    return { id: docRef.id, ...data }
+  } catch (error) {
+    console.error('[Firebase addEvaluation Error]:', error)
+    return null
+  }
+}
+
+/**
+ * Suscripción en tiempo real a las evaluaciones de un alumno, ordenadas por fecha.
+ */
+export function subscribeToEvaluations(
+  studentId: string,
+  callback: (evals: Evaluacion[]) => void
+) {
+  const evalCollRef = collection(db, 'students', studentId, 'evaluaciones')
+  const q = query(evalCollRef, orderBy('fecha', 'asc'))
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const evals: Evaluacion[] = []
+      snapshot.forEach((docSnap) => {
+        evals.push({ id: docSnap.id, ...(docSnap.data() as Omit<Evaluacion, 'id'>) })
+      })
+      callback(evals)
+    },
+    (err) => {
+      console.warn('[Firebase subscribeToEvaluations warn]:', err)
+    }
+  )
+}
+
+/**
+ * Lectura one-shot de todas las evaluaciones de un alumno.
+ */
+export async function getStudentEvaluations(studentId: string): Promise<Evaluacion[]> {
+  try {
+    const evalCollRef = collection(db, 'students', studentId, 'evaluaciones')
+    const q = query(evalCollRef, orderBy('fecha', 'asc'))
+    const querySnapshot = await getDocs(q)
+    const evals: Evaluacion[] = []
+    querySnapshot.forEach((docSnap) => {
+      evals.push({ id: docSnap.id, ...(docSnap.data() as Omit<Evaluacion, 'id'>) })
+    })
+    return evals
+  } catch (error) {
+    console.error('[Firebase getStudentEvaluations Error]:', error)
+    return []
+  }
+}
+
+/**
+ * Suscripción en tiempo real a TODOS los alumnos del sistema (para Director / directorio institucional).
+ */
+export function subscribeToAllStudents(callback: (students: StudentData[]) => void) {
+  return onSnapshot(
+    collection(db, 'students'),
+    (snapshot) => {
+      const students: StudentData[] = []
+      snapshot.forEach((docSnap) => {
+        students.push({ id: docSnap.id, ...(docSnap.data() as Omit<StudentData, 'id'>) })
+      })
+      callback(students)
+    },
+    (err) => {
+      console.warn('[Firebase subscribeToAllStudents warn]:', err)
+    }
+  )
+}
+
+/**
  * 8. REGISTRO DE SESIÓN + INCREMENTO ATÓMICO DE HORAS (writeBatch)
  *
  * Guarda la sesión en 'sessions' e incrementa horasAcumuladas / horas_acumuladas
