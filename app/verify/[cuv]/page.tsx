@@ -6,6 +6,10 @@ import {
   AlertTriangle,
   ArrowLeft,
   Lock,
+  Award,
+  Calendar,
+  Building,
+  QrCode,
 } from 'lucide-react'
 import { verifyCuvCode } from '@/lib/firebase-service'
 import { PrintCertificateButton } from '@/components/pram/print-certificate'
@@ -32,8 +36,8 @@ export default async function VerifyCUVPage({
   const isValid = certificado !== null && certificado.estado === 'valid'
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col justify-between">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col justify-between print:bg-white print:min-h-0">
+      {/* Header (Oculto en Impresión) */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8 print:hidden">
         <div className="flex items-center gap-3">
           <Link
@@ -44,11 +48,11 @@ export default async function VerifyCUVPage({
             <ArrowLeft className="size-4" />
           </Link>
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              PRAM OS · Validador de Certificados (Firestore O(1))
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 font-mono">
+              PRAM OS · VALIDADOR PÚBLICO CUV (DISTRITO 10-04)
             </span>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              Verificación de Certificado CUV
+              Verificación Oficial de Certificado
             </h1>
           </div>
         </div>
@@ -61,10 +65,10 @@ export default async function VerifyCUVPage({
         </Link>
       </header>
 
-      <main className="mx-auto max-w-3xl w-full px-4 py-8 sm:py-12 space-y-6">
+      <main className="mx-auto max-w-3xl w-full px-4 py-8 sm:py-12 space-y-6 print:max-w-none print:p-0 print:m-0">
         {dbError ? (
-          /* Error de conexión — tarjeta limpia sin excepciones */
-          <div className="p-8 bg-white rounded-xl border border-slate-200 shadow-sm text-center space-y-4 max-w-lg mx-auto">
+          /* Error de conexión */
+          <div className="p-8 bg-white rounded-xl border border-slate-200 shadow-sm text-center space-y-4 max-w-lg mx-auto print:hidden">
             <div className="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 mx-auto border border-slate-200">
               <Lock className="size-5" />
             </div>
@@ -92,99 +96,139 @@ export default async function VerifyCUVPage({
             </div>
           </div>
         ) : certificado && certificado.estado === 'valid' ? (
-          <div className="space-y-6">
-            {/* Banner de Verificación Exitosa */}
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+          <div className="space-y-6 print:space-y-0">
+            {/* Banner de Verificación Exitosa (Oculto en Impresión) */}
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3 print:hidden">
               <div className="flex items-center gap-3">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                   <CheckCircle2 className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-xs sm:text-sm font-semibold text-emerald-900">
-                    Certificado Auténtico e Inmutable
+                    Certificado Auténtico, Válido e Inmutable
                   </h2>
                   <p className="text-[11px] text-emerald-700 font-normal">
-                    Este documento ha sido validado contra el registro oficial de CUVs en Firestore.
+                    Este documento ha sido verificado contra el registro oficial de CUVs en Firestore (MINERD).
                   </p>
                 </div>
               </div>
 
-              <div className="print:hidden">
+              <div>
                 <PrintCertificateButton />
               </div>
             </div>
 
-            {/* Tarjeta Tipo Diploma */}
-            <div className="p-8 sm:p-12 bg-white rounded-xl border border-slate-200 shadow-sm relative overflow-hidden print:border-none print:shadow-none print:p-0">
-              <div className="border-4 border-double border-slate-200 p-6 sm:p-10 rounded-lg space-y-8 text-center bg-radial from-slate-50/50 via-white to-white">
-                <div className="space-y-2">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-slate-900 text-white font-mono font-bold text-base mb-2">
-                    PRAM
+            {/* Tarjeta Oficial Tipo Diploma Editorial (Print-Ready) */}
+            <div className="p-6 sm:p-10 bg-white rounded-xl border border-slate-300 shadow-sm relative overflow-hidden print:border-none print:shadow-none print:p-4 print:w-full">
+              {/* Marca de Agua Geométrica Institucional de Fondo */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-[0.03] flex items-center justify-center"
+                aria-hidden="true"
+              >
+                <svg className="size-96 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 2.18l7 3.89v4.93c0 4.61-3.12 8.92-7 10-3.88-1.08-7-5.39-7-10V8.07l7-3.89z" />
+                </svg>
+              </div>
+
+              {/* Marco Interno de Precisión Institucional */}
+              <div className="border-2 border-slate-200 print:border-slate-800 p-6 sm:p-10 rounded-lg space-y-6 text-center bg-white relative z-10">
+                {/* 1. Encabezado e Insignia Institucional */}
+                <div className="space-y-3">
+                  {/* Escudo / Insignia Oficial */}
+                  <div className="flex justify-center">
+                    <div className="flex size-14 items-center justify-center rounded-xl bg-slate-900 p-2.5 shadow-sm text-white">
+                      <svg className="size-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                      </svg>
+                    </div>
                   </div>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                    PRAM OS · Sistema de Refuerzo Académico
-                  </h2>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                    Programa de Refuerzo Académico Minerva Mirabal
-                  </h3>
+
+                  {/* Textos de Cabecera Oficial */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] tracking-widest font-semibold text-slate-500 uppercase">
+                      REPÚBLICA DOMINICANA — MINISTERIO DE EDUCACIÓN (MINERD)
+                    </p>
+                    <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                      PROGRAMA DE REFUERZO ACADÉMICO MINERVA MIRABAL (PRAM)
+                    </p>
+                    <p className="text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">
+                      LICEO MINERVA MIRABAL · DISTRITO EDUCATIVO 10-04
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <h2 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 uppercase">
+                      Certificado de Acreditación de Servicio Social & Tutoría
+                    </h2>
+                  </div>
                 </div>
 
-                <div className="space-y-3 py-4 border-y border-slate-100">
+                {/* 2. Cuerpo del Certificado */}
+                <div className="space-y-3 py-4 border-y border-slate-200">
                   <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                    Certifica que:
+                    Se otorga el presente documento a:
                   </p>
-                  <p className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                  <p className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-sans">
                     {certificado.mentor_nombre}
                   </p>
-                  <p className="text-xs text-slate-600 font-normal max-w-lg mx-auto leading-relaxed">
-                    Ha cumplido satisfactoriamente con la totalidad de{' '}
-                    <strong className="text-slate-900 font-semibold">
-                      {certificado.horas_certificadas} horas
+                  <p className="text-xs sm:text-sm text-slate-600 font-normal max-w-xl mx-auto leading-relaxed">
+                    Por haber completado y validado satisfactoriamente un total acumulado de{' '}
+                    <strong className="text-slate-900 font-bold">
+                      {certificado.horas_certificadas} horas pedagógicas
                     </strong>{' '}
-                    de tutoría pedagógica y refuerzo escolar para estudiantes de educación secundaria en el{' '}
-                    <span className="text-slate-900 font-medium">{certificado.liceo}</span>.
+                    en sesiones presenciales de tutoría y nivelación escolar para estudiantes del{' '}
+                    <span className="text-slate-900 font-medium">{certificado.liceo}</span>, conforme a los lineamientos institucionales del Ministerio de Educación de la República Dominicana.
                   </p>
                 </div>
 
-                {/* Metadatos y Código CUV */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left text-xs pt-2">
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <span className="text-[10px] uppercase font-semibold text-slate-400 block">
-                      Código Único (CUV)
+                {/* 3. Metadatos y Código CUV Inmutable */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left text-xs pt-1">
+                  <div className="bg-slate-50 p-3 rounded-md border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">
+                      CÓDIGO ÚNICO (CUV)
                     </span>
                     <span className="font-mono font-bold text-slate-900 text-xs break-all">
                       {certificado.cuv_codigo}
                     </span>
                   </div>
 
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <span className="text-[10px] uppercase font-semibold text-slate-400 block">
-                      Fecha de Emisión
+                  <div className="bg-slate-50 p-3 rounded-md border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">
+                      FECHA DE EMISIÓN
                     </span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-slate-900 text-xs">
                       {certificado.fecha_emision}
                     </span>
                   </div>
 
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <span className="text-[10px] uppercase font-semibold text-slate-400 block">
-                      Entidad Emisora
+                  <div className="bg-slate-50 p-3 rounded-md border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">
+                      JURISDICCIÓN ACADÉMICA
                     </span>
-                    <span className="font-medium text-slate-900 text-[11px] leading-tight block">
-                      {certificado.entidad_emisora}
+                    <span className="font-medium text-slate-900 text-xs leading-tight block">
+                      Distrito Educativo 10-04 / MINERD
                     </span>
                   </div>
                 </div>
 
-                {/* Firmas Institucionales */}
+                {/* 4. Firmas Institucionales Oficiales */}
                 <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
-                  <div className="border-t border-slate-300 pt-2">
-                    <p className="font-semibold text-slate-900">Dra. Carmen Batlle</p>
-                    <p className="text-[10px] text-slate-500">Dirección y Supervisión Académica</p>
+                  <div className="border-t border-slate-400 pt-2 space-y-0.5">
+                    <p className="font-bold text-slate-900 text-xs">
+                      Dirección del Liceo Minerva Mirabal
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Supervisión Académica & Servicio Social
+                    </p>
                   </div>
-                  <div className="border-t border-slate-300 pt-2">
-                    <p className="font-semibold text-slate-900">Distrito Educativo 10-04</p>
-                    <p className="text-[10px] text-slate-500">Acreditación Institucional</p>
+                  <div className="border-t border-slate-400 pt-2 space-y-0.5">
+                    <p className="font-bold text-slate-900 text-xs">
+                      Distrito Educativo 10-04
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Acreditación Institucional MINERD
+                    </p>
                   </div>
                 </div>
               </div>
@@ -192,7 +236,7 @@ export default async function VerifyCUVPage({
           </div>
         ) : (
           /* Estado de CUV no encontrado */
-          <div className="p-8 bg-white rounded-xl border border-slate-200 shadow-sm text-center space-y-4 max-w-lg mx-auto">
+          <div className="p-8 bg-white rounded-xl border border-slate-200 shadow-sm text-center space-y-4 max-w-lg mx-auto print:hidden">
             <div className="flex size-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 mx-auto border border-amber-200">
               <AlertTriangle className="size-6" />
             </div>
@@ -206,7 +250,7 @@ export default async function VerifyCUVPage({
               </p>
             </div>
             <p className="text-xs text-slate-500">
-              Verifica que el código haya sido escrito exactamente como figura en el documento físico.
+              Verifica que el código haya sido escrito exactamente como figura en el documento físico o enlace oficial.
             </p>
             <div className="pt-2">
               <Link
@@ -220,11 +264,16 @@ export default async function VerifyCUVPage({
         )}
       </main>
 
+      {/* Footer Institucional (Oculto en Impresión) */}
       <footer className="border-t border-slate-200 bg-white py-6 px-4 text-center text-xs text-slate-500 print:hidden">
-        <p className="font-normal">
-          Validación Oficial de Certificados · PRAM OS · Liceo Minerva Mirabal
+        <p className="font-medium text-slate-700">
+          Validación Oficial de Certificados CUV · PRAM OS · Liceo Minerva Mirabal (Distrito 10-04)
+        </p>
+        <p className="text-[11px] text-slate-400 mt-0.5">
+          Ministerio de Educación de la República Dominicana (MINERD)
         </p>
       </footer>
     </div>
   )
 }
+

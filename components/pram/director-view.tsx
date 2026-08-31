@@ -47,7 +47,7 @@ export function DirectorView() {
   const ranking = getRankingMentores()
   const pendientesAuditoria = getSesionesPendientesAuditoria()
   const niveles = getEstudiantesPorNivel()
-  const supervisor = supervisores[0] || { nombre: 'Dra. Carmen Batlle', area: 'Matemáticas' }
+  const supervisor = supervisores[0] || { nombre: 'Dirección del Liceo Minerva Mirabal', area: 'Matemáticas' }
 
   const totalHorasAuditadas = sesiones
     .filter((s) => s.estado_auditoria === 'Aprobado_Institucional' || s.validado_por_auditoria)

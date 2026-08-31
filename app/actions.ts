@@ -49,7 +49,7 @@ export async function submitSessionAction(formData: FormData) {
 
 export async function approveSessionAction(sessionId: string) {
   try {
-    await approveSessionInDb(sessionId, 'Dra. Carmen Batlle')
+    await approveSessionInDb(sessionId, 'Dirección del Liceo Minerva Mirabal')
     revalidatePath('/dashboard/director')
     revalidatePath('/dashboard/mentor')
     revalidatePath('/')

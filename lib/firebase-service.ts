@@ -145,7 +145,7 @@ export async function getFirebasePendingSessions(): Promise<Sesion[]> {
  */
 export async function approveFirebaseSession(
   sessionId: string,
-  supervisorName = 'Dra. Carmen Batlle'
+  supervisorName = 'Dirección del Liceo Minerva Mirabal'
 ): Promise<boolean> {
   try {
     const currentUser = auth.currentUser
@@ -358,7 +358,7 @@ export async function createFlexibleCuvForMentor(
 ): Promise<string | null> {
   try {
     const directorUid = auth.currentUser?.uid || 'director-admin'
-    const directorName = auth.currentUser?.displayName || 'Dra. Carmen Batlle'
+    const directorName = auth.currentUser?.displayName || 'Dirección del Liceo Minerva Mirabal'
     const randomHex = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID().slice(0, 8).toUpperCase()
       : Math.random().toString(36).substring(2, 10).toUpperCase()

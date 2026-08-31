@@ -79,8 +79,8 @@ export function PrintAttendanceTemplate() {
             <p className="text-slate-500 text-[10px]">Cédula / Matrícula</p>
           </div>
           <div className="border-t border-slate-400 pt-2">
-            <p className="font-semibold">Dra. Carmen Batlle / Sello de Dirección</p>
-            <p className="text-slate-500 text-[10px]">Supervisión Académica Institucional</p>
+            <p className="font-semibold">Dirección del Liceo Minerva Mirabal</p>
+            <p className="text-slate-500 text-[10px]">Supervisión Académica & Servicio Social</p>
           </div>
         </div>
       </div>

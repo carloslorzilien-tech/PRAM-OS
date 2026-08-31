@@ -36,7 +36,7 @@ Inspirado en la claridad tipográfica de **Claude** y la funcionalidad académic
 - **Historial de Sesiones:** Listado en tiempo real con estados de validación (`Pendiente` / `Aprobado`).
 
 ### 3. Panel de Dirección y Auditoría (`/dashboard/director`)
-- **Bandeja de Entrada Ministerial:** Tabla con sesiones pendientes de firma de la Dra. Carmen Batlle.
+- **Bandeja de Entrada Ministerial:** Tabla con sesiones pendientes de validación por la Dirección del Liceo Minerva Mirabal.
 - **Botón `[ Aprobar y Bloquear ]`:** Acción atómica que actualiza la sesión a `approved` e incrementa inmediatamente las horas acumuladas del mentor.
 - **Botón `[ Imprimir Expediente Institucional ]`:** Generación de reporte formal con estilos `@media print` nativos del navegador.
 

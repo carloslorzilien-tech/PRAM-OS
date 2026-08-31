@@ -14,7 +14,7 @@ import {
 export const mockSupervisores: Supervisor[] = [
   {
     id: 'sup-1',
-    nombre: 'Dra. Carmen Batlle',
+    nombre: 'Dirección del Liceo Minerva Mirabal',
     area: 'Matemáticas',
     codigo_acceso: 'DIR-2026',
   },

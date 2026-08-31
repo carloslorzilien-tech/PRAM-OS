@@ -224,7 +224,7 @@ export function DemoTabsView({
           <div className="space-y-6 animate-in fade-in duration-200">
             <div className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between text-xs text-slate-600">
               <span className="font-semibold text-slate-900">
-                Rol Simulado: Dra. Carmen Batlle (Dirección & Auditoría Institucional)
+                Rol Simulado: Dirección del Liceo Minerva Mirabal (Auditoría Institucional)
               </span>
               <span className="rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold">
                 Firma Autorizada

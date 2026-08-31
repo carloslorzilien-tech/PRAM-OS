@@ -74,11 +74,11 @@ SET horas_acumuladas = EXCLUDED.horas_acumuladas,
 -- Inserción de 5 Sesiones Aprobadas y 2 Pendientes
 INSERT INTO sesiones (id, mentor_id, materia, tema, duracion_minutos, cantidad_alumnos, fecha_sesion, estado, aprobado_por, fecha_aprobacion, notas)
 VALUES
-    ('s-101', 'm-1', 'Matemáticas', 'Ecuaciones Lineales y Despeje de Incógnitas', 60, 4, '2026-08-10', 'approved', 'Dra. Carmen Batlle', '2026-08-11 09:30:00Z', 'Excelente participación de los alumnos de 3ro B.'),
-    ('s-102', 'm-1', 'Matemáticas', 'Fracciones Complejas y Operaciones Mixtas', 45, 3, '2026-08-12', 'approved', 'Dra. Carmen Batlle', '2026-08-13 10:15:00Z', 'Refuerzo de jerarquía de operaciones.'),
-    ('s-103', 'm-2', 'Lengua Española', 'Estructura del Ensayo Argumentativo', 60, 5, '2026-08-11', 'approved', 'Dra. Carmen Batlle', '2026-08-12 11:00:00Z', 'Redacción de tesis y conectores de causa.'),
-    ('s-104', 'm-2', 'Lengua Española', 'Comprensión Lectora y Figuras Literarias', 45, 4, '2026-08-14', 'approved', 'Dra. Carmen Batlle', '2026-08-15 14:20:00Z', 'Análisis de textos periodísticos dominicanos.'),
-    ('s-105', 'm-3', 'Ciencias Naturales', 'Leyes de Mendel y Genética Básica', 90, 6, '2026-08-13', 'approved', 'Dra. Carmen Batlle', '2026-08-14 16:00:00Z', 'Resolución guiada de cuadros de Punnett.'),
+    ('s-101', 'm-1', 'Matemáticas', 'Ecuaciones Lineales y Despeje de Incógnitas', 60, 4, '2026-08-10', 'approved', 'Dirección del Liceo Minerva Mirabal', '2026-08-11 09:30:00Z', 'Excelente participación de los alumnos de 3ro B.'),
+    ('s-102', 'm-1', 'Matemáticas', 'Fracciones Complejas y Operaciones Mixtas', 45, 3, '2026-08-12', 'approved', 'Dirección del Liceo Minerva Mirabal', '2026-08-13 10:15:00Z', 'Refuerzo de jerarquía de operaciones.'),
+    ('s-103', 'm-2', 'Lengua Española', 'Estructura del Ensayo Argumentativo', 60, 5, '2026-08-11', 'approved', 'Dirección del Liceo Minerva Mirabal', '2026-08-12 11:00:00Z', 'Redacción de tesis y conectores de causa.'),
+    ('s-104', 'm-2', 'Lengua Española', 'Comprensión Lectora y Figuras Literarias', 45, 4, '2026-08-14', 'approved', 'Dirección del Liceo Minerva Mirabal', '2026-08-15 14:20:00Z', 'Análisis de textos periodísticos dominicanos.'),
+    ('s-105', 'm-3', 'Ciencias Naturales', 'Leyes de Mendel y Genética Básica', 90, 6, '2026-08-13', 'approved', 'Dirección del Liceo Minerva Mirabal', '2026-08-14 16:00:00Z', 'Resolución guiada de cuadros de Punnett.'),
     ('s-106', 'm-1', 'Matemáticas', 'Trigonometría: Seno, Coseno y Tangente', 60, 3, '2026-08-16', 'pending', NULL, NULL, 'Pendiente de validación ministerial.'),
     ('s-107', 'm-3', 'Ciencias Naturales', 'Ecosistemas y Conservación de Cuencas', 45, 4, '2026-08-17', 'pending', NULL, NULL, 'Sesión realizada en laboratorio de ciencias.')
 ON CONFLICT (id) DO NOTHING;

@@ -344,7 +344,7 @@ CREATE TRIGGER trg_ranking_mentor_self
 -- 12. SEED DATA (Datos Iniciales)
 -- ============================================================
 INSERT INTO supervisores (id, nombre, area, codigo_acceso) VALUES
-('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'Dra. Carmen Batlle', 'Matemáticas', 'DIR-2026')
+('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'Dirección del Liceo Minerva Mirabal', 'Matemáticas', 'DIR-2026')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO mentores (id, nombre, rango, horas_acumuladas, especialidad, supervisor_id, puntos_ranking) VALUES

@@ -11,7 +11,7 @@ export function DirectorAuditTable({ initialSessions }: { initialSessions: Sesio
 
   const handleApprove = async (id: string) => {
     setProcessingId(id)
-    const success = await approveFirebaseSession(id, 'Dra. Carmen Batlle')
+    const success = await approveFirebaseSession(id, 'Dirección del Liceo Minerva Mirabal')
     setProcessingId(null)
     if (success) {
       setSessions((prev) => prev.filter((s) => s.id !== id))

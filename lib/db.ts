@@ -137,7 +137,7 @@ let mockSesiones: Sesion[] = [
     cantidad_alumnos: 4,
     fecha_sesion: '2026-08-14',
     estado: 'approved',
-    aprobado_por: 'Dra. Carmen Batlle',
+    aprobado_por: 'Dirección del Liceo Minerva Mirabal',
     cuv: 'PRAM-2026-M01-8841',
   },
   {
@@ -150,6 +150,19 @@ let mockSesiones: Sesion[] = [
     cantidad_alumnos: 3,
     fecha_sesion: '2026-08-15',
     estado: 'pending',
+  },
+]
+
+let mockCuvs: CertificadoCUV[] = [
+  {
+    id: 'cert-1',
+    cuv_codigo: 'PRAM-2026-M01-8841',
+    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
+    horas_certificadas: 48.5,
+    liceo: 'Liceo Minerva Mirabal',
+    fecha_emision: '15 de Agosto de 2026',
+    estado: 'valid',
+    entidad_emisora: 'Ministerio de Educación (MINERD) · Distrito 10-04',
   },
 ]
 
@@ -169,6 +182,10 @@ export async function getPublicKPIs(): Promise<PublicKPIs> {
 export async function getTopMentores(limit?: number): Promise<Mentor[]> {
   const sorted = [...mockMentores].sort((a, b) => b.horas_acumuladas - a.horas_acumuladas)
   return limit !== undefined ? sorted.slice(0, limit) : sorted
+}
+
+export async function getSessionById(sessionId: string): Promise<Sesion | null> {
+  return mockSesiones.find((s) => s.id === sessionId) || null
 }
 
 export async function getMentorSessions(mentorId: string): Promise<{ mentor: Mentor | null; sesiones: Sesion[] }> {
@@ -235,7 +252,7 @@ export async function createSessionInDb(data: {
   return newSession
 }
 
-export async function approveSessionInDb(sessionId: string, supervisorName = 'Dra. Carmen Batlle'): Promise<Sesion | null> {
+export async function approveSessionInDb(sessionId: string, supervisorName = 'Dirección del Liceo Minerva Mirabal'): Promise<Sesion | null> {
   const session = mockSesiones.find((s) => s.id === sessionId)
   if (session) {
     session.estado = 'approved'

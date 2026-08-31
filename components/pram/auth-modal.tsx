@@ -161,7 +161,7 @@ export function AuthModal({ isOpen, onClose, actionLabel }: AuthModalProps) {
                   <Crown className="size-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-700">Director</span>
-                <span className="text-[10px] text-slate-400">Dra. Carmen Batlle</span>
+                <span className="text-[10px] text-slate-400">Dirección Minerva Mirabal</span>
               </button>
             </div>
 
