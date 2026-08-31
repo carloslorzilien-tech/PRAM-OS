@@ -10,13 +10,12 @@ export type HistoryItem = {
 }
 
 export const session = {
-  dateLabel: '14 ago 2026 · 3:30 PM',
-  title: 'Resolución de Ecuaciones Lineales con Una Incógnita',
-  mentorNote:
-    'Repasaremos el despeje de variables y practicaremos con 5 ejercicios guiados. Trae tu cuaderno de la sesión anterior.',
-  mentor: 'Prof. Altagracia Peña',
+  dateLabel: 'Sin sesiones programadas',
+  title: 'Refuerzo Académico',
+  mentorNote: 'Registra la primera sesión en el Panel del Tutor.',
+  mentor: 'Docente / Tutor PRAM',
   subject: 'Matemáticas',
-  pin: '1234',
+  pin: '----',
 }
 
 export const levelRubric = [
@@ -29,10 +28,10 @@ export const levelRubric = [
 
 export const level = {
   label: 'Nivel Académico',
-  current: 3.7,
+  current: 0,
   scale: 5,
-  delta: 0.6,
-  levelName: 'Funcional',
+  delta: 0,
+  levelName: 'En Diagnóstico',
 }
 
 export type MentorRank = 'Junior' | 'Senior' | 'Director de Área'
@@ -47,42 +46,17 @@ export const mentorRanks: { rank: MentorRank; description: string }[] = [
   },
 ]
 
-export const history: HistoryItem[] = [
-  {
-    id: '1',
-    topic: 'Operaciones con Fracciones',
-    date: '7 ago 2026',
-    status: 'completado',
-  },
-  {
-    id: '2',
-    topic: 'Razones y Proporciones',
-    date: '31 jul 2026',
-    status: 'completado',
-  },
-  {
-    id: '3',
-    topic: 'Introducción al Álgebra',
-    date: '24 jul 2026',
-    status: 'completado',
-  },
-  {
-    id: '4',
-    topic: 'Evaluación Diagnóstica de Cierre',
-    date: '21 ago 2026',
-    status: 'pendiente',
-  },
-]
+export const history: HistoryItem[] = []
 
 export const microRoutes = [
-  { id: 'm1', title: 'Despeje de variables', minutes: 8, done: true },
+  { id: 'm1', title: 'Despeje de variables', minutes: 8, done: false },
   { id: 'm2', title: 'Ecuaciones con paréntesis', minutes: 12, done: false },
   { id: 'm3', title: 'Problemas de aplicación', minutes: 15, done: false },
 ]
 
 export const student = {
-  name: 'Carlos',
-  fullName: 'Carlos Reyes',
-  pin: '1234',
-  cohort: 'Grupo 8B',
+  name: 'Estudiante',
+  fullName: 'Estudiante PRAM',
+  pin: '----',
+  cohort: 'Cohorte 2026-2',
 }

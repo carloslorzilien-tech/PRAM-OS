@@ -97,10 +97,11 @@ export function MentorImpactTable({ initialMentores = [] }: MentorImpactTablePro
             // Ordenar descendentemente por horas acumuladas
             mapped.sort((a, b) => b.horas_acumuladas - a.horas_acumuladas)
 
-            if (mapped.length > 0) {
-              setMentores(mapped)
-              setIsLive(true)
-            }
+            setMentores(mapped)
+            setIsLive(true)
+          } else {
+            setMentores([])
+            setIsLive(true)
           }
           setLoading(false)
         },

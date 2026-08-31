@@ -202,39 +202,68 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
     if (role === 'guest') {
       setCurrentUser(DEFAULT_GUEST_USER)
     } else if (role === 'estudiante') {
-      const est = estudiantes.find((e) => e.id === 'e-1') || estudiantes[0]
+      const est = estudiantes[0] || {
+        id: 'e-guest',
+        nombre: 'Estudiante PRAM',
+        pin: '1234',
+        grado: '3ro',
+        liceo_seccion: 'Liceo Minerva Mirabal · 3ro A',
+        nivel_actual: 1,
+        puntos_ranking: 0,
+        racha_asistencia: 0,
+        graduado_pram: false,
+      }
       setCurrentUser({
         id: est.id,
-        email: 'carlos.reyes@estudiante.Institucional.edu.do',
+        email: 'estudiante@pram.edu.do',
         nombre: est.nombre,
         role: 'estudiante',
         estudianteData: est,
       })
     } else if (role === 'mentor_junior') {
-      const men = mentores.find((m) => m.id === 'm-3') || mentores[mentores.length - 1]
+      const men = mentores[0] || {
+        id: 'm-junior',
+        nombre: 'Tutor PRAM',
+        rango: 'Junior' as const,
+        horas_acumuladas: 0,
+        especialidad: 'General',
+        puntos_ranking: 0,
+      }
       setCurrentUser({
         id: men.id,
-        email: 'sofia.castillo@Institucional.edu.do',
+        email: 'tutor@pram.edu.do',
         nombre: men.nombre,
         role: 'mentor_junior',
         mentorData: men,
       })
       setActiveMentorId(men.id)
     } else if (role === 'head_mentor') {
-      const men = mentores.find((m) => m.id === 'm-1') || mentores[0]
+      const men = mentores[0] || {
+        id: 'm-head',
+        nombre: 'Tutor Titular',
+        rango: 'Head' as const,
+        horas_acumuladas: 0,
+        especialidad: 'General',
+        puntos_ranking: 0,
+      }
       setCurrentUser({
         id: men.id,
-        email: 'altagracia.pena@Institucional.edu.do',
+        email: 'titular@pram.edu.do',
         nombre: men.nombre,
         role: 'head_mentor',
         mentorData: men,
       })
       setActiveMentorId(men.id)
     } else if (role === 'director') {
-      const sup = supervisores[0]
+      const sup = supervisores[0] || {
+        id: 'sup-dir',
+        nombre: 'Dirección del Liceo Minerva Mirabal',
+        area: 'Matemáticas' as const,
+        codigo_acceso: 'DIR-2026',
+      }
       setCurrentUser({
         id: sup.id,
-        email: 'carmen.batlle@director.Institucional.edu.do',
+        email: 'carlos.lorzilien@gmail.com',
         nombre: sup.nombre,
         role: 'director',
         supervisorData: sup,

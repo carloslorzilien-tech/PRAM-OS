@@ -61,7 +61,7 @@ export interface CertificadoCUV {
   estado: 'valid' | 'invalid'
 }
 
-// In-Memory Store
+// In-Memory Store (Zero State Baseline)
 let mockUsuarios: Usuario[] = [
   {
     id: 'u-carlos-dir',
@@ -70,101 +70,11 @@ let mockUsuarios: Usuario[] = [
     rol: 'DIRECTOR',
     status: 'APPROVED',
   },
-  {
-    id: 'u-carlos-mentor',
-    email: 'carlos.tutor@pram.edu.do',
-    nombre: 'Prof. Carlos Omar Lorzilien',
-    rol: 'MENTOR',
-    area: 'Matemáticas',
-    status: 'APPROVED',
-  },
-  {
-    id: 'u-altagracia',
-    email: 'altagracia.pena@Institucional.edu.do',
-    nombre: 'Prof. Altagracia Peña',
-    rol: 'MENTOR',
-    area: 'Matemáticas',
-    status: 'APPROVED',
-  },
-  {
-    id: 'u-marcos',
-    email: 'marcos.santana@Institucional.edu.do',
-    nombre: 'Lic. Marcos Santana',
-    rol: 'MENTOR',
-    area: 'Lengua Española',
-    status: 'APPROVED',
-  },
 ]
 
-let mockMentores: Mentor[] = [
-  {
-    id: 'm-1',
-    nombre: 'Prof. Carlos Omar Lorzilien',
-    email: 'carlos.tutor@pram.edu.do',
-    rango: 'Head',
-    horas_acumuladas: 48.5,
-    meta_horas: 60.0,
-    especialidad: 'Matemáticas',
-  },
-  {
-    id: 'm-2',
-    nombre: 'Prof. Altagracia Peña',
-    email: 'altagracia.pena@Institucional.edu.do',
-    rango: 'Head',
-    horas_acumuladas: 42.0,
-    meta_horas: 60.0,
-    especialidad: 'Matemáticas',
-  },
-  {
-    id: 'm-3',
-    nombre: 'Lic. Marcos Santana',
-    email: 'marcos.santana@Institucional.edu.do',
-    rango: 'Senior',
-    horas_acumuladas: 34.0,
-    meta_horas: 60.0,
-    especialidad: 'Lengua Española',
-  },
-]
-
-let mockSesiones: Sesion[] = [
-  {
-    id: 'ses-1',
-    mentor_id: 'm-1',
-    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
-    materia: 'Matemáticas',
-    tema: 'Resolución de Ecuaciones Lineales con Una Incógnita',
-    duracion_minutos: 45,
-    cantidad_alumnos: 4,
-    fecha_sesion: '2026-08-14',
-    estado: 'approved',
-    aprobado_por: 'Dirección del Liceo Minerva Mirabal',
-    cuv: 'PRAM-2026-M01-8841',
-  },
-  {
-    id: 'ses-2',
-    mentor_id: 'm-1',
-    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
-    materia: 'Matemáticas',
-    tema: 'Factorización de Polinomios y Trinomios Cuadrados',
-    duracion_minutos: 60,
-    cantidad_alumnos: 3,
-    fecha_sesion: '2026-08-15',
-    estado: 'pending',
-  },
-]
-
-let mockCuvs: CertificadoCUV[] = [
-  {
-    id: 'cert-1',
-    cuv_codigo: 'PRAM-2026-M01-8841',
-    mentor_nombre: 'Prof. Carlos Omar Lorzilien',
-    horas_certificadas: 48.5,
-    liceo: 'Liceo Minerva Mirabal',
-    fecha_emision: '15 de Agosto de 2026',
-    estado: 'valid',
-    entidad_emisora: 'Ministerio de Educación (MINERD) · Distrito 10-04',
-  },
-]
+let mockMentores: Mentor[] = []
+let mockSesiones: Sesion[] = []
+let mockCuvs: CertificadoCUV[] = []
 
 export async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1500): Promise<T> {
   return fn()

@@ -122,10 +122,10 @@ export function AuthModal({ isOpen, onClose, actionLabel }: AuthModalProps) {
                 className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-center hover:bg-white hover:border-[#152642]/30 hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="flex size-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <BookOpen className="size-4" />
+                  <User className="size-4" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-700">Estudiante</span>
-                <span className="text-[10px] text-slate-400">Carlos Reyes</span>
+                <span className="text-[10px] text-slate-400">Modo Alumno</span>
               </button>
 
               <button
@@ -134,10 +134,10 @@ export function AuthModal({ isOpen, onClose, actionLabel }: AuthModalProps) {
                 className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-center hover:bg-white hover:border-[#152642]/30 hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <User className="size-4" />
+                  <BookOpen className="size-4" />
                 </div>
-                <span className="text-[11px] font-bold text-slate-700">Mentor Junior</span>
-                <span className="text-[10px] text-slate-400">Ing. Sofía Castillo</span>
+                <span className="text-[11px] font-bold text-slate-700">Tutor Junior</span>
+                <span className="text-[10px] text-slate-400">Modo Tutor</span>
               </button>
 
               <button
@@ -148,8 +148,8 @@ export function AuthModal({ isOpen, onClose, actionLabel }: AuthModalProps) {
                 <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700 group-hover:bg-violet-600 group-hover:text-white transition-colors">
                   <GraduationCap className="size-4" />
                 </div>
-                <span className="text-[11px] font-bold text-slate-700">Head Mentor</span>
-                <span className="text-[10px] text-slate-400">Prof. Altagracia Peña</span>
+                <span className="text-[11px] font-bold text-slate-700">Tutor Titular</span>
+                <span className="text-[10px] text-slate-400">Modo Titular</span>
               </button>
 
               <button
