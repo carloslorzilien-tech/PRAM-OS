@@ -17,9 +17,7 @@ service cloud.firestore {
 
     function isPreApprovedEmail() {
       return isAuthenticated() && (
-        request.auth.token.email == 'carlos.lorzilien@gmail.com' ||
-        request.auth.token.email == 'carlosomarlorzilienservilien@gmail.com' ||
-        request.auth.token.email == 'carlosmarlorzilienservilien@gmail.com'
+        request.auth.token.email == 'carlos.lorzilien@gmail.com'
       );
     }
 

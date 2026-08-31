@@ -37,8 +37,8 @@ export function UserProfileBadge({
 
   const isApproved = effectiveStatus === 'APPROVED'
   const dashboardUrl = isDirector ? '/dashboard/director' : '/dashboard/mentor'
-  const email = user?.email || (isDirector ? 'carlos.lorzilien@gmail.com' : 'carlosomarlorzilienservilien@gmail.com')
-  const fullName = user?.displayName || userProfile?.nombre || (isDirector ? 'Carlos Lorzilien (Director)' : 'Prof. Carlos Omar Lorzilien')
+  const email = user?.email || (isDirector ? 'carlos.lorzilien@gmail.com' : 'tutor@pram.edu.do')
+  const fullName = user?.displayName || userProfile?.nombre || (isDirector ? 'Carlos Lorzilien (Director)' : 'Docente / Tutor PRAM')
 
   return (
     <div className="relative inline-flex items-center gap-2">

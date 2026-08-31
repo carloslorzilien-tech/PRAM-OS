@@ -31,16 +31,11 @@ const FirebaseAuthContext = createContext<FirebaseAuthContextType>({
 // Helper: Emails pre-aprobados y su rol
 // ────────────────────────────────────────────────────────
 const DIRECTOR_EMAILS = ['carlos.lorzilien@gmail.com']
-const MENTOR_EMAILS = [
-  'carlosomarlorzilienservilien@gmail.com',
-  'carlosmarlorzilienservilien@gmail.com',
-]
 
-function classifyEmail(email: string): { isDirector: boolean; isMentor: boolean } {
+function classifyEmail(email: string): { isDirector: boolean } {
   const clean = email.toLowerCase().trim()
   return {
     isDirector: DIRECTOR_EMAILS.includes(clean),
-    isMentor: MENTOR_EMAILS.includes(clean),
   }
 }
 
@@ -51,7 +46,7 @@ function classifyEmail(email: string): { isDirector: boolean; isMentor: boolean 
 function buildUsuarioFromDoc(
   firebaseUser: User,
   firestoreData: Record<string, unknown> | null,
-  classification: { isDirector: boolean; isMentor: boolean }
+  classification: { isDirector: boolean }
 ): Usuario {
   const email = (firebaseUser.email || '').toLowerCase().trim()
   const displayName =
@@ -61,7 +56,7 @@ function buildUsuarioFromDoc(
     email.split('@')[0] ||
     'Usuario PRAM'
 
-  // Determinar rol: prioridad a clasificación por email, luego al doc de Firestore
+  // Determinar rol: prioridad a clasificación por email de Dirección, luego al doc de Firestore
   let rol: Usuario['rol'] = 'MENTOR'
   if (classification.isDirector) {
     rol = 'DIRECTOR'
@@ -73,11 +68,11 @@ function buildUsuarioFromDoc(
   }
 
   let status: Usuario['status'] = 'PENDING'
-  if (classification.isDirector || classification.isMentor) {
+  if (classification.isDirector) {
     status = 'APPROVED'
   } else if (firestoreData) {
     const docStatus = (firestoreData.status as string) || ''
-    if (docStatus === 'APPROVED' || docStatus === 'REJECTED') {
+    if (docStatus === 'APPROVED' || docStatus === 'REJECTED' || docStatus === 'INACTIVE') {
       status = docStatus as Usuario['status']
     }
   }
@@ -87,7 +82,7 @@ function buildUsuarioFromDoc(
     email,
     nombre: displayName,
     rol,
-    area: classification.isMentor ? 'Matemáticas' : (firestoreData?.area as Usuario['area']) || null,
+    area: (firestoreData?.area as Usuario['area']) || null,
     status,
     created_at: (firestoreData?.created_at as string) || new Date().toISOString(),
   }
@@ -171,7 +166,6 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
             // Usuario existente: solo sincronizar si hay campos críticos desactualizados
             const needsSync =
               (classification.isDirector && (firestoreData!.rol !== 'DIRECTOR' || firestoreData!.status !== 'APPROVED')) ||
-              (classification.isMentor && firestoreData!.status !== 'APPROVED') ||
               !firestoreData!.nombre
             if (needsSync) {
               await syncProfileToFirestore(currentUser.uid, profile)

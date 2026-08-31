@@ -72,7 +72,7 @@ let mockUsuarios: Usuario[] = [
   },
   {
     id: 'u-carlos-mentor',
-    email: 'carlosomarlorzilienservilien@gmail.com',
+    email: 'carlos.tutor@pram.edu.do',
     nombre: 'Prof. Carlos Omar Lorzilien',
     rol: 'MENTOR',
     area: 'Matemáticas',
@@ -100,7 +100,7 @@ let mockMentores: Mentor[] = [
   {
     id: 'm-1',
     nombre: 'Prof. Carlos Omar Lorzilien',
-    email: 'carlosomarlorzilienservilien@gmail.com',
+    email: 'carlos.tutor@pram.edu.do',
     rango: 'Head',
     horas_acumuladas: 48.5,
     meta_horas: 60.0,
