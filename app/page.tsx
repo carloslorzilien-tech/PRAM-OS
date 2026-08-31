@@ -12,6 +12,7 @@ import { getPublicKPIs, getTopMentores } from '@/lib/db'
 import { MainNav } from '@/components/pram/main-nav'
 import { AnimatedKPIs } from '@/components/pram/animated-kpis'
 import { HeroAuthActions } from '@/components/pram/hero-auth-actions'
+import { MentorImpactTable } from '@/components/pram/mentor-impact-table'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,79 +106,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 5. Tabla: Cuadro de Honor de Mentores */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold tracking-tight text-slate-900">
-                Cuadro de Honor de Mentores
-              </h2>
-              <p className="text-xs text-slate-500 font-normal">
-                Docentes y tutores con mayor aporte al programa de servicio social
-              </p>
-            </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Período 2026-2
-            </span>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[500px]">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
-                  <tr>
-                    <th className="px-5 py-3.5 w-10">#</th>
-                    <th className="px-5 py-3.5">Mentor</th>
-                    <th className="px-5 py-3.5 hidden sm:table-cell">Especialidad</th>
-                    <th className="px-5 py-3.5">Rango</th>
-                    <th className="px-5 py-3.5 text-right">Horas</th>
-                    <th className="px-5 py-3.5 text-right">Avance (60h)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {topMentores.map((mentor, index) => {
-                    const pct = Math.min(100, Math.round((mentor.horas_acumuladas / mentor.meta_horas) * 100))
-                    return (
-                      <tr key={mentor.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-5 py-3.5 font-mono font-medium text-slate-400">
-                          {index + 1}
-                        </td>
-                        <td className="px-5 py-3.5 font-semibold text-slate-900">
-                          <div>{mentor.nombre}</div>
-                          <div className="text-[10px] text-slate-500 sm:hidden">{mentor.especialidad}</div>
-                        </td>
-                        <td className="px-5 py-3.5 text-slate-600 font-normal hidden sm:table-cell">
-                          {mentor.especialidad}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span className="rounded-lg bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 text-[10px] font-semibold">
-                            {mentor.rango}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
-                          {mentor.horas_acumuladas.toFixed(1)} h
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <div className="inline-flex items-center gap-2 justify-end">
-                            <div className="w-16 sm:w-20 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                              <div
-                                className="h-full bg-slate-800 rounded-full"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <span className="font-mono text-[11px] font-bold text-slate-700">
-                              {pct}%
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        {/* 5. Cuadro de Estatus e Impacto de Mentores (Tiempo Real) */}
+        <MentorImpactTable initialMentores={topMentores} />
 
         {/* 6. Enlaces de Acceso Rápido */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-200">

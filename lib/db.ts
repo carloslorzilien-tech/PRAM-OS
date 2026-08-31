@@ -18,10 +18,10 @@ export interface Mentor {
   id: string
   nombre: string
   email: string
-  rango: 'Junior' | 'Senior' | 'Head'
+  rango: 'Junior' | 'Senior' | 'Head' | string
   horas_acumuladas: number
   meta_horas: number
-  especialidad: MateriaValida
+  especialidad: MateriaValida | string
   telefono?: string
   created_at?: string
 }

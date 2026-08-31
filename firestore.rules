@@ -46,14 +46,14 @@ service cloud.firestore {
     // 1. COLECCIÓN 'users' (Perfiles de Directores, Mentores y Alumnos)
     // ==============================================================
     match /users/{userId} {
-      // Cada usuario lee su propio perfil; los directores leen todos para auditoría
-      allow read: if isOwner(userId) || isDirector();
+      // Lectura pública de perfiles básicos para el Cuadro de Estatus e Impacto institucional
+      allow read: if true;
 
-      // Registro inicial del perfil al iniciar sesión
+      // Registro inicial del perfil al autenticarse por primera vez
       allow create: if isOwner(userId);
 
       // El usuario puede actualizar su información básica sin elevar privilegios
-      // El director puede actualizar rol y status para aprobar o rechazar solicitudes
+      // La Dirección puede actualizar roles y estados (APPROVED/REJECTED/INACTIVE)
       allow update: if isDirector() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'role', 'status'])
@@ -134,16 +134,20 @@ service cloud.firestore {
       // ── Subcolección 'evaluaciones' (Quizzes y Exámenes Finales) ──
       // Cada evaluación es un registro inmutable que preserva el historial temporal.
       match /evaluaciones/{evalId} {
-        // Cualquier usuario autenticado puede leer las evaluaciones
+        // La lectura de evaluaciones requiere autenticación
         allow read: if isAuthenticated();
 
-        // Solo el mentor dueño (aprobado) puede registrar evaluaciones
-        allow create: if isApprovedUser() &&
-          get(/databases/$(database)/documents/students/$(studentId)).data.get('mentorUid', '') == request.auth.uid;
+        // La creación de quizzes sólo está permitida si el usuario está aprobado
+        // y es el tutor asignado al alumno o es un Director
+        allow create: if isApprovedUser() && (
+          isDirector() ||
+          get(/databases/$(database)/documents/students/$(studentId)).data.get('mentorUid', '') == request.auth.uid
+        );
 
-        // Las evaluaciones son inmutables: no se pueden editar ni borrar
+        // Inmutabilidad estricta: prohíbe explícitamente update y delete
         allow update, delete: if false;
       }
     }
   }
 }
+

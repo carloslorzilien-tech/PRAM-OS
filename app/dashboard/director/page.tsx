@@ -17,7 +17,7 @@ import {
   ExternalLink,
   UserCog,
   GraduationCap,
-  Trophy,
+  TrendingUp,
 } from 'lucide-react'
 import { DirectorAuditTable } from '@/components/pram/director-table'
 import { DirectorRequestsTable } from '@/components/pram/director-requests-table'
@@ -324,8 +324,8 @@ export default function DirectorDashboardPage() {
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              <Trophy className="size-4" />
-              <span>Ranking & Directorio de Alumnos</span>
+              <TrendingUp className="size-4" />
+              <span>Consistencia & Progreso Académico</span>
             </button>
           </div>
 
@@ -367,10 +367,10 @@ export default function DirectorDashboardPage() {
             <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
               <div className="border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-bold text-slate-900">
-                  Directorio & Ranking Institucional de Alumnos
+                  Consistencia y Progreso Académico de Estudiantes
                 </h3>
                 <p className="text-xs text-slate-500 font-normal">
-                  Supervisión general de todos los estudiantes del liceo, métricas de progreso y ranking de mejora ($\Delta$).
+                  Supervisión institucional del avance individual, evolución diagnóstica ($\Delta$) e historial inmutable de evaluaciones.
                 </p>
               </div>
               <DirectorStudentsOverview />
