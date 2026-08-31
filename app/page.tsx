@@ -13,6 +13,7 @@ import { MainNav } from '@/components/pram/main-nav'
 import { AnimatedKPIs } from '@/components/pram/animated-kpis'
 import { HeroAuthActions } from '@/components/pram/hero-auth-actions'
 import { MentorImpactTable } from '@/components/pram/mentor-impact-table'
+import { DashboardAccessCards } from '@/components/pram/dashboard-access-cards'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,71 +110,8 @@ export default async function HomePage() {
         {/* 5. Cuadro de Estatus e Impacto de Mentores (Tiempo Real) */}
         <MentorImpactTable initialMentores={topMentores} />
 
-        {/* 6. Enlaces de Acceso Rápido */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
-          <Link
-            href="/dashboard/mentor"
-            className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-slate-300 transition-all flex flex-col justify-between group"
-          >
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Award className="size-4 text-slate-900" />
-                <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-800">
-                  Panel del Tutor
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 font-normal">
-                Registro ágil de tutorías y seguimiento en tiempo real de las 60 horas.
-              </p>
-            </div>
-            <div className="mt-4 flex items-center justify-between text-xs font-semibold text-slate-900">
-              <span>Ingresar</span>
-              <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </Link>
-
-          <Link
-            href="/dashboard/director"
-            className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-slate-300 transition-all flex flex-col justify-between group"
-          >
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <FileCheck className="size-4 text-slate-900" />
-                <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-800">
-                  Panel de Dirección
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 font-normal">
-                Auditoría, aprobación ministerial y emisión atómica de diplomas CUV.
-              </p>
-            </div>
-            <div className="mt-4 flex items-center justify-between text-xs font-semibold text-slate-900">
-              <span>Ingresar</span>
-              <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </Link>
-
-          <Link
-            href="/recursos"
-            className="p-5 bg-slate-900 text-white rounded-2xl shadow-sm hover:bg-slate-800 transition-all flex flex-col justify-between group"
-          >
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <BookOpen className="size-4 text-slate-300" />
-                <h3 className="text-sm font-bold text-white">
-                  Recursos & Plantillas
-                </h3>
-              </div>
-              <p className="text-xs text-slate-300 font-normal">
-                Planillas de asistencia física y material pedagógico de apoyo.
-              </p>
-            </div>
-            <div className="mt-4 flex items-center justify-between text-xs font-semibold text-white">
-              <span>Explorar Recursos</span>
-              <ArrowRight className="size-3.5 text-slate-300 group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </Link>
-        </section>
+        {/* 6. Enlaces de Acceso Rápido con Intercepción de Autenticación */}
+        <DashboardAccessCards />
       </main>
 
       {/* Footer Institucional */}

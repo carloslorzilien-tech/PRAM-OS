@@ -66,13 +66,8 @@ service cloud.firestore {
     // 2. COLECCIÓN 'sessions' (Tutorías y Horas Pedagógicas)
     // ==============================================================
     match /sessions/{sessionId} {
-      // Mentores leen sus propias sesiones; directores leen toda la base
-      allow read: if isDirector() || (
-        isAuthenticated() && (
-          resource.data.get('mentor_id', '') == request.auth.uid ||
-          resource.data.get('mentorId', '') == request.auth.uid
-        )
-      );
+      // Lectura pública para el cómputo de métricas y sesiones validadas del programa
+      allow read: if true;
 
       // Mentores aprobados pueden crear sesiones en estado 'pending'
       allow create: if isApprovedUser() && (
@@ -114,8 +109,8 @@ service cloud.firestore {
     // 4. COLECCIÓN 'students' (Alumnos registrados por cada Mentor)
     // ==============================================================
     match /students/{studentId} {
-      // Cualquier usuario autenticado puede leer los alumnos (directorio institucional)
-      allow read: if isAuthenticated();
+      // Lectura pública de estudiantes para el cálculo de impacto de cohorte en la landing
+      allow read: if true;
 
       // Solo mentores aprobados pueden registrar alumnos, y sólo como suyos
       allow create: if isApprovedUser() &&
