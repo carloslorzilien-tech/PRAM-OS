@@ -37,7 +37,9 @@ export function DemoTabsView({
   const [activeTab, setActiveTab] = useState<'public' | 'mentor' | 'director'>('public')
 
   const mentor = mentorData.mentor
-  const pct = Math.min(100, Math.round((mentor.horas_acumuladas / mentor.meta_horas) * 100))
+  const metaHoras = mentor && Number.isFinite(mentor.meta_horas) && mentor.meta_horas > 0 ? mentor.meta_horas : 60
+  const horasAcum = mentor && Number.isFinite(mentor.horas_acumuladas) ? mentor.horas_acumuladas : 0
+  const pct = Math.min(100, Math.round((horasAcum / metaHoras) * 100))
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">

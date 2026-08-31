@@ -159,10 +159,10 @@ export async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 15
 
 export async function getPublicKPIs(): Promise<PublicKPIs> {
   return {
-    horasCertificadas: 124.5,
-    estudiantesAtendidos: 28,
-    sesionesValidadas: 42,
-    tasaAsistencia: 96,
+    horasCertificadas: 0,
+    estudiantesAtendidos: 0,
+    sesionesValidadas: 0,
+    tasaAsistencia: 100,
   }
 }
 

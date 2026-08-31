@@ -29,8 +29,11 @@ import {
   getFirebasePendingSessions,
   getFirebasePendingUsers,
   createFlexibleCuvForMentor,
+  subscribeToRealtimeKPIs,
 } from '@/lib/firebase-service'
-import { Sesion, Usuario, Mentor, getPublicKPIs, getTopMentores } from '@/lib/db'
+import { Sesion, Usuario, Mentor } from '@/lib/db'
+import { collection, onSnapshot } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 export default function DirectorDashboardPage() {
   const { user, userProfile, loading: authLoading } = useFirebaseAuth()
@@ -57,37 +60,85 @@ export default function DirectorDashboardPage() {
     }
   }, [user, userProfile, authLoading, router])
 
-  // 2. Carga de Datos desde Firestore y KPIs
+  // 2. Carga y Suscripción en Tiempo Real desde Firestore (KPIs y Mentores para CUV)
   useEffect(() => {
-    async function loadData() {
-      if (user && (userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR')) {
-        try {
-          const [sessionsData, usersData, kpisData, topMentoresData] = await Promise.all([
-            getFirebasePendingSessions(),
-            getFirebasePendingUsers(),
-            getPublicKPIs(),
-            getTopMentores(),
-          ])
-          
-          setPendingSessions(sessionsData)
-          setPendingUsers(usersData)
-          setKpis(kpisData)
-          setTopMentores(topMentoresData)
-        } catch (error) {
-          console.error('[Director Dashboard Fetch Error]:', error)
-          setIsOfflineMode(true)
-        } finally {
-          setIsLoadingData(false)
-        }
-      } else {
+    if (!user || (userProfile?.rol !== 'DIRECTOR' && userProfile?.rol !== 'AREA_DIRECTOR')) {
+      if (!authLoading) setIsLoadingData(false)
+      return
+    }
+
+    // A) Suscripción en vivo a KPIs agregados
+    const unsubKPIs = subscribeToRealtimeKPIs((liveKpis) => {
+      setKpis(liveKpis)
+    })
+
+    // B) Suscripción en vivo al directorio de Mentores en Firestore
+    const usersRef = collection(db, 'users')
+    const unsubMentores = onSnapshot(
+      usersRef,
+      (snapshot) => {
+        const rawMentores: Mentor[] = []
+        snapshot.forEach((docSnap) => {
+          const u = docSnap.data()
+          const r = (u.rol || u.role || '').toUpperCase()
+          const s = (u.status || '').toUpperCase()
+          const horas = Number(u.horasAcumuladas ?? u.horas_acumuladas ?? 0)
+
+          if (
+            s !== 'INACTIVE' &&
+            s !== 'REJECTED' &&
+            (r.includes('MENTOR') || r.includes('TUTOR') || r.includes('DIRECTOR') || horas > 0)
+          ) {
+            const name = u.nombre || u.name || (u.email ? u.email.split('@')[0] : 'Tutor PRAM')
+            const area = u.area || u.especialidad || 'Refuerzo Académico'
+            const meta = Number(u.metaHoras ?? u.meta_horas ?? 60)
+            let rango = 'Tutor en Certificación'
+            if (horas >= 60) rango = 'Líder de Área'
+            else if (horas >= 30) rango = 'Mentor Sénior'
+            else if (horas >= 10) rango = 'Tutor Titular'
+
+            rawMentores.push({
+              id: docSnap.id,
+              nombre: name,
+              email: u.email || '',
+              rango,
+              horas_acumuladas: Number.isFinite(horas) ? horas : 0,
+              meta_horas: Number.isFinite(meta) && meta > 0 ? meta : 60,
+              especialidad: area,
+            })
+          }
+        })
+
+        rawMentores.sort((a, b) => b.horas_acumuladas - a.horas_acumuladas)
+        setTopMentores(rawMentores)
+      },
+      (err) => {
+        console.warn('[Director Dashboard Users onSnapshot warn]:', err)
+      }
+    )
+
+    // C) Carga inicial de solicitudes y sesiones pendientes de auditoría
+    async function loadPending() {
+      try {
+        const [sessionsData, usersData] = await Promise.all([
+          getFirebasePendingSessions(),
+          getFirebasePendingUsers(),
+        ])
+        setPendingSessions(sessionsData)
+        setPendingUsers(usersData)
+      } catch (error) {
+        console.error('[Director Dashboard Pending Fetch Error]:', error)
+        setIsOfflineMode(true)
+      } finally {
         setIsLoadingData(false)
       }
     }
 
-    if (!authLoading && user && (userProfile?.rol === 'DIRECTOR' || userProfile?.rol === 'AREA_DIRECTOR')) {
-      loadData()
-    } else if (!authLoading) {
-      setIsLoadingData(false)
+    loadPending()
+
+    return () => {
+      unsubKPIs()
+      unsubMentores()
     }
   }, [user, userProfile, authLoading])
 
@@ -391,7 +442,7 @@ export default function DirectorDashboardPage() {
               </p>
             </div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">
-              Distrito 08-03
+              Distrito 10-04
             </span>
           </div>
 
@@ -409,8 +460,9 @@ export default function DirectorDashboardPage() {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {topMentores.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-4 text-center text-slate-400">
-                      No hay mentores registrados aún
+                    <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-500">
+                      <p className="font-semibold text-slate-800">No hay tutores activos registrados aún en Firestore.</p>
+                      <p className="text-slate-400 mt-0.5">Los docentes aprobados con horas pedagógicas aparecerán aquí automáticamente.</p>
                     </td>
                   </tr>
                 ) : (

@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MINERD-slate?style=flat-square)](https://www.ministeriodeeducacion.gob.do/)
 
-**PRAM OS** es el sistema operativo educativo e institucional para la gestión pedagógica, validación ministerial de tutorías y acreditación de servicio social estudiantil (60 horas) para estudiantes de 3ro y 4to de bachillerato, diseñado bajo lineamientos del **Ministerio de Educación de la República Dominicana (MINERD)** para el **Liceo Minerva Mirabal (Distrito 08-03)**.
+**PRAM OS** es el sistema operativo educativo e institucional para la gestión pedagógica, validación ministerial de tutorías y acreditación de servicio social estudiantil (60 horas) para estudiantes de 3ro y 4to de bachillerato, diseñado bajo lineamientos del **Ministerio de Educación de la República Dominicana (MINERD)** para el **Liceo Minerva Mirabal (Distrito 10-04)**.
 
 ---
 

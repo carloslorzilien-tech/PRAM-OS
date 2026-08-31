@@ -14,7 +14,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db, auth } from '@/lib/firebase'
-import { Sesion, Usuario, MateriaValida, CertificadoCUV } from '@/lib/db'
+import { Sesion, Usuario, MateriaValida, CertificadoCUV, PublicKPIs } from '@/lib/db'
 import { PramSession, CreatePramSessionInput, CuvCertificate } from '@/types/pram'
 
 /**
@@ -738,6 +738,119 @@ export async function submitSessionWithHours(data: {
   } catch (error) {
     console.error('[Firebase submitSessionWithHours Error]:', error)
     return null
+  }
+}
+
+/**
+ * 9. AGREGACIÓN EN TIEMPO REAL DE KPIS GLOBALES (users, students, sessions)
+ */
+export async function getFirestorePublicKPIs(): Promise<PublicKPIs> {
+  try {
+    const [usersSnap, studentsSnap, sessionsSnap] = await Promise.all([
+      getDocs(collection(db, 'users')),
+      getDocs(collection(db, 'students')),
+      getDocs(collection(db, 'sessions')),
+    ])
+
+    let horasCertificadas = 0
+    usersSnap.forEach((docSnap) => {
+      const data = docSnap.data()
+      const h = Number(data.horasAcumuladas ?? data.horas_acumuladas ?? 0)
+      if (Number.isFinite(h)) {
+        horasCertificadas += h
+      }
+    })
+
+    const estudiantesAtendidos = studentsSnap.size
+
+    let sesionesValidadas = 0
+    sessionsSnap.forEach((docSnap) => {
+      const data = docSnap.data()
+      const st = (data.estado || data.status || '').toLowerCase()
+      if (st === 'approved' || st === 'aprobado' || st === 'validado') {
+        sesionesValidadas += 1
+      }
+    })
+
+    return {
+      horasCertificadas: Number(horasCertificadas.toFixed(1)),
+      estudiantesAtendidos,
+      sesionesValidadas,
+      tasaAsistencia: 100,
+    }
+  } catch (error) {
+    console.warn('[getFirestorePublicKPIs Error]:', error)
+    return {
+      horasCertificadas: 0,
+      estudiantesAtendidos: 0,
+      sesionesValidadas: 0,
+      tasaAsistencia: 100,
+    }
+  }
+}
+
+/**
+ * Suscripción reactiva en tiempo real a los KPIs globales desde Firestore.
+ */
+export function subscribeToRealtimeKPIs(callback: (kpis: PublicKPIs) => void): () => void {
+  let latestUsersHours = 0
+  let latestStudentsCount = 0
+  let latestApprovedSessions = 0
+
+  const pushUpdate = () => {
+    callback({
+      horasCertificadas: Number(latestUsersHours.toFixed(1)),
+      estudiantesAtendidos: latestStudentsCount,
+      sesionesValidadas: latestApprovedSessions,
+      tasaAsistencia: 100,
+    })
+  }
+
+  const unsubUsers = onSnapshot(
+    collection(db, 'users'),
+    (snapshot) => {
+      let sum = 0
+      snapshot.forEach((d) => {
+        const data = d.data()
+        const h = Number(data.horasAcumuladas ?? data.horas_acumuladas ?? 0)
+        if (Number.isFinite(h)) sum += h
+      })
+      latestUsersHours = sum
+      pushUpdate()
+    },
+    (err) => console.warn('[subscribeToRealtimeKPIs users warn]:', err)
+  )
+
+  const unsubStudents = onSnapshot(
+    collection(db, 'students'),
+    (snapshot) => {
+      latestStudentsCount = snapshot.size
+      pushUpdate()
+    },
+    (err) => console.warn('[subscribeToRealtimeKPIs students warn]:', err)
+  )
+
+  const unsubSessions = onSnapshot(
+    collection(db, 'sessions'),
+    (snapshot) => {
+      let approvedCount = 0
+      snapshot.forEach((d) => {
+        const data = d.data()
+        const st = (data.estado || data.status || '').toLowerCase()
+        if (st === 'approved' || st === 'aprobado' || st === 'validado') {
+          approvedCount += 1
+        }
+      })
+      latestApprovedSessions = approvedCount
+      pushUpdate()
+    },
+    (err) => console.warn('[subscribeToRealtimeKPIs sessions warn]:', err)
+  )
+
+  return () => {
+    unsubUsers()
+    unsubStudents()
+    unsubSessions()
   }
 }
 

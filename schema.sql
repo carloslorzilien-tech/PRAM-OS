@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS certificados_cuv (
     mentor_nombre TEXT NOT NULL,
     horas_certificadas NUMERIC(6, 2) NOT NULL,
     fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
-    entidad_emisora TEXT NOT NULL DEFAULT 'Distrito Educativo 08-03 / MINERD',
+    entidad_emisora TEXT NOT NULL DEFAULT 'Distrito Educativo 10-04 / MINERD',
     liceo TEXT NOT NULL DEFAULT 'Liceo Minerva Mirabal',
     estado TEXT NOT NULL DEFAULT 'valid' CHECK (estado IN ('valid', 'revoked')),
     created_at TIMESTAMPTZ DEFAULT NOW()

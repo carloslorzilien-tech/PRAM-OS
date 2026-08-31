@@ -183,7 +183,7 @@ export default async function VerifyCUVPage({
                     <p className="text-[10px] text-slate-500">Dirección y Supervisión Académica</p>
                   </div>
                   <div className="border-t border-slate-300 pt-2">
-                    <p className="font-semibold text-slate-900">Distrito Educativo 08-03</p>
+                    <p className="font-semibold text-slate-900">Distrito Educativo 10-04</p>
                     <p className="text-[10px] text-slate-500">Acreditación Institucional</p>
                   </div>
                 </div>

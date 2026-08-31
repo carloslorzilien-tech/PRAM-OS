@@ -88,7 +88,7 @@ export default function RecursosPage() {
           {/* Vista previa limpia de la plantilla */}
           <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-3">
             <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-              <span>Liceo Minerva Mirabal · Distrito 08-03</span>
+              <span>Liceo Minerva Mirabal · Distrito 10-04</span>
               <span>Formato F-PRAM-01</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
