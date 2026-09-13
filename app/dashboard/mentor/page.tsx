@@ -70,27 +70,27 @@ export default function MentorDashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-8">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-3 sm:px-8 gap-2 backdrop-blur-md">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           <Link
             href="/"
-            className="flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            className="flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0"
             title="Volver al Portal"
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                PRAM OS · Panel del Tutor
-              </span>
-            </div>
-            <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 block truncate">
+              PRAM OS · Panel del Tutor
+            </span>
+            <h1 className="text-xs sm:text-sm font-semibold tracking-tight text-slate-900 leading-tight truncate">
               {mentorName}
             </h1>
           </div>
         </div>
-        <UserProfileBadge />
+        <div className="shrink-0 flex items-center">
+          <UserProfileBadge />
+        </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 space-y-6">

@@ -218,40 +218,103 @@ export default function RecursosPage() {
             <div className="flex items-center gap-2">
               <FolderTree className="size-4.5 text-slate-900" />
               <h2 className="text-base font-bold tracking-tight text-slate-900">
-                Respaldo Digital: Estructura en Google Drive
+                Repositorio Digital de Evidencias · Google Drive
               </h2>
+              <span className="rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold">
+                Repositorio Oficial
+              </span>
             </div>
             <p className="text-xs text-slate-500 font-normal">
-              Organización de la carpeta digital para que la Dirección o evaluadores inspeccionen las pruebas corregidas en segundos.
+              Acceso institucional en la nube para la carga de respaldos fotográficos y auditoría directa de las evaluaciones físicas F-PRAM-01.
             </p>
           </div>
 
-          <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-4">
-            {/* El Truco de los 5 Segundos */}
-            <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <Smartphone className="size-5 text-slate-900 shrink-0 mt-0.5" />
-              <div className="space-y-1 text-xs text-slate-700">
-                <p className="font-semibold text-slate-900">El Protocolo de Cero Fricción (5 Segundos)</p>
-                <p className="text-slate-600 leading-relaxed">
-                  Al corregir la prueba física F-PRAM-01 en papel, el mentor le toma una foto clara con el celular y la sube en 5 segundos a la carpeta del alumno en Google Drive. Luego guarda la hoja original en el folder de argollas de PRAM y asienta la nota en la app.
+          <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-5">
+            {/* Banner de Acceso Oficial al Enlace de Drive */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-900">
+                    Carpeta Oficial PRAM OS (Distrito 10-04)
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 max-w-md leading-relaxed">
+                  Repositorio activo en Google Drive para consultar o auditar las pruebas físicas corregidas de los estudiantes del programa.
+                </p>
+              </div>
+
+              <a
+                href="https://drive.google.com/drive/folders/1rcQrX6BB6LYM647_3VZ71akE0lFFf6IB?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-4 py-2.5 text-xs font-semibold shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0 group"
+              >
+                <span>Abrir Repositorio Oficial en Drive</span>
+                <ExternalLink className="size-3.5 text-slate-300 group-hover:text-white transition-colors" />
+              </a>
+            </div>
+
+            {/* Matriz de Gobernanza y Permisos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-900">Carga y Edición de Evidencias</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
+                    Mentores & PRAM
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Reservado a la <strong>Dirección de PRAM</strong> y tutores acreditados para subir la fotografía del examen corregido inmediatamente tras la sesión.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-900">Auditoría y Supervisión</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
+                    Dirección Liceo / MINERD
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Acceso de consulta para la <strong>Dirección del Liceo Minerva Mirabal</strong> y supervisores del Distrito 10-04 para verificar la autenticidad de cualquier nota.
                 </p>
               </div>
             </div>
 
-            {/* Árbol Visual de Carpetas */}
-            <div className="p-4 bg-slate-900 rounded-lg text-slate-100 font-mono text-xs overflow-x-auto leading-relaxed">
-              <div className="text-emerald-400 font-bold mb-2">📁 PRAM OS - Evidencias de Evaluacion (Distrito 10-04)/</div>
-              <div className="text-slate-400">├── 📄 PROTOCOLO_Y_ORGANIZACION_DRIVE.txt</div>
-              <div className="text-slate-400">└── 📁 Cohorte_Piloto_12_Estudiantes/</div>
-              <div className="text-slate-300 ml-4">├── 📁 01_Estudiante_3roA/  → PreTest.jpg, Quiz_01.jpg, PostTest.jpg</div>
-              <div className="text-slate-300 ml-4">├── 📁 02_Estudiante_3roA/</div>
-              <div className="text-slate-300 ml-4">├── 📁 03_Estudiante_3roB/</div>
-              <div className="text-slate-300 ml-4">├── 📁 ...</div>
-              <div className="text-slate-300 ml-4">└── 📁 12_Estudiante_4toC/</div>
+            {/* El Protocolo de los 5 Segundos */}
+            <div className="flex items-start gap-3 p-4 bg-slate-50/70 rounded-lg border border-slate-200/80">
+              <Smartphone className="size-5 text-slate-900 shrink-0 mt-0.5" />
+              <div className="space-y-1 text-xs text-slate-700">
+                <p className="font-semibold text-slate-900">Protocolo de Cero Fricción (5 Segundos)</p>
+                <p className="text-slate-600 leading-relaxed">
+                  Al corregir la prueba física F-PRAM-01 en papel, el tutor toma una fotografía clara del desarrollo y la sube en 5 segundos a la carpeta del estudiante en el Drive. Luego archiva la hoja original en la carpeta física y asienta la nota en la app.
+                </p>
+              </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 italic">
-              Nota: La estructura completa de carpetas para los 12 estudiantes ya fue generada localmente en tu Escritorio, lista para arrastrar y soltar en Google Drive.
+            {/* Árbol Visual de Estructura de Carpetas */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500 block">
+                Estructura de Organización por Estudiante:
+              </span>
+              <div className="p-4 bg-slate-900 rounded-lg text-slate-100 font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800 shadow-inner">
+                <div className="text-emerald-400 font-bold mb-1.5">📁 PRAM OS - Evidencias de Evaluacion (Distrito 10-04)/</div>
+                <div className="text-slate-400">├── 📄 PROTOCOLO_Y_ORGANIZACION_DRIVE.txt</div>
+                <div className="text-slate-400">└── 📁 Cohorte_Piloto_12_Estudiantes/</div>
+                <div className="text-slate-300 ml-4">├── 📁 01_Estudiante_3roA/  → PreTest.jpg, Quiz_01.jpg, PostTest.jpg</div>
+                <div className="text-slate-300 ml-4">├── 📁 02_Estudiante_3roA/</div>
+                <div className="text-slate-300 ml-4">├── 📁 03_Estudiante_3roB/</div>
+                <div className="text-slate-300 ml-4">├── 📁 04_Estudiante_3roB/</div>
+                <div className="text-slate-300 ml-4">├── 📁 05_Estudiante_4toA/</div>
+                <div className="text-slate-300 ml-4">├── 📁 06_Estudiante_4toA/</div>
+                <div className="text-slate-300 ml-4">├── 📁 07_Estudiante_4toB/</div>
+                <div className="text-slate-300 ml-4">└── 📁 ... (12 Expedientes Digitales)</div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Los respaldos fotográficos alojados en este repositorio de Google Drive constituyen el <strong>Audit Trail secundario</strong> que valida de forma transparente cada $\Delta$ de aprendizaje y cada certificado CUV emitido por la plataforma.
             </p>
           </div>
         </section>
