@@ -101,12 +101,12 @@ export function PrintEvalTemplate() {
         {/* Bloque de Firmas */}
         <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
           <div className="border-t border-slate-400 pt-2">
-            <p className="font-semibold">Firma del Mentor / Tutor</p>
-            <p className="text-slate-500 text-[10px]">Docente Responsable del Refuerzo</p>
+            <p className="font-semibold">Dirección de PRAM / Mentor Evaluador</p>
+            <p className="text-slate-500 text-[10px]">Custodia y Aplicación Pedagógica</p>
           </div>
           <div className="border-t border-slate-400 pt-2">
             <p className="font-semibold">Dirección del Liceo Minerva Mirabal</p>
-            <p className="text-slate-500 text-[10px]">Validación Institucional</p>
+            <p className="text-slate-500 text-[10px]">Supervisión Institucional & Auditoría</p>
           </div>
         </div>
 

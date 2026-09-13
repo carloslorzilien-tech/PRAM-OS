@@ -3,18 +3,21 @@ import Link from 'next/link'
 import {
   ArrowLeft,
   BookOpen,
-  FileText,
+  FileCheck,
   ExternalLink,
   LogIn,
   ClipboardList,
   ShieldCheck,
+  FolderTree,
+  Smartphone,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react'
-import { PrintAttendanceTemplate } from '@/components/pram/print-template'
 import { PrintEvalTemplate } from '@/components/pram/print-eval-template'
 
 export const metadata = {
-  title: 'Recursos, Guía de Uso y Plantillas · PRAM OS',
-  description: 'Guía visual para docentes, plantillas oficiales F-PRAM-01 y recursos pedagógicos · Liceo Minerva Mirabal.',
+  title: 'Recursos, Guía y Formato F-PRAM-01 · PRAM OS',
+  description: 'Guía visual para docentes, formato oficial F-PRAM-01, estructura de Drive y recursos pedagógicos · Liceo Minerva Mirabal.',
 }
 
 export default function RecursosPage() {
@@ -40,22 +43,22 @@ export default function RecursosPage() {
       step: '1',
       icon: LogIn,
       title: 'Acceder con Google',
-      description: 'Abre PRAM OS desde el celular o computadora y haz clic en "Iniciar con Google". La Dirección del Liceo aprobará tu cuenta para habilitar el registro de sesiones.',
-      detail: 'Solo necesitas tu cuenta de Gmail. No hay contraseñas adicionales.',
+      description: 'Abre PRAM OS desde tu celular o laptop y haz clic en "Iniciar con Google". Tu cuenta queda registrada al instante.',
+      detail: 'Acceso directo con tu correo de Gmail sin contraseñas adicionales.',
     },
     {
       step: '2',
       icon: ClipboardList,
-      title: 'Registrar Sesión y Evaluar',
-      description: 'Desde tu panel, registra cada tutoría en 4 campos: Materia, Duración, Tema y Cantidad de Alumnos. Luego, en "Mis Alumnos", asienta la nota del examen físico que corregiste en papel.',
-      detail: 'El formulario toma menos de 30 segundos. La nota se guarda de forma inmutable.',
+      title: 'Asistencia y Registro Digital (<30s)',
+      description: 'La asistencia es 100% digital: en el formulario de 4 campos registras la materia, duración, tema y cantidad de alumnos. Cero hojas de asistencia en papel.',
+      detail: 'La sesión queda registrada de inmediato en la base de datos.',
     },
     {
       step: '3',
       icon: ShieldCheck,
-      title: 'Dirección Aprueba y Emite CUV',
-      description: 'La Dirección revisa las sesiones pendientes, coteja con la carpeta física F-PRAM y aprueba con un clic. El sistema genera automáticamente el certificado CUV verificable.',
-      detail: 'El código CUV es inmutable: nadie puede modificarlo ni borrarlo después de emitido.',
+      title: 'Auditoría y Certificación CUV',
+      description: 'La Dirección de PRAM custodia las evaluaciones físicas y la Dirección del Liceo puede auditar en cualquier momento. Al aprobarse, se emite el CUV inmutable.',
+      detail: 'El certificado CUV es permanente y verificable con código QR / web.',
     },
   ]
 
@@ -73,10 +76,10 @@ export default function RecursosPage() {
           </Link>
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              PRAM OS · Materiales y Guía de Uso
+              PRAM OS · Liceo Minerva Mirabal (Distrito 10-04)
             </span>
             <h1 className="text-sm font-semibold tracking-tight text-slate-900 leading-tight">
-              Recursos y Documentación
+              Recursos, Guía y Formato Oficial
             </h1>
           </div>
         </div>
@@ -97,10 +100,10 @@ export default function RecursosPage() {
         <section className="space-y-5">
           <div className="space-y-1">
             <h2 className="text-base font-bold tracking-tight text-slate-900">
-              Guía Rápida: Cómo Usar PRAM OS
+              Guía Rápida: Cómo Funciona PRAM OS
             </h2>
             <p className="text-xs text-slate-500 font-normal">
-              3 pasos para registrar tutorías, asentar evaluaciones y obtener tu certificado CUV.
+              Flujo unificado: registro ágil en la nube, respaldo físico de exámenes y certificación oficial CUV.
             </p>
           </div>
 
@@ -112,7 +115,6 @@ export default function RecursosPage() {
                   key={item.step}
                   className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3"
                 >
-                  {/* Número del paso */}
                   <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-lg bg-slate-900 text-white font-mono text-lg font-bold shrink-0">
                       {item.step}
@@ -122,17 +124,14 @@ export default function RecursosPage() {
                     </div>
                   </div>
 
-                  {/* Título */}
                   <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                     {item.title}
                   </h3>
 
-                  {/* Descripción */}
                   <p className="text-xs text-slate-600 leading-relaxed">
                     {item.description}
                   </p>
 
-                  {/* Detalle */}
                   <p className="text-[11px] text-slate-400 leading-relaxed border-t border-slate-100 pt-2">
                     {item.detail}
                   </p>
@@ -141,70 +140,124 @@ export default function RecursosPage() {
             })}
           </div>
 
-          {/* Nota sobre el flujo físico + digital */}
-          <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1.5">
-            <p className="font-semibold text-slate-800">
-              Modelo Phygital (Físico + Digital)
-            </p>
-            <p>
-              Los exámenes se aplican y corrigen en papel (Pre-Test, Quiz, Post-Test). El tutor asienta la nota en PRAM OS
-              y archiva la hoja en la carpeta física F-PRAM del Liceo. Esto garantiza autenticidad pedagógica y respaldo legal.
+          {/* Banner de Claridad: Asistencia Digital vs Exámenes Físicos */}
+          <div className="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 text-xs text-emerald-950 leading-relaxed space-y-2">
+            <div className="flex items-center gap-2 font-bold text-emerald-900">
+              <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+              <span>Cero Papeleo en Asistencia · Máximo Rigor en Evaluaciones</span>
+            </div>
+            <p className="text-emerald-800">
+              <strong>La asistencia y las horas son 100% digitales:</strong> el tutor las registra en 30 segundos desde su teléfono. 
+              <strong> El único papel físico que existe</strong> es la hoja de examen F-PRAM-01 donde el estudiante resuelve los problemas a mano para demostrar su aprendizaje real.
             </p>
           </div>
         </section>
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* SECCIÓN 2: PLANTILLAS OFICIALES F-PRAM-01                 */}
+        {/* SECCIÓN 2: ÚNICA PLANTILLA OFICIAL F-PRAM-01 (EVALUACIÓN)  */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        <section className="space-y-5">
+        <section className="space-y-4">
           <div className="space-y-1">
-            <h2 className="text-base font-bold tracking-tight text-slate-900">
-              Plantillas Oficiales F-PRAM-01
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold tracking-tight text-slate-900">
+                Formato Oficial F-PRAM-01 (Hoja de Evaluación)
+              </h2>
+              <span className="rounded-md bg-slate-900 text-white px-2 py-0.5 text-[10px] font-mono font-semibold">
+                Única Plantilla Física
+              </span>
+            </div>
             <p className="text-xs text-slate-500 font-normal">
-              Formatos imprimibles para el registro físico de asistencia y evaluaciones.
+              Formato impreso para la resolución manual de Pre-Test, Quizzes y Post-Test. Corrige en papel, toma una foto para el Drive y asienta la nota en PRAM OS.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Tarjeta 1: Asistencia */}
-            <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <FileText className="size-4 text-slate-900" />
-                <h3 className="text-sm font-semibold tracking-tight text-slate-900">
-                  Control de Asistencia
-                </h3>
+          <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="size-4.5 text-slate-900" />
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Registro de Evaluación y Auditoría de Impacto (F-PRAM-01)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500 max-w-xl">
+                  Incluye encabezado del Liceo Minerva Mirabal (Distrito 10-04), casillas de materia y tipo de prueba, área de desarrollo rayada, bloque de puntaje /100 y firmas de custodia y supervisión.
+                </p>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Hoja de registro con tabla para 10 estudiantes, firmas del tutor y validación de la Dirección. Úsala en cada sesión de tutoría.
-              </p>
-              <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-100 pt-2">
-                <span>Formato F-PRAM-01 · Asistencia</span>
-              </div>
-              <PrintAttendanceTemplate />
-            </div>
 
-            {/* Tarjeta 2: Evaluación */}
-            <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <BookOpen className="size-4 text-slate-900" />
-                <h3 className="text-sm font-semibold tracking-tight text-slate-900">
-                  Hoja de Evaluación
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Formato para Pre-Test, Quiz o Post-Test con área de desarrollo, puntaje /100 y firmas. Corrige en papel y asienta la nota en PRAM OS.
-              </p>
-              <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-100 pt-2">
-                <span>Formato F-PRAM-01 · Evaluación</span>
-              </div>
               <PrintEvalTemplate />
             </div>
+
+            {/* Ficha técnica compacta de la plantilla */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block font-mono">Uso</span>
+                <span className="font-semibold text-slate-800">Pre-Test / Quiz / Post-Test</span>
+              </div>
+              <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block font-mono">Calificación</span>
+                <span className="font-semibold text-slate-800">0 a 100 Puntos</span>
+              </div>
+              <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block font-mono">Custodia</span>
+                <span className="font-semibold text-slate-800">Dirección de PRAM</span>
+              </div>
+              <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block font-mono">Auditoría</span>
+                <span className="font-semibold text-slate-800">Dirección del Liceo</span>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* SECCIÓN 3: RECURSOS PEDAGÓGICOS EXTERNOS                  */}
+        {/* SECCIÓN 3: ESTRUCTURA DE RESPALDO EN GOOGLE DRIVE           */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FolderTree className="size-4.5 text-slate-900" />
+              <h2 className="text-base font-bold tracking-tight text-slate-900">
+                Respaldo Digital: Estructura en Google Drive
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 font-normal">
+              Organización de la carpeta digital para que la Dirección o evaluadores inspeccionen las pruebas corregidas en segundos.
+            </p>
+          </div>
+
+          <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm space-y-4">
+            {/* El Truco de los 5 Segundos */}
+            <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <Smartphone className="size-5 text-slate-900 shrink-0 mt-0.5" />
+              <div className="space-y-1 text-xs text-slate-700">
+                <p className="font-semibold text-slate-900">El Protocolo de Cero Fricción (5 Segundos)</p>
+                <p className="text-slate-600 leading-relaxed">
+                  Al corregir la prueba física F-PRAM-01 en papel, el mentor le toma una foto clara con el celular y la sube en 5 segundos a la carpeta del alumno en Google Drive. Luego guarda la hoja original en el folder de argollas de PRAM y asienta la nota en la app.
+                </p>
+              </div>
+            </div>
+
+            {/* Árbol Visual de Carpetas */}
+            <div className="p-4 bg-slate-900 rounded-lg text-slate-100 font-mono text-xs overflow-x-auto leading-relaxed">
+              <div className="text-emerald-400 font-bold mb-2">📁 PRAM OS - Evidencias de Evaluacion (Distrito 10-04)/</div>
+              <div className="text-slate-400">├── 📄 PROTOCOLO_Y_ORGANIZACION_DRIVE.txt</div>
+              <div className="text-slate-400">└── 📁 Cohorte_Piloto_12_Estudiantes/</div>
+              <div className="text-slate-300 ml-4">├── 📁 01_Estudiante_3roA/  → PreTest.jpg, Quiz_01.jpg, PostTest.jpg</div>
+              <div className="text-slate-300 ml-4">├── 📁 02_Estudiante_3roA/</div>
+              <div className="text-slate-300 ml-4">├── 📁 03_Estudiante_3roB/</div>
+              <div className="text-slate-300 ml-4">├── 📁 ...</div>
+              <div className="text-slate-300 ml-4">└── 📁 12_Estudiante_4toC/</div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 italic">
+              Nota: La estructura completa de carpetas para los 12 estudiantes ya fue generada localmente en tu Escritorio, lista para arrastrar y soltar en Google Drive.
+            </p>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* SECCIÓN 4: RECURSOS PEDAGÓGICOS EXTERNOS                  */}
         {/* ═══════════════════════════════════════════════════════════ */}
         <section className="space-y-4">
           <div>
@@ -212,7 +265,7 @@ export default function RecursosPage() {
               Recursos Pedagógicos Recomendados
             </h2>
             <p className="text-xs text-slate-500 font-normal">
-              Plataformas verificadas de apoyo académico
+              Plataformas oficiales de apoyo y práctica académica
             </p>
           </div>
 
