@@ -71,7 +71,7 @@ export function PhygitalModal({
     e.preventDefault()
 
     await registrarExamenPhygital({
-      estudiante_id: estudianteId || estudiante.id,
+      estudiante_id: estudianteId || estudiante?.id || '',
       tipo,
       variante,
       resultado_nivel: nivelCalculado,

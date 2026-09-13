@@ -23,7 +23,7 @@ export function PrintAttendanceTemplate() {
       <div className="hidden print:block fixed inset-0 bg-white p-8 z-50 text-slate-900 font-sans">
         <div className="text-center border-b-2 border-slate-900 pb-4 mb-6">
           <h1 className="text-base font-bold uppercase tracking-wider">
-            Ministerio de Educación de la República Dominicana (Institucional)
+            Ministerio de Educación de la República Dominicana (MINERD)
           </h1>
           <h2 className="text-sm font-semibold mt-1">
             Programa de Refuerzo Académico Minerva Mirabal (PRAM OS)
@@ -76,7 +76,7 @@ export function PrintAttendanceTemplate() {
         <div className="grid grid-cols-2 gap-8 pt-12 text-center text-xs">
           <div className="border-t border-slate-400 pt-2">
             <p className="font-semibold">Firma del Mentor / Tutor</p>
-            <p className="text-slate-500 text-[10px]">Cédula / Matrícula</p>
+            <p className="text-slate-500 text-[10px]">Docente Responsable del Refuerzo</p>
           </div>
           <div className="border-t border-slate-400 pt-2">
             <p className="font-semibold">Dirección del Liceo Minerva Mirabal</p>
