@@ -23,8 +23,10 @@ import {
   Materia,
   AreaSupervision,
 } from '@/types/pram'
-import { SupabaseService } from './supabase/supabase-service'
-import { supabase, isSupabaseConfigured } from './supabase/client'
+
+// Stub inerte para aislar el contexto demo de dependencias de base de datos externas
+const SupabaseService: any = {}
+
 import {
   mockEstudiantes,
   mockMentores,
@@ -288,23 +290,8 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
     setAuthModalState({ isOpen: false, actionLabel: '' })
   }, [])
 
-  // Supabase Auth Methods
+  // Métodos de Autenticación Local / Demo
   const signInWithGoogle = async (): Promise<{ success: boolean; needsOnboarding?: boolean }> => {
-    if (!isDemoMode && supabase) {
-      try {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
-          },
-        })
-        if (!error) return { success: true }
-      } catch (e) {
-        console.warn('OAuth redirect:', e)
-      }
-    }
-
-    // Default to Head Mentor in Demo / Google fallback
     setCurrentUserRole('head_mentor')
     if (authModalState.pendingAction) {
       authModalState.pendingAction()
@@ -320,9 +307,6 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    if (supabase && !isDemoMode) {
-      await supabase.auth.signOut()
-    }
     setCurrentUser(DEFAULT_GUEST_USER)
   }
 
@@ -337,92 +321,12 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Carga inicial y Suscripciones Supabase Realtime si no está en Demo
+  // Inicialización de datos para Modo Demo / Offline
   useEffect(() => {
-    async function loadData() {
-      setIsLoading(true)
-      setConnectionError(null)
-
-      if (isDemoMode || !isSupabaseConfigured || !supabase) {
-        setIsCloudConnected(false)
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        const [cloudMentores, cloudEstudiantes, cloudSesiones, cloudExamenes, cloudSolicitudes] =
-          await Promise.all([
-            SupabaseService.getMentores(),
-            SupabaseService.getEstudiantes(),
-            SupabaseService.getSesiones(),
-            SupabaseService.getExamenes(),
-            SupabaseService.getSolicitudesRefuerzo(),
-          ])
-
-        if (cloudMentores.length > 0) {
-          setMentores(cloudMentores)
-          setActiveMentorId(cloudMentores[0].id)
-        }
-        if (cloudEstudiantes.length > 0) setEstudiantes(cloudEstudiantes)
-        if (cloudSesiones.length > 0) setSesiones(cloudSesiones)
-        if (cloudExamenes.length > 0) setExamenes(cloudExamenes)
-        if (cloudSolicitudes.length > 0) setSolicitudes(cloudSolicitudes)
-
-        setIsCloudConnected(true)
-        setConnectionError(null)
-
-        // Supabase Realtime
-        const channel = supabase.channel('pram-realtime')
-        channel.on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'estudiantes' },
-            (payload) => {
-              if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-                const updatedStudent = payload.new as Estudiante
-                setEstudiantes((prev) => {
-                  const exists = prev.some((e) => e.id === updatedStudent.id)
-                  const updatedList = exists
-                    ? prev.map((e) => (e.id === updatedStudent.id ? updatedStudent : e))
-                    : [updatedStudent, ...prev]
-                  persistLocally('pram_estudiantes', updatedList)
-                  return updatedList
-                })
-              }
-            }
-          )
-        channel.on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'sesiones' },
-            (payload) => {
-              if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-                const updatedSesion = payload.new as Sesion
-                setSesiones((prev) => {
-                  const exists = prev.some((s) => s.id === updatedSesion.id)
-                  const updatedList = exists
-                    ? prev.map((s) => (s.id === updatedSesion.id ? updatedSesion : s))
-                    : [updatedSesion, ...prev]
-                  persistLocally('pram_sesiones', updatedList)
-                  return updatedList
-                })
-              }
-            }
-          )
-        channel.subscribe()
-
-        return () => {
-          supabase!.removeChannel(channel)
-        }
-      } catch (err) {
-        console.warn('PRAM: Modo Demo / Fallback local activo:', err)
-        setIsCloudConnected(false)
-        setConnectionError('Sin conexión. Datos locales activos.')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadData()
-  }, [isDemoMode, persistLocally])
+    setIsLoading(false)
+    setIsCloudConnected(false)
+    setConnectionError(null)
+  }, [])
 
   // RBAC: Filtrado estricto de Estudiantes según el Rol del usuario
   const estudiantesVisibles = useMemo(() => {

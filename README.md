@@ -1,165 +1,140 @@
-# PRAM OS (Programa de Refuerzo Académico Minerva Mirabal)
+# PRAM OS · Programa de Refuerzo Académico Minerva Mirabal
+> Sistema de gestión pedagógica, validación de Servicio Social Estudiantil (60 Horas MINERD) y certificación inmutable CUV.  
+> **Liceo Minerva Mirabal · Distrito Educativo 10-04, Santo Domingo Este, República Dominicana.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/Neon-PostgreSQL-00E599?style=flat-square&logo=postgresql)](https://neon.tech/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MINERD-slate?style=flat-square)](https://www.ministeriodeeducacion.gob.do/)
-
-**PRAM OS** es el sistema operativo educativo e institucional para la gestión pedagógica, validación ministerial de tutorías y acreditación de servicio social estudiantil (60 horas) para estudiantes de 3ro y 4to de bachillerato, diseñado bajo lineamientos del **Ministerio de Educación de la República Dominicana (MINERD)** para el **Liceo Minerva Mirabal (Distrito 10-04)**.
+Desarrollado por **Carlos Lorzilien** ([@carloslorzilien-tech](https://github.com/carloslorzilien-tech)).
 
 ---
 
-## 🏛️ Filosofía Visual y Estándar de Diseño (@rules)
+## ¿Por qué creé PRAM OS?
 
-Inspirado en la claridad tipográfica de **Claude** y la funcionalidad académica de **Khan Academy**:
-- **Paleta de Superficies:** Fondo `bg-slate-50` (#F8FAFC), contenedores y tarjetas en blanco puro `bg-white border border-slate-200 shadow-sm rounded-xl`.
-- **Acento Institucional:** Deep Navy / Slate (`bg-slate-900` / `#0F172A`).
-- **Acento de Verificación:** Verde Esmeralda Académico (`bg-emerald-50 text-emerald-700 border-emerald-200`).
-- **Estados de Auditoría:** `Pendiente de Auditoría` (`bg-amber-50 text-amber-700 border-amber-200`) y `Aprobado / Inmutable` (`bg-emerald-50 text-emerald-700 border-emerald-200`).
-- **Contadores de Alto Impacto:** Métricas numéricas en formato grande (`text-4xl` a `text-5xl font-bold tracking-tight text-slate-900`) con efecto animado *count-up* en 1.2 segundos.
-- **Cero Bloat y Cero Emojis:** 100% vectorizado con íconos de precisión de `lucide-react` (14px–16px) e isotipo oficial **"M"** de PRAM.
+En las escuelas públicas dominicanas, el **Servicio Social Estudiantil (60 Horas obligatorias del MINERD)** y las tutorías de refuerzo entre pares se han llevado históricamente con cuadernos de asistencia o fotocopias sueltas. En la práctica escolar real, eso trae tres problemas graves:
 
----
+1. **Pérdida de evidencia:** Las hojas se rompen, se extravían y nadie sabe con certeza cuántas horas completó cada alumno tutor.
+2. **Falta de rigor pedagógico:** Firmar una hoja no demuestra si el estudiante tutor realmente explicó el tema, ni si el alumno que recibió la ayuda mejoró su rendimiento.
+3. **Sobrecarga para la Dirección:** Los coordinadores pedagógicos y directores no tienen tiempo de revisar cientos de firmas a mano al final del año escolar.
 
-## 🚀 Arquitectura de Rutas y Funcionalidades
-
-### 1. Portal Público de Impacto (`/`)
-- **Grid de 4 KPIs Gigantes Animados:** Horas Certificadas Totales, Estudiantes Atendidos, Sesiones Validadas y Tasa de Asistencia (%).
-- **Módulo de Verificación CUV:** Búsqueda y redirección directa hacia expedientes inmutables.
-- **Cuadro de Honor de Mentores:** Top 10 tutores clasificados por horas aportadas con barras de progreso hacia las 60 horas.
-- **Manejo Día-0 (Cold Start):** Insignias informativas de estado cuando las métricas están en conteo inicial.
-
-### 2. Panel del Tutor / Mentor (`/dashboard/mentor`)
-- **Seguimiento a las 60 Horas:** Barra de progreso visual hacia la meta del Servicio Social Estudiantil MINERD.
-- **Formulario de Registro Rápido (< 30s):** Formulario optimizado de 4 campos clave (Materia, Duración, Tema, Alumnos, Fecha) con inserción server-side en Neon PostgreSQL.
-- **Historial de Sesiones:** Listado en tiempo real con estados de validación (`Pendiente` / `Aprobado`).
-
-### 3. Panel de Dirección y Auditoría (`/dashboard/director`)
-- **Bandeja de Entrada Ministerial:** Tabla con sesiones pendientes de validación por la Dirección del Liceo Minerva Mirabal.
-- **Botón `[ Aprobar y Bloquear ]`:** Acción atómica que actualiza la sesión a `approved` e incrementa inmediatamente las horas acumuladas del mentor.
-- **Botón `[ Imprimir Expediente Institucional ]`:** Generación de reporte formal con estilos `@media print` nativos del navegador.
-
-### 4. Biblioteca de Materiales y Recursos (`/recursos`)
-- **Plantilla Oficial de Asistencia (F-PRAM-01):** Formato físico institucional imprimible con tabla para 10 estudiantes y casillas de firma de supervisión.
-- **Enlaces Curriculares:** Conexión directa a Khan Academy, mallas curriculares del MINERD y Olimpíadas Académicas.
-
-### 5. Validador de Certificados CUV (`/verify/[cuv]`)
-- **Diploma Oficial Verificado:** Consulta en Neon PostgreSQL por código CUV (ej: `PRAM-2026-M01-8841`).
-- Muestra el nombre del mentor, total de horas, liceo, fecha de emisión y sello ministerial.
-- Botón directo para **Imprimir / Guardar como PDF** (`@media print`).
-
-### 6. Simulador Demo de Roles (`/demo`)
-- Selector de pestañas interactivas para alternar en vivo entre la **Vista Pública**, la **Vista del Tutor** y la **Vista de Dirección** sin necesidad de iniciar sesión.
+**PRAM OS** nació dentro del Liceo Minerva Mirabal para solucionar esto con tecnología real, accesible y adaptada a nuestro contexto escolar.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## El Modelo Phygital: La Realidad de la Escuela Pública
 
-| Capa | Tecnología | Propósito |
-| :--- | :--- | :--- |
-| **Framework** | Next.js 16 (App Router) | Renderizado híbrido SSR/RSC y Server Actions |
-| **Base de Datos** | Neon PostgreSQL Serverless | Base de datos relacional en la nube |
-| **Autenticación** | Clerk (`@clerk/nextjs`) | Gestión segura de identidad con fallback autónomo |
-| **Estilos** | Tailwind CSS v4 + Vanilla CSS | Sistema de diseño institucional basado en tokens |
-| **PWA** | Serwist (`@serwist/next`) | Service Worker y funcionamiento offline |
-| **Tipografía** | Plus Jakarta Sans & JetBrains Mono | Legibilidad académica y cifras tabulares |
-| **Íconos** | Lucide React | Iconografía vectorial uniforme de 14px-16px |
+PRAM OS no intenta digitalizar a la fuerza lo que no debe ser digitalizado. En una escuela pública no podemos exigirle a los muchachos que hagan pruebas matemáticas en tablets o laptops con internet inestable.
 
----
+Por eso diseñé un flujo **Phygital (Físico + Digital)** que toma menos de 30 segundos:
 
-## 🗄️ Esquema de Base de Datos (`schema.sql`)
-
-```sql
--- Mentores y Servicio Social
-CREATE TABLE mentores (
-    id TEXT PRIMARY KEY,
-    nombre TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    rango TEXT NOT NULL DEFAULT 'Junior' CHECK (rango IN ('Junior', 'Senior', 'Head')),
-    horas_acumuladas NUMERIC(6, 2) DEFAULT 0.00,
-    meta_horas NUMERIC(6, 2) DEFAULT 60.00,
-    especialidad TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Sesiones Pedagógicas y Auditoría
-CREATE TABLE sesiones (
-    id TEXT PRIMARY KEY,
-    mentor_id TEXT NOT NULL REFERENCES mentores(id) ON DELETE CASCADE,
-    materia TEXT NOT NULL,
-    tema TEXT NOT NULL,
-    duracion_minutos INT NOT NULL DEFAULT 45,
-    cantidad_alumnos INT NOT NULL DEFAULT 1,
-    fecha_sesion DATE NOT NULL DEFAULT CURRENT_DATE,
-    estado TEXT NOT NULL DEFAULT 'pending' CHECK (estado IN ('pending', 'approved', 'rejected')),
-    aprobado_por TEXT,
-    fecha_aprobacion TIMESTAMPTZ,
-    notas TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Certificados Inmutables CUV
-CREATE TABLE certificados_cuv (
-    id TEXT PRIMARY KEY,
-    cuv_codigo TEXT UNIQUE NOT NULL,
-    mentor_id TEXT NOT NULL REFERENCES mentores(id) ON DELETE CASCADE,
-    mentor_nombre TEXT NOT NULL,
-    horas_certificadas NUMERIC(6, 2) NOT NULL,
-    fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
-    entidad_emisora TEXT NOT NULL,
-    liceo TEXT NOT NULL,
-    estado TEXT NOT NULL DEFAULT 'valid' CHECK (estado IN ('valid', 'revoked'))
-);
+```
+                                  FLUJO PHYGITAL PRAM OS
+  
+  [ 1. PAPEL ]                  [ 2. FOTO EN DRIVE ]            [ 3. NUBE & CUV ]
+  El estudiante resuelve        El tutor califica en papel,     La nota se asienta en
+  la prueba física oficial      toma una foto clara con el      PRAM OS. Dirección audita
+  F-PRAM-01 a mano.     ──────► celular y la sube en 5 seg  ──► y emite el Certificado
+                                a la carpeta de Google Drive.    CUV inmutable (código QR).
 ```
 
----
-
-## 📦 Instalación y Puesta en Marcha Local
-
-### 1. Clonar el Repositorio
-```bash
-git clone https://github.com/carloslorzilien-tech/PRAM-OS.git
-cd PRAM-OS
-```
-
-### 2. Instalar Dependencias
-```bash
-npm install
-```
-
-### 3. Configurar Variables de Entorno
-Crea un archivo `.env.local` basado en `.env.example`:
-```env
-# Neon PostgreSQL
-DATABASE_URL="postgresql://usuario:password@host/neondb?sslmode=require&channel_binding=require"
-POSTGRES_URL="postgresql://usuario:password@host/neondb?sslmode=require&channel_binding=require"
-
-# Clerk Auth (Opcional - La app funciona en Modo Autónomo si faltan)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-```
-
-### 4. Migración de Base de Datos
-```bash
-node scripts/migrate-neon.mjs
-```
-
-### 5. Iniciar Servidor de Desarrollo
-```bash
-npm run dev
-```
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+- **Soporte Físico:** Las pruebas en papel F-PRAM-01 se guardan en el archivo de evidencias del liceo (folder de palanca con separador por alumno).
+- **Audit Trail Digital:** Las fotos en Google Drive permiten que cualquier inspector o evaluador del Distrito 10-04 verifique los exámenes desde cualquier lugar sin tener que abrir el archivador físico.
+- **Certificación CUV:** El software emite un código criptográfico único que valida las horas del tutor sin posibilidad de falsificación.
 
 ---
 
-## 🔒 Seguridad y Protección (.gitignore)
+## Módulos del Sistema
 
-El proyecto cuenta con un blindaje estricto en `.gitignore` para garantizar que **ningún secreto o contraseña** de Neon o Clerk sea enviado al repositorio público de GitHub.
+| Ruta | Descripción |
+| :--- | :--- |
+| **`/` (Portal Público)** | Métricas de impacto en tiempo real (Horas acumuladas, alumnos atendidos, sesiones y tasa de asistencia) y buscador directo de certificados CUV. |
+| **`/dashboard/mentor`** | Panel del tutor con seguimiento de su meta de 60 horas, registro de tutorías en 4 campos ($<30$ segundos) y módulo "Mis Alumnos" para asentar notas de exámenes. |
+| **`/dashboard/director`** | Bandeja de auditoría ministerial en tiempo real. La Dirección aprueba sesiones, audita el progreso delta ($\Delta$) de los estudiantes y genera actas institucionales. |
+| **`/verify/[cuv]`** | Validador público oficial de certificados CUV. Muestra las firmas de la Dirección y el sello institucional del MINERD, listo para imprimir en PDF (`@media print`). |
+| **`/recursos`** | Guía visual de uso en 3 pasos para docentes, formato oficial de evaluación F-PRAM-01 imprimible y enlace directo al repositorio oficial de evidencias en Google Drive. |
 
 ---
 
-## 📄 Créditos y Licencia
+## Stack Tecnológico
 
-Desarrollado para el **Programa de Refuerzo Académico Minerva Mirabal (PRAM)**.
-República Dominicana · 2026.
+Elegí cada herramienta pensando en velocidad, bajo consumo de datos móviles y estabilidad:
+
+- **Frontend:** [Next.js 16 (App Router)](https://nextjs.org/) con React 19 y TypeScript estricto.
+- **Estilos & UI:** [Tailwind CSS v4](https://tailwindcss.com/) siguiendo un sistema de diseño institucional, sobrio y sin distracciones visuales.
+- **Base de Datos & Backend:** [Firebase Firestore](https://firebase.google.com/) con listeners en tiempo real (`onSnapshot`) y transacciones atómicas (`writeBatch`).
+- **Autenticación:** Firebase Authentication con Google OAuth (acceso en 1 clic y persistencia local de sesión en navegadores móviles).
+- **PWA (Progressive Web App):** Empaquetado con [Serwist](https://github.com/serwist/serwist) para instalación como app nativa en Android e iOS.
+- **Iconografía:** [Lucide React](https://lucide.dev/).
+
+---
+
+## Seguridad y Reglas de Base de Datos (`firestore.rules`)
+
+La integridad de los datos está blindada mediante políticas de seguridad a nivel de base de datos:
+
+- **Control de Acceso basado en Roles (RBAC):** Solo las cuentas autorizadas por la Dirección pueden registrar tutorías.
+- **Privilegios de Dirección:** Únicamente el correo del director (`carlos.lorzilien@gmail.com`) tiene permisos de aprobación y emisión de CUV.
+- **Inmutabilidad de Evaluaciones:** La subcolección `/students/{studentId}/evaluaciones` tiene bloqueadas las modificaciones y eliminaciones (`allow update, delete: if false;`). Una vez que un tutor asienta una nota, nadie puede alterarla.
+- **Protección de Certificados CUV:** La colección `/cuvs` es de lectura pública (para verificación), pero su creación está restringida a la transacción atómica de aprobación de la Dirección.
+
+---
+
+## Cómo Ejecutar el Proyecto en Local
+
+### Prerrequisitos
+- Node.js 20 o superior
+- npm o pnpm
+
+### Pasos
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/carloslorzilien-tech/PRAM-OS.git
+   cd PRAM-OS
+   ```
+
+2. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
+
+3. **Configurar variables de entorno:**
+   Copia el archivo de ejemplo:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Rellena `.env.local` con tus credenciales de Firebase:
+   ```env
+   NEXT_PUBLIC_FIREBASE_API_KEY=tu_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_proyecto.firebasestorage.app
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
+   ```
+
+4. **Iniciar el servidor de desarrollo:**
+   ```bash
+   npm run dev
+   ```
+   Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+
+5. **Compilar para producción:**
+   ```bash
+   npm run build
+   ```
+
+---
+
+## Demarcación y Contexto Institucional
+
+- **Centro Educativo:** Liceo Minerva Mirabal
+- **Distrito Educativo:** 10-04
+- **Regional:** 10 (Santo Domingo)
+- **Marco Normativo:** Programa de Servicio Social Estudiantil (Orden Departamental del MINERD)
+
+---
+
+## Autor
+
+**Carlos Lorzilien**  
+Estudiante y Desarrollador Principal de PRAM OS  
+Santo Domingo, República Dominicana  
+GitHub: [@carloslorzilien-tech](https://github.com/carloslorzilien-tech) · Contacto: `carlos.lorzilien@gmail.com`
