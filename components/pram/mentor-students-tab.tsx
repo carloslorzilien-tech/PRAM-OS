@@ -17,6 +17,7 @@ import {
   Sparkles,
   Clock,
   BookOpen,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   addStudent,
@@ -28,6 +29,7 @@ import {
 import { useFirebaseAuth } from '@/lib/firebase-auth'
 import { StudentEvalModal } from '@/components/pram/student-eval-modal'
 import { StudentEvalTimeline } from '@/components/pram/student-eval-timeline'
+import { analyzeStudentPdpAlert } from '@/lib/pdp-analytics'
 
 type Grade = '3ero A' | '3ero B' | '4to A' | '4to B'
 type Subject = 'Matemáticas' | 'Lengua Española'
@@ -253,12 +255,24 @@ export function MentorStudentsTab() {
                 const metrics = getStudentMetrics(s)
                 const isExpanded = expandedStudentId === s.id
                 const evals = evaluationsMap.get(s.id) || []
+                const pdpAlert = analyzeStudentPdpAlert(evals)
 
                 return (
                   <React.Fragment key={s.id}>
                     <tr className={`hover:bg-slate-50/80 transition-colors ${isExpanded ? 'bg-slate-50/60' : ''}`}>
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-slate-900">{s.fullName}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-slate-900">{s.fullName}</span>
+                          {pdpAlert.isStagnant && (
+                            <span
+                              title={`Riesgo de estancamiento en: ${pdpAlert.repeatedSubtype}`}
+                              className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200"
+                            >
+                              <AlertTriangle className="size-2.5 text-rose-600" />
+                              Alerta PDP
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[10px] text-slate-400 md:hidden">{s.subject}</div>
                       </td>
                       <td className="px-4 py-3">

@@ -1,9 +1,20 @@
 'use client'
 
-import React, { useState } from 'react'
-import { X, ClipboardList, Loader2, ChevronDown, ChevronUp, Microscope } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import {
+  X,
+  ClipboardList,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Microscope,
+  AlertTriangle,
+  FolderOpen,
+  Info,
+} from 'lucide-react'
 import { addEvaluation, Evaluacion } from '@/lib/firebase-service'
 import { showToast } from '@/components/pram/toast'
+import { analyzeStudentPdpAlert, DRIVE_REPOSITORY_URL } from '@/lib/pdp-analytics'
 
 // ── PDP Taxonomy ──────────────────────────────────────────────
 type CausaRaiz = 'Procedimental' | 'Conceptual' | 'Atención' | 'Estratégico'
@@ -61,6 +72,7 @@ export function StudentEvalModal({
 
   const hasFinalExam = Boolean(existingEvals?.some((e) => e.tipo === 'EXAMEN_FINAL'))
   const materia: MateriaKey = studentSubject === 'Lengua Española' ? 'Lengua Española' : 'Matemáticas'
+  const pdpAlert = useMemo(() => analyzeStudentPdpAlert(existingEvals), [existingEvals])
 
   const [tipo, setTipo] = useState<'QUIZ' | 'EXAMEN_FINAL'>('QUIZ')
   const [calificacion, setCalificacion] = useState<string>('')
@@ -183,6 +195,58 @@ export function StudentEvalModal({
             </p>
           </div>
         </div>
+
+        {/* Ficha de Alerta Preventiva / Diagnóstico Previo */}
+        {pdpAlert.isStagnant && pdpAlert.prescription ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50/90 p-3.5 space-y-2 text-xs text-rose-900 shadow-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] bg-rose-200/80 text-rose-900 px-2 py-0.5 rounded">
+                <AlertTriangle className="size-3.5 text-rose-700 shrink-0" />
+                Alerta PDP: Estudiante Estancado
+              </span>
+              <span className="text-[10px] text-rose-700 font-semibold">
+                2 fallos consecutivos
+              </span>
+            </div>
+
+            <p className="text-xs font-semibold leading-relaxed">
+              El alumno presenta bloqueo recurrente en:{' '}
+              <span className="font-bold underline decoration-rose-400">{pdpAlert.repeatedSubtype}</span>.
+            </p>
+
+            <div className="bg-white/95 rounded-lg p-2.5 border border-rose-200/80 space-y-1">
+              <p className="text-[11px] font-semibold text-slate-800">
+                Técnica Obligatoria: <span className="text-rose-900">{pdpAlert.prescription.tecnicaObligatoria}</span>
+              </p>
+              <p className="text-[10px] text-slate-600 leading-normal">
+                {pdpAlert.prescription.instruccionMentor}
+              </p>
+            </div>
+
+            <div className="pt-0.5 flex justify-end">
+              <a
+                href={pdpAlert.prescription.enlaceDrive}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-rose-900 text-white hover:bg-rose-800 px-3 py-1.5 text-[11px] font-medium shadow-xs transition-all"
+              >
+                <FolderOpen className="size-3.5" />
+                <span>Abrir Guía en Google Drive</span>
+              </a>
+            </div>
+          </div>
+        ) : pdpAlert.prescription ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/90 p-3 space-y-1.5 text-xs text-slate-700">
+            <div className="flex items-center gap-1.5 text-slate-600 font-semibold text-[11px]">
+              <Info className="size-3.5 text-slate-500 shrink-0" />
+              <span>Diagnóstico PDP Previo:</span>
+              <span className="text-slate-900 font-bold">{pdpAlert.lastDiagnoses[pdpAlert.lastDiagnoses.length - 1]?.subtipo}</span>
+            </div>
+            <p className="text-[10px] text-slate-500 leading-normal">
+              Recomendación: <strong className="text-slate-700">{pdpAlert.prescription.tecnicaObligatoria}</strong>.
+            </p>
+          </div>
+        ) : null}
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-4">

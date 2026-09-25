@@ -20,8 +20,22 @@ import {
   BookOpen,
   GraduationCap,
   ShieldCheck,
+  Microscope,
+  AlertTriangle,
+  FileText,
+  Printer,
+  X,
+  Copy,
+  Check,
+  FolderOpen,
 } from 'lucide-react'
 import { StudentEvalTimeline } from '@/components/pram/student-eval-timeline'
+import {
+  analyzeClassroomPdpAlerts,
+  getBreakdownNodosRotos,
+  PDP_PRESCRIPTIONS,
+  DRIVE_REPOSITORY_URL,
+} from '@/lib/pdp-analytics'
 
 type SortOption = 'delta_desc' | 'calificacion_desc' | 'nombre_asc' | 'delta_asc' | 'evals_desc'
 
@@ -41,6 +55,20 @@ export function DirectorStudentsOverview() {
 
   // Expanded student
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
+
+  // PDP Broken Nodes & Teacher Report Modal state
+  const [showNodosRotos, setShowNodosRotos] = useState<boolean>(true)
+  const [reportModalData, setReportModalData] = useState<{
+    grade: string
+    subject: string
+    subtipo: string
+    affectedCount: number
+    percentage: number
+    causaRaiz?: string
+    tecnica: string
+    instruccion: string
+  } | null>(null)
+  const [copiedReport, setCopiedReport] = useState(false)
 
   // Subscribe to all students and fetch evaluations
   useEffect(() => {
@@ -158,6 +186,17 @@ export function DirectorStudentsOverview() {
       totalEvaluaciones,
     }
   }, [students, evaluationsMap])
+
+  // PDP Analytics Memos
+  const classroomAlerts = useMemo(
+    () => analyzeClassroomPdpAlerts(students, evaluationsMap),
+    [students, evaluationsMap]
+  )
+
+  const brokenNodes = useMemo(
+    () => getBreakdownNodosRotos(students, evaluationsMap, selectedGrade, selectedSubject),
+    [students, evaluationsMap, selectedGrade, selectedSubject]
+  )
 
   // Filtered & Sorted student list
   const processedStudents = useMemo(() => {
@@ -351,7 +390,161 @@ export function DirectorStudentsOverview() {
         </div>
       </div>
 
-      {/* 2. Controls & Filter Bar */}
+      {/* 2. Alertas Curriculares de Sección (>30% de concentración en un nodo) */}
+      {classroomAlerts.length > 0 && (
+        <div className="space-y-3">
+          {classroomAlerts.map((alert, idx) => (
+            <div
+              key={`alert-${idx}`}
+              className="rounded-xl border border-amber-300 bg-amber-50/90 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs"
+            >
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded bg-amber-200/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900">
+                    <AlertTriangle className="size-3.5 text-amber-800" />
+                    Punto Ciego de Aula Detectado
+                  </span>
+                  <span className="text-xs font-bold text-amber-950">
+                    {alert.grade} · {alert.subject}
+                  </span>
+                </div>
+                <p className="text-xs text-amber-950 font-medium leading-relaxed">
+                  Concentración del <strong>{alert.percentage}%</strong> en{' '}
+                  <strong className="underline decoration-amber-400 font-bold">{alert.subtipoError}</strong> ({alert.affectedStudentsCount} de {alert.totalEvaluatedStudents} alumnos auditados).
+                </p>
+              </div>
+              <div className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReportModalData({
+                      grade: alert.grade,
+                      subject: alert.subject,
+                      subtipo: alert.subtipoError,
+                      affectedCount: alert.affectedStudentsCount,
+                      percentage: alert.percentage,
+                      causaRaiz: alert.causaRaiz,
+                      tecnica: alert.prescription?.tecnicaObligatoria || 'Método Singapur / Refuerzo Focalizado',
+                      instruccion: alert.prescription?.instruccionMentor || 'Repaso de 10 minutos al inicio de la próxima clase ordinaria.',
+                    })
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900 text-white hover:bg-amber-800 px-3.5 py-2 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                >
+                  <FileText className="size-3.5" />
+                  <span>Emitir Nota al Docente Titular</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 3. Mapa de Nodos Rotos (Analítica Colectiva PDP) */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-slate-900 text-white shadow-xs">
+              <Microscope className="size-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Mapa de Nodos Rotos (Analítica Colectiva PDP)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Frecuencia de fallos específicos para intervención preventiva antes de pruebas oficiales del MINERD.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md">
+              {brokenNodes.totalPdpErrors} fallos auditados ({brokenNodes.totalStudentsAudited} alumnos)
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowNodosRotos((v) => !v)}
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 p-1.5 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+              title={showNodosRotos ? 'Ocultar mapa' : 'Mostrar mapa'}
+            >
+              {showNodosRotos ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </button>
+          </div>
+        </div>
+
+        {showNodosRotos && (
+          <div>
+            {brokenNodes.ranking.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-400 bg-slate-50 rounded-lg border border-slate-100">
+                No hay diagnósticos PDP registrados para el filtro actual. Aplica evaluaciones con subtipo de error para alimentar el mapa.
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {brokenNodes.ranking.slice(0, 5).map((node, i) => (
+                  <div
+                    key={node.subtipo}
+                    className="p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-colors space-y-2"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-400 font-mono text-[11px]">
+                          #{i + 1}
+                        </span>
+                        <span className="font-semibold text-slate-900">
+                          {node.subtipo}
+                        </span>
+                        <span className="rounded bg-slate-100 text-slate-600 text-[10px] font-medium px-2 py-0.5 border border-slate-200">
+                          {node.materia}
+                        </span>
+                        <span className="rounded bg-indigo-50 text-indigo-700 text-[10px] font-medium px-2 py-0.5 border border-indigo-200">
+                          {node.causaRaiz}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-xs">
+                          {node.percentage}% de fallos
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          ({node.studentsCount} alumno{node.studentsCount !== 1 ? 's' : ''})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const prescription = PDP_PRESCRIPTIONS[node.subtipo]
+                            setReportModalData({
+                              grade: selectedGrade === 'Todos' ? 'Secciones de 3ro y 4to' : selectedGrade,
+                              subject: node.materia,
+                              subtipo: node.subtipo,
+                              affectedCount: node.studentsCount,
+                              percentage: node.percentage,
+                              causaRaiz: node.causaRaiz,
+                              tecnica: prescription?.tecnicaObligatoria || 'Método Singapur / Refuerzo Focalizado',
+                              instruccion: prescription?.instruccionMentor || 'Repaso de 10 minutos al inicio de la próxima clase ordinaria.',
+                            })
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 px-2 py-1 rounded transition-colors cursor-pointer"
+                          title="Generar nota para el profesor titular del liceo"
+                        >
+                          <FileText className="size-3 text-slate-500" />
+                          <span>Nota Docente</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-slate-900 h-1.5 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.max(10, node.percentage))}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Controls & Filter Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
         {/* Search */}
         <div className="relative flex-1 max-w-xs">
@@ -534,6 +727,113 @@ export function DirectorStudentsOverview() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* 5. Modal: Nota Preventiva al Profesor Titular del Liceo Minerva Mirabal */}
+      {reportModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-4 py-6 overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-lg p-6 space-y-5 relative my-auto">
+            {/* Cerrar */}
+            <button
+              type="button"
+              onClick={() => {
+                setReportModalData(null)
+                setCopiedReport(false)
+              }}
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Cerrar modal"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* Encabezado Institucional */}
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs shrink-0">
+                <FileText className="size-5" />
+              </div>
+              <div className="min-w-0 pr-6">
+                <h3 className="text-sm font-bold tracking-tight text-slate-900">
+                  Nota Preventiva de Aula (F-PRAM-NP)
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Liceo Minerva Mirabal · Distrito Educativo 10-04
+                </p>
+              </div>
+            </div>
+
+            {/* Contenido del Micro-Reporte */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs text-slate-700">
+              <div className="border-b border-slate-200/80 pb-2 space-y-0.5 text-[11px] font-mono">
+                <p><strong>DESTINATARIO:</strong> Docente Titular de {reportModalData.subject}</p>
+                <p><strong>SECCIÓN / CURSO:</strong> {reportModalData.grade}</p>
+                <p><strong>ORIGEN:</strong> Auditoría de Refuerzo Académico PRAM OS</p>
+                <p><strong>FECHA:</strong> {new Date().toLocaleDateString('es-DO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              </div>
+
+              <div className="space-y-1.5 font-sans">
+                <p className="font-semibold text-slate-900 text-xs">
+                  DIAGNÓSTICO CLÍNICO COLECTIVO:
+                </p>
+                <p className="text-slate-700 text-xs leading-relaxed bg-white p-3 rounded-lg border border-slate-200">
+                  "La analítica de PRAM OS ha detectado una concentración del <strong>{reportModalData.percentage}%</strong> de fallos en el nodo crítico <strong>[{reportModalData.subtipo}]</strong> ({reportModalData.causaRaiz || 'Procedimental'}) en <strong>{reportModalData.affectedCount}</strong> estudiantes de <strong>{reportModalData.grade}</strong>."
+                </p>
+              </div>
+
+              <div className="space-y-1.5 font-sans">
+                <p className="font-semibold text-slate-900 text-xs">
+                  INTERVENCIÓN PREVENTIVA SUGERIDA (10 MINUTOS DE AULA):
+                </p>
+                <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-1.5 text-xs text-slate-700">
+                  <p>
+                    <strong>Técnica:</strong> {reportModalData.tecnica}
+                  </p>
+                  <p className="text-slate-600 leading-normal">
+                    {reportModalData.instruccion}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+              <a
+                href={DRIVE_REPOSITORY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                <FolderOpen className="size-4" />
+                <span>Ver Carpeta en Drive</span>
+              </a>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = `MINERD · DISTRITO 10-04 · LICEO MINERVA MIRABAL\nNOTA PREVENTIVA PRAM OS (F-PRAM-NP)\nPara: Docente Titular de ${reportModalData.subject} (${reportModalData.grade})\nFecha: ${new Date().toLocaleDateString('es-DO')}\n\nDIAGNÓSTICO:\nLa analítica de PRAM OS detectó que el ${reportModalData.percentage}% de los estudiantes auditados presentan bloqueo en [${reportModalData.subtipo}] (${reportModalData.causaRaiz || 'Procedimental'}).\n\nINTERVENCIÓN SUGERIDA DE AULA (10 MIN):\nTécnica: ${reportModalData.tecnica}\nInstrucción: ${reportModalData.instruccion}\n\nEvidencias y Guías en Drive: ${DRIVE_REPOSITORY_URL}`
+
+                    navigator.clipboard.writeText(text)
+                    setCopiedReport(true)
+                    setTimeout(() => setCopiedReport(false), 3000)
+                  }}
+                  className="inline-flex items-center gap-1.5 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg px-3 py-2 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                >
+                  {copiedReport ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5 text-slate-500" />}
+                  <span>{copiedReport ? 'Copiado' : 'Copiar Texto'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                >
+                  <Printer className="size-3.5" />
+                  <span>Imprimir Nota</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
