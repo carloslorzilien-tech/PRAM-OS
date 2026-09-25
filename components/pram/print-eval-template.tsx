@@ -80,10 +80,10 @@ export function PrintEvalTemplate() {
               Desarrollo del Examen (Área de Trabajo del Estudiante)
             </span>
           </div>
-          {/* Líneas de escritura */}
-          <div className="p-4 space-y-5">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <div key={i} className="border-b border-slate-200 h-1" />
+          {/* Líneas de escritura — hoja lisa */}
+          <div className="p-4">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="border-b border-slate-300 h-7" />
             ))}
           </div>
         </div>

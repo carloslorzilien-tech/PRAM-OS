@@ -1,6 +1,41 @@
 // types/pram.ts
 // PRAM SYSTEM SPECIFICATION — Programa de Refuerzo Académico Minerva Mirabal
 
+// ==========================================
+// PDP — PRAM DIAGNOSTIC PROTOCOL (v1)
+// ==========================================
+
+/** Causa raíz de error según el PDP */
+export type CausaRaizPDP = 'Procedimental' | 'Conceptual' | 'Atención' | 'Estratégico';
+
+/** Subtipos de error para Matemáticas */
+export type SubtipoErrorMatematicas =
+  | 'Signo / Operación Inversa'
+  | 'Orden de Operaciones'
+  | 'Confusión de Variable'
+  | 'Transferencia Incorrecta de Regla'
+  | 'Falta de Validación del Resultado'
+  | 'Error Mecánico de Cálculo';
+
+/** Subtipos de error para Lengua Española */
+export type SubtipoErrorLengua =
+  | 'Salto de palabras'
+  | 'Inversión de relación'
+  | 'Sujeto-objeto confuso'
+  | 'Pérdida de matiz / contexto';
+
+/** Subtipo de error unión (depende de la materia) */
+export type SubtipoError = SubtipoErrorMatematicas | SubtipoErrorLengua;
+
+/** Diagnóstico PDP completo adjunto a una evaluación o sesión */
+export interface PdpDiagnostico {
+  causaRaizPDP: CausaRaizPDP;
+  subtipoError: SubtipoError;
+  tecnicaAplicada?: string;
+  ejerciciosResueltos?: number;
+}
+
+
 export type GradoSecundaria = '3ro' | '4to';
 
 export type NivelDominio = 1 | 2 | 3 | 4 | 5;
@@ -178,7 +213,9 @@ export interface MentorRankingItem {
   mentor: Mentor;
   horas: number;
   delta_promedio: number;
-  score: number; // (Horas * 10) + (Delta_Promedio * 50)
+  puntos_horas?: number; // (Horas / 60) * 40 pts
+  puntos_delta?: number; // (Delta / 4.0) * 60 pts
+  score: number; // (Horas / 60 * 40) + (Delta / 4.0 * 60) -> Base 100 pts
   estudiantes_count: number;
 }
 

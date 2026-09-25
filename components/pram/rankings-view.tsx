@@ -69,9 +69,14 @@ export function RankingsView() {
       {/* Tab 1: Ranking de Mentores */}
       {tab === 'mentores' && (
         <section className="space-y-2.5 w-full">
-          <p className="text-center text-[11px] text-slate-400 font-normal">
-            Criterio: (Horas acumuladas × 10) + (Delta de cohorte × 50)
-          </p>
+          <div className="rounded-lg bg-slate-50 border border-slate-200/80 p-2.5 text-center">
+            <p className="text-[11px] font-semibold text-slate-700">
+              Fórmula Oficial PRAM v3.0 (Base 100 pts)
+            </p>
+            <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+              (Horas / 60 × 40 pts) + (Delta Promedio / 4.0 × 60 pts)
+            </p>
+          </div>
 
           <div className="space-y-2 w-full">
             {rankingMentores.map((item, idx) => {
@@ -104,20 +109,21 @@ export function RankingsView() {
                           {item.mentor.rango}
                         </span>
                         {isTop1 && (
-                          <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.2 text-[9px] font-medium text-slate-700">
-                            Puesto 1
+                          <span className="rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.2 text-[9px] font-medium">
+                            Líder Pedagógico
                           </span>
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 truncate mt-0.5 font-normal">
-                        +{item.delta_promedio} Δ · {item.horas.toFixed(1)} h Institucional
+                        <strong className="text-emerald-700">+{item.delta_promedio} Δ</strong> ({item.puntos_delta || 0} pts) · {item.horas.toFixed(1)}h ({item.puntos_horas || 0} pts)
                       </p>
                     </div>
                   </div>
 
-                  {/* Lado Derecho: Badge de Puntos */}
-                  <div className="bg-slate-900 text-white font-mono font-medium px-2.5 py-1 rounded-md text-xs shrink-0 flex items-center justify-center min-w-[64px]">
-                    <span>{item.score} PTS</span>
+                  {/* Lado Derecho: Badge de Puntos Base 100 */}
+                  <div className="bg-slate-900 text-white font-mono font-medium px-2.5 py-1 rounded-md text-xs shrink-0 flex flex-col items-center justify-center min-w-[70px]">
+                    <span className="font-bold text-xs">{item.score}</span>
+                    <span className="text-[8px] text-slate-300 font-normal uppercase">/ 100 pts</span>
                   </div>
                 </div>
               )

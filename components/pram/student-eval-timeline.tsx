@@ -9,6 +9,7 @@ import {
   BookOpen,
   Award,
   GraduationCap,
+  Microscope,
 } from 'lucide-react'
 import { Evaluacion } from '@/lib/firebase-service'
 
@@ -207,6 +208,31 @@ export function StudentEvalTimeline({
                         {quiz.observacion}
                       </p>
                     )}
+
+                    {/* PDP Diagnóstico Tag */}
+                    {quiz.causaRaizPDP && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-200 uppercase tracking-wide">
+                          <Microscope className="size-3 text-slate-500" />
+                          PDP: {quiz.causaRaizPDP}
+                        </span>
+                        {quiz.subtipoError && (
+                          <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border border-indigo-200">
+                            {quiz.subtipoError}
+                          </span>
+                        )}
+                        {quiz.tecnicaAplicada && (
+                          <span className="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600 border border-slate-200">
+                            Técnica: {quiz.tecnicaAplicada}
+                          </span>
+                        )}
+                        {Number.isFinite(quiz.ejerciciosResueltos) && (
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            ({quiz.ejerciciosResueltos} ej.)
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="shrink-0">
@@ -261,6 +287,26 @@ export function StudentEvalTimeline({
                       <p className="text-xs italic text-slate-500 mt-1.5 bg-slate-50 rounded-lg p-2.5 border border-slate-100">
                         {examen.observacion}
                       </p>
+                    )}
+
+                    {/* PDP Diagnóstico Tag */}
+                    {examen.causaRaizPDP && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-200 uppercase tracking-wide">
+                          <Microscope className="size-3 text-slate-500" />
+                          PDP: {examen.causaRaizPDP}
+                        </span>
+                        {examen.subtipoError && (
+                          <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border border-indigo-200">
+                            {examen.subtipoError}
+                          </span>
+                        )}
+                        {examen.tecnicaAplicada && (
+                          <span className="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600 border border-slate-200">
+                            Técnica: {examen.tecnicaAplicada}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 

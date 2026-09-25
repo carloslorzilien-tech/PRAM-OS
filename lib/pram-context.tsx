@@ -760,24 +760,31 @@ export function PramProvider({ children }: { children: React.ReactNode }) {
   const getEstudianteById = (id: string) => estudiantes.find((e) => e.id === id)
   const getMentorById = (id: string) => mentores.find((m) => m.id === id)
 
-  // Motor de Rankings: Top Mentores con Fórmula Oficial
+  // Motor de Rankings: Top Mentores con Fórmula Oficial PRAM v3.0 (Base 100)
+  // Puntaje = (Horas/60 * 40) + (Delta/4.0 * 60)
   const getRankingMentores = (): MentorRankingItem[] => {
     return mentores
       .map((mentor) => {
         const alumnos = estudiantes.filter((e) => e.mentor_id === mentor.id)
         let totalDelta = 0
         alumnos.forEach((a) => {
-          const delta = a.nivel_actual - (a.nivel_pretest || 2)
-          totalDelta += delta
+          const delta = a.nivel_actual - (a.nivel_pretest || 1)
+          totalDelta += Math.max(0, delta)
         })
-        const deltaPromedio = alumnos.length > 0 ? Number((totalDelta / alumnos.length).toFixed(1)) : 1.0
+        const deltaPromedio = alumnos.length > 0 ? Number((totalDelta / alumnos.length).toFixed(2)) : 1.0
         const horas = Number(mentor.horas_acumuladas) || 0
-        const score = Math.round((horas * 10) + (deltaPromedio * 50))
+        
+        // Ponderación oficial: 40% Horas (max 60h), 60% Delta pedagógico (max 4.0Δ)
+        const puntosHoras = Number(((Math.min(horas, 60) / 60) * 40).toFixed(1))
+        const puntosDelta = Number(((Math.min(deltaPromedio, 4.0) / 4.0) * 60).toFixed(1))
+        const score = Math.round(puntosHoras + puntosDelta)
 
         return {
           mentor,
           horas,
           delta_promedio: deltaPromedio,
+          puntos_horas: puntosHoras,
+          puntos_delta: puntosDelta,
           score,
           estudiantes_count: alumnos.length,
         }

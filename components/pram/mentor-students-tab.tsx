@@ -348,6 +348,7 @@ export function MentorStudentsTab() {
         <StudentEvalModal
           studentId={evalModalStudent.id}
           studentName={evalModalStudent.fullName}
+          studentSubject={evalModalStudent.subject}
           existingEvals={evaluationsMap.get(evalModalStudent.id) || []}
           onClose={() => setEvalModalStudent(null)}
           onSuccess={() => {

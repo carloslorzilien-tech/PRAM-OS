@@ -581,6 +581,11 @@ export interface Evaluacion {
   calificacion: number
   tema: string
   observacion: string
+  // PDP — PRAM Diagnostic Protocol (opcionales)
+  causaRaizPDP?: 'Procedimental' | 'Conceptual' | 'Atención' | 'Estratégico'
+  subtipoError?: string
+  tecnicaAplicada?: string
+  ejerciciosResueltos?: number
   createdAt?: any
 }
 

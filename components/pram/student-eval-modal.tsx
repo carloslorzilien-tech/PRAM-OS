@@ -1,13 +1,43 @@
 'use client'
 
 import React, { useState } from 'react'
-import { X, ClipboardList, Loader2 } from 'lucide-react'
+import { X, ClipboardList, Loader2, ChevronDown, ChevronUp, Microscope } from 'lucide-react'
 import { addEvaluation, Evaluacion } from '@/lib/firebase-service'
 import { showToast } from '@/components/pram/toast'
+
+// ── PDP Taxonomy ──────────────────────────────────────────────
+type CausaRaiz = 'Procedimental' | 'Conceptual' | 'Atención' | 'Estratégico'
+type MateriaKey = 'Matemáticas' | 'Lengua Española'
+
+const PDP_SUBTYPES: Record<MateriaKey, Record<CausaRaiz, string[]>> = {
+  'Matemáticas': {
+    'Procedimental': ['Signo / Operación Inversa', 'Orden de Operaciones'],
+    'Conceptual':    ['Confusión de Variable', 'Transferencia Incorrecta de Regla'],
+    'Atención':      ['Falta de Validación del Resultado', 'Error Mecánico de Cálculo'],
+    'Estratégico':   [],
+  },
+  'Lengua Española': {
+    'Procedimental': ['Sujeto-objeto confuso'],
+    'Conceptual':    ['Inversión de relación'],
+    'Atención':      ['Salto de palabras'],
+    'Estratégico':   ['Pérdida de matiz / contexto'],
+  },
+}
+
+const CAUSA_RAIZ_OPTIONS: CausaRaiz[] = ['Procedimental', 'Conceptual', 'Atención', 'Estratégico']
+
+const CAUSA_RAIZ_COLORS: Record<CausaRaiz, string> = {
+  'Procedimental': 'border-blue-200 bg-blue-50 text-blue-700',
+  'Conceptual':    'border-violet-200 bg-violet-50 text-violet-700',
+  'Atención':      'border-amber-200 bg-amber-50 text-amber-700',
+  'Estratégico':   'border-emerald-200 bg-emerald-50 text-emerald-700',
+}
+
 
 interface StudentEvalModalProps {
   studentId: string
   studentName: string
+  studentSubject?: string
   existingEvals: Evaluacion[] // to check if EXAMEN_FINAL already exists
   onClose: () => void
   onSuccess: () => void
@@ -16,6 +46,7 @@ interface StudentEvalModalProps {
 export function StudentEvalModal({
   studentId,
   studentName,
+  studentSubject,
   existingEvals,
   onClose,
   onSuccess,
@@ -29,6 +60,7 @@ export function StudentEvalModal({
   }
 
   const hasFinalExam = Boolean(existingEvals?.some((e) => e.tipo === 'EXAMEN_FINAL'))
+  const materia: MateriaKey = studentSubject === 'Lengua Española' ? 'Lengua Española' : 'Matemáticas'
 
   const [tipo, setTipo] = useState<'QUIZ' | 'EXAMEN_FINAL'>('QUIZ')
   const [calificacion, setCalificacion] = useState<string>('')
@@ -36,6 +68,19 @@ export function StudentEvalModal({
   const [observacion, setObservacion] = useState<string>('')
   const [fecha, setFecha] = useState<string>(getTodayString)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // PDP state
+  const [showPdp, setShowPdp]       = useState(false)
+  const [causaRaiz, setCausaRaiz]   = useState<CausaRaiz | ''>('')
+  const [subtipoError, setSubtipo]  = useState<string>('')
+  const [tecnica, setTecnica]       = useState<string>('')
+  const [ejercicios, setEjercicios] = useState<string>('')
+
+  const handleCausaRaizChange = (c: CausaRaiz | '') => {
+    setCausaRaiz(c)
+    setSubtipo('')
+  }
+  const availableSubtipos: string[] = causaRaiz ? (PDP_SUBTYPES[materia][causaRaiz] ?? []) : []
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,13 +114,25 @@ export function StudentEvalModal({
     setIsSubmitting(true)
 
     try {
-      const result = await addEvaluation(studentId, {
+      const payload: Omit<Evaluacion, 'id' | 'createdAt'> = {
         fecha,
         tipo,
         calificacion: califNum,
         tema: tema.trim(),
         observacion: observacion.trim(),
-      })
+      }
+
+      // Attach PDP fields only if the mentor opened and filled the section
+      if (showPdp && causaRaiz) {
+        payload.causaRaizPDP = causaRaiz
+        if (subtipoError) payload.subtipoError = subtipoError
+        if (tecnica.trim()) payload.tecnicaAplicada = tecnica.trim()
+        if (ejercicios && Number.isFinite(Number(ejercicios))) {
+          payload.ejerciciosResueltos = Number(ejercicios)
+        }
+      }
+
+      const result = await addEvaluation(studentId, payload)
 
       if (result) {
         showToast(
@@ -97,7 +154,7 @@ export function StudentEvalModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm px-4 py-6 overflow-y-auto">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md p-6 space-y-5 relative">
         {/* Botón de cerrar */}
         <button
@@ -120,7 +177,9 @@ export function StudentEvalModal({
               Registrar Evaluación
             </h3>
             <p className="text-xs font-medium text-slate-500 truncate">
-              Estudiante: <span className="font-semibold text-slate-700">{studentName || 'Sin asignar'}</span>
+              <span className="font-semibold text-slate-700">{studentName || 'Sin asignar'}</span>
+              {' · '}
+              <span className="text-slate-400">{materia}</span>
             </p>
           </div>
         </div>
@@ -214,6 +273,114 @@ export function StudentEvalModal({
               disabled={isSubmitting}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-colors disabled:bg-slate-50"
             />
+          </div>
+
+          {/* ── Diagnóstico PDP ───────────────────────────────── */}
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            {/* Toggle header */}
+            <button
+              type="button"
+              onClick={() => setShowPdp((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Microscope className="size-4 text-slate-500" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Diagnóstico PDP
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">— opcional</span>
+              </div>
+              {showPdp
+                ? <ChevronUp className="size-4 text-slate-400" />
+                : <ChevronDown className="size-4 text-slate-400" />
+              }
+            </button>
+
+            {showPdp && (
+              <div className="px-4 pb-4 pt-3 space-y-3 bg-white">
+
+                {/* Causa Raíz */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                    Causa Raíz del Error
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CAUSA_RAIZ_OPTIONS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => handleCausaRaizChange(causaRaiz === c ? '' : c)}
+                        className={`rounded-lg border px-3 py-2 text-xs font-semibold text-left transition-all ${
+                          causaRaiz === c
+                            ? CAUSA_RAIZ_COLORS[c]
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subtipo — solo si hay causa raíz con subtipos para esa materia */}
+                {causaRaiz && availableSubtipos.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                      Subtipo de Error{' '}
+                      <span className="text-slate-400 font-normal normal-case">({materia})</span>
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {availableSubtipos.map((sub) => (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={() => setSubtipo(subtipoError === sub ? '' : sub)}
+                          className={`rounded-lg border px-3 py-2 text-xs font-medium text-left transition-all ${
+                            subtipoError === sub
+                              ? 'border-slate-900 bg-slate-900 text-white'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Técnica Aplicada */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                    Técnica Aplicada <span className="text-slate-400 font-normal lowercase">(opcional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Regla 90s, barras Singapur..."
+                    value={tecnica}
+                    onChange={(e) => setTecnica(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-colors"
+                  />
+                </div>
+
+                {/* Ejercicios Resueltos */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                    Ejercicios Resueltos <span className="text-slate-400 font-normal lowercase">(opcional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={99}
+                    placeholder="Ej: 5"
+                    value={ejercicios}
+                    onChange={(e) => setEjercicios(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-colors"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Botones de acción */}
